@@ -1,44 +1,24 @@
-services:
+﻿services:
   - type: web
-    name: shipproof
+    name: trustfield
     runtime: docker
-    plan: starter
+    plan: free
     autoDeploy: true
     healthCheckPath: /healthz
     envVars:
       - key: SHIPPROOF_BASE_URL
         sync: false
-      - key: SHIPPROOF_PAYMENT_LINK
-        sync: false
       - key: SHIPPROOF_CONTACT_EMAIL
-        sync: false
-      - key: SHIPPROOF_ADMIN_TOKEN
-        generateValue: true
-      - key: SHIPPROOF_DATA
-        value: /data
-      - key: SHIPPROOF_FREE_REPORTS
-        value: "0"
-      - key: SHIPPROOF_SCAN_TIMEOUT
-        value: "75"
-      - key: SHIPPROOF_SECRET_KEY
-        generateValue: true
-      - key: RAZORPAY_KEY_ID
-        sync: false
-      - key: RAZORPAY_KEY_SECRET
-        sync: false
-      - key: RAZORPAY_WEBHOOK_SECRET
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-      - key: RESEND_API_KEY
         sync: false
       - key: SHIPPROOF_EMAIL_FROM
         sync: false
+      - key: SHIPPROOF_ADMIN_TOKEN
+        sync: false
+      - key: SHIPPROOF_SECRET_KEY
+        sync: false
+      - key: SHIPPROOF_PAYMENT_LINK
+        sync: false
+      - key: SHIPPROOF_DATA
+        value: /tmp/data
       - key: PORT
-        value: 8000
-    disk:
-      name: data
-      mountPath: /data
-      sizeGB: 1
+        value: "8000"
