@@ -155,3 +155,29 @@ def send_welcome(email: str) -> dict:
             f"- {config.BRAND}",
         ),
     )
+
+
+def send_free_report(record: dict) -> dict:
+    """Free scan email: score, issue titles, unlock CTA. No PDF, no paid claims."""
+    email = str(record.get("email") or "").strip().lower()
+    if not email:
+        return {"ok": False, "error": "no email on record"}
+    score = record.get("score") or {}
+    value = score.get("score")
+    grade = score.get("grade") or ""
+    findings = record.get("findings") or []
+    titles = "".join(
+        f"<li style='margin:6px 0;color:#cbd5e1'>{f.get('title', '')} "
+        f"<span style='color:#93a1b8'>({f.get('severity', '')})</span></li>"
+        for f in findings[:5]
+    )
+    link = f"{config.BASE_URL}/r/{record.get('id', '')}"
+    html = _shell(
+        "Your free scan is ready",
+        f"Score {value}/100 ({grade}). You are seeing every issue we found - the evidence and fixes are in the paid report.",
+        f"<ul style='padding-left:18px;margin:10px 0'>{titles}</ul>",
+        f"See the full report",
+        link,
+        f"One-time report: {config.BASE_URL}/r/{record.get('id', '')}",
+    )
+    return send(email, f"Your {config.BRAND} scan - {value}/100 ({grade})", html)
