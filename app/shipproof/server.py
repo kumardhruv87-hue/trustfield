@@ -177,6 +177,7 @@ def _record_preview(record: dict) -> dict:
         "headline": score_data.get("headline"),
         "verdict": score_data.get("verdict"),
         "summary_hi": score_data.get("summary_hi"),
+        "summary_en": score_data.get("summary_en"),
         "counts": score_data.get("counts"),
         "total": score_data.get("total"),
         "cost_risk": score_data.get("cost_risk"),
