@@ -366,10 +366,8 @@ def report_page(record: dict) -> str:
     critical_count = int(counts.get("critical", 0))
     checks = record.get("checks") or []
     checks_run = len(checks)
-    checks_passed = sum(1 for check in checks if check.get("ok"))
-    pay_target = config.PAYMENT_LINK or f"mailto:{config.CONTACT_EMAIL}?subject=Unlock%20report%20{record.get('id','')}"
-    sep = "&" if "?" in pay_target else "?"
-    pay_url = f"{pay_target}{sep}ref={record.get('id','')}"
+    checks_passed = sum(1 for c in checks if c.get("ok") is True)
+    pay_url = f"{config.BASE_URL}/pay/{record.get('id', '')}"
 
     if paid:
         findings_block = findings_html(findings)
