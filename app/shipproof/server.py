@@ -318,6 +318,16 @@ class Handler(BaseHTTPRequestHandler):
                 raise HTTPProblem(429, "Too many requests — slow down a little.")
             if path in ("/", "/pricing", "/scan"):
                 return self._html(200, report.index_page())
+            if path == "/delete-account":
+                body = (
+                    "<!doctype html><html><head><meta charset='utf-8'><title>Delete your data</title>"
+                    "<link rel='stylesheet' href='/static/style.css'></head><body><main class='wrap narrow legal'>"
+                    "<h1>Delete your data</h1><p>Email us and we will delete your report, scan and email within 7 days.</p>"
+                    f"<p><a href='mailto:{config.CONTACT_EMAIL}?subject=Delete%20my%20data'>{config.CONTACT_EMAIL}</a></p>"
+                    "<p class='fine'>Reports are auto-deleted 30 days after the scan. Paid invoices are kept for tax law.</p>"
+                    "</main></body></html>"
+                )
+                return self._html(200, body)
             if path == "/privacy":
                 return self._html(200, report.legal_page("privacy"))
             if path == "/terms":
