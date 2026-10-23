@@ -571,6 +571,11 @@ class Handler(BaseHTTPRequestHandler):
         }
         store.save_scan(record)
         indexstore.record(record)
+        if email and emailer.configured():
+            try:
+                emailer.send_report(record)
+            except Exception:
+                pass
         if email:
             try:
                 store.save_lead(email, scan_id, source=f"scan-{kind}")
