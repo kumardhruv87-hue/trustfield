@@ -718,6 +718,11 @@ class Handler(BaseHTTPRequestHandler):
 def make_server(host: str = config.HOST, port: int = config.PORT) -> ThreadingHTTPServer:
     config.ensure_dirs()
     store.purge_old(30)
+    try:
+        from . import storage
+        storage.ensure_bucket()
+    except Exception:
+        pass
     server = ThreadingHTTPServer((host, port), Handler)
     server.daemon_threads = True
     return server
