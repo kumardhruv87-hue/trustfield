@@ -51,6 +51,11 @@ ADMIN_TOKEN = os.environ.get("SHIPPROOF_ADMIN_TOKEN", "")
 SECRET_KEY = os.environ.get("SHIPPROOF_SECRET_KEY", "") or ADMIN_TOKEN or "dev-secret-change-me"
 TOKEN_TTL_DAYS = int(os.environ.get("SHIPPROOF_TOKEN_TTL_DAYS", "90"))
 
+# ---------------------------------------------------------- supabase store ----
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+SUPABASE_BUCKET = os.environ.get("SUPABASE_BUCKET", "trustfield")
+
 # ------------------------------------------------------------- runtime -----
 PORT = int(os.environ.get("PORT", "8000"))
 HOST = os.environ.get("HOST", "0.0.0.0")
