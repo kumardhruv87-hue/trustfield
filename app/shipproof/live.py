@@ -830,19 +830,23 @@ def _check_compliance(base: str, budget: net.Budget, c: Collector, has_ai: bool)
 # --------------------------------------------------------------------------
 
 PLATFORM_HINTS = {
-    "lovable": "Lovable",
+    "lovable.app": "Lovable",
+    ".lovable.dev": "Lovable",
+    "lovableproject.com": "Lovable",
     "bolt.new": "Bolt.new",
     "v0.dev": "v0",
-    "replit": "Replit",
-    "base44": "Base44",
+    "replit.app": "Replit",
+    "replit.dev": "Replit",
+    "base44.app": "Base44",
     "bubble.io": "Bubble",
     "softr.io": "Softr",
     "carrd.co": "Carrd",
-    "webflow": "Webflow",
-    "framer": "Framer",
-    "next.js": "Next.js",
-    "supabase": "Supabase",
-    "firebase": "Firebase",
+    "webflow.io": "Webflow",
+    "framer.website": "Framer",
+    "_next/static": "Next.js",
+    ".supabase.co": "Supabase",
+    "firebaseio.com": "Firebase",
+    "firebaseapp.com": "Firebase",
 }
 
 
