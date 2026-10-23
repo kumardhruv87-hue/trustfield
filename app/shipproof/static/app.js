@@ -126,6 +126,7 @@
     }
 
     function payLinkFor(id) {
+      return "/pay/" + encodeURIComponent(id);
       var base = meta("sp-pay");
       if (!base) return "";
       var sep = base.indexOf("?") === -1 ? "?" : "&";
@@ -159,10 +160,10 @@
           '<div class="ring-inner"><b>' + score + "</b><span>" + esc(data.grade || "") + "</span></div></div>" +
           '<div class="result-text"><h3>' + esc(data.headline || "") + "</h3>" +
           "<p>" + esc(data.verdict || "") + "</p>" +
-          '<p class="fine">' + esc(data.target || "") + " Â· " + (data.total || 0) + " findings" +
-          (data.checks_total ? " Â· " + data.checks_total + " checks run" : "") + "</p></div></div>" +
+          '<p class="fine">' + esc(data.target || "") + " · " + (data.total || 0) + " findings" +
+          (data.checks_total ? " · " + data.checks_total + " checks run" : "") + "</p></div></div>" +
         countsHTML(data.counts) +
-        (data.summary_hi ? '<div class="hinglish"><strong>The short version:</strong> ' + esc(data.summary_hi) + "</div>" : "") +
+        ((data.summary_en || data.summary_hi) ? '<div class="hinglish"><strong>The short version:</strong> ' + esc(data.summary_en || data.summary_hi) + "</div>" : "") +
         (actions ? '<h4>Fix these first</h4><ol class="actions">' + actions + "</ol>" : "") +
         (preview ? '<div class="mini-finding-grid">' + preview + "</div>" : "") +
         '<div class="result-cta">' +
@@ -174,7 +175,7 @@
         "</div>" +
         '<p class="fine">' +
           (locked
-            ? "You are seeing the top 3 findings. The full report has every finding, the fix for each one, the prompt-injection kit and the risk estimates."
+            ? "You are seeing the top 3 findings. The full report has every finding, the evidence for each one, the exact fix, the fix prompt and the PDF report."
             : "Full report unlocked.") +
         "</p>";
 
@@ -334,3 +335,21 @@
   });
 })();
 
+
+/* After Razorpay redirects back with ?paid=1, poll until the webhook unlocks the report. */
+(function () {
+  try {
+    var q = new URLSearchParams(window.location.search);
+    if (q.get("paid") !== "1") return;
+    var scan = meta("sp-scan");
+    if (!scan || meta("sp-unlocked")) return;
+    var tries = 0;
+    var timer = setInterval(function () {
+      tries += 1;
+      fetch("/api/scan/" + encodeURIComponent(scan)).then(function (r) { return r.json(); }).then(function (d) {
+        if (d && d.locked === false) { clearInterval(timer); window.location.reload(); }
+        else if (tries >= 24) { clearInterval(timer); }
+      }).catch(function () {});
+    }, 2500);
+  } catch (e) {}
+})();
