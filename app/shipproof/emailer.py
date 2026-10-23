@@ -37,6 +37,8 @@ def send(to: str, subject: str, html: str) -> dict:
         headers={
             "Authorization": f"Bearer {config.RESEND_API_KEY}",
             "Content-Type": "application/json",
+            "User-Agent": f"{config.BRAND}/1.0 (+{config.BASE_URL})",
+            "Accept": "application/json",
         },
         method="POST",
     )
