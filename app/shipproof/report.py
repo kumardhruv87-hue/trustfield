@@ -360,7 +360,6 @@ def report_page(record: dict) -> str:
         bool(record.get("unlocked"))
         or config.UNLOCK_ALL
         or config.FREE_REPORTS
-        or len(findings) <= 3
     )
     counts = score.get("counts") or {}
     critical_count = int(counts.get("critical", 0))
