@@ -235,6 +235,7 @@ def legal_page(name: str) -> str:
             "BRAND": esc(config.BRAND),
             "CONTACT_EMAIL": esc(config.CONTACT_EMAIL),
             "CITY": esc(config.CITY),
+            "LEGAL_NAME": esc(config.LEGAL_NAME),
             "YEAR": config.now().year,
         },
     )
