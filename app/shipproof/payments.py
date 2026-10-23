@@ -1,6 +1,8 @@
 """Payment webhook verification (Razorpay + Stripe) — stdlib only."""
 from __future__ import annotations
 
+from . import config
+
 import hashlib
 import hmac
 import time
