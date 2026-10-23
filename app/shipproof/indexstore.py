@@ -9,7 +9,7 @@ import json
 import threading
 from collections import Counter
 
-from . import config
+from . import config, storage
 
 _lock = threading.Lock()
 
@@ -31,6 +31,10 @@ def record(scan: dict) -> None:
     with _lock:
         with config.INDEX_FILE.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    if storage.enabled():
+        rows = storage.get_json("index.json") or []
+        rows.append(row)
+        storage.put_json("index.json", rows[-20000:])
 
 
 def aggregate(limit: int = 20000) -> dict:
