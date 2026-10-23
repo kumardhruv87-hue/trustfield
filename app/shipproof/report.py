@@ -337,20 +337,13 @@ def pdf_button(record: dict) -> str:
 
 
 def watch_upsell_html(record: dict) -> str:
-    target = config.WATCH_PAYMENT_LINK or config.PAYMENT_LINK
-    url = target or f"mailto:{config.CONTACT_EMAIL}?subject=Watch%20plan"
-    sep = "&" if "?" in url else "?"
-    url = f"{url}{sep}ref={record.get('id', '')}"
-    return f"""
+    return """
     <div class="locked free-upsell">
       <div class="lock-icon">🛡️</div>
-      <h3>Keep this proof current</h3>
-      <p>A finding fixed today can come back with your next deploy. Watch re-scans every week,
-         emails you only when something new appears, and keeps your badge valid.</p>
-      <p class="fine">Watch — ₹{esc(config.WATCH_INR)} / ${esc(config.WATCH_USD)} per month</p>
-      <a class="btn primary" href="{esc(url)}" target="_blank" rel="noopener">
-        Start Watch — ₹{esc(config.WATCH_INR)}/month
-      </a>
+      <h3>Watch is coming soon</h3>
+      <p>Automatic re-checks after every deploy, email alerts and a badge that renews itself are on
+         the roadmap. Until then, re-scan after each deploy - it takes a minute and keeps you honest.</p>
+      <p class="fine">Not on sale yet.</p>
     </div>"""
 
 
@@ -385,11 +378,11 @@ def report_page(record: dict) -> str:
           <h3>You can see every issue. Unlock the fixes.</h3>
           <p>The free scan gives you the score and all {len(findings)} issue titles.
              The paid report adds the evidence for each one, the plain-English fix,
-             the copy-paste fix prompt, the 12-attack prompt-injection kit and the PDF report.</p>
+             the copy-paste fix prompt and the PDF report.</p>
           <a class="btn primary" href="{esc(pay_url)}" target="_blank" rel="noopener">
             Get the full report - ₹{esc(config.PRICE_INR)} / ${esc(config.PRICE_USD)}
           </a>
-          <p class="fine">One-time payment. No subscription. Report link stays live for 90 days.</p>
+          <p class="fine">One-time payment. No subscription. Report link stays live for 30 days.</p>
         </div>"""
         kit_block = kit_html(record, unlocked=True)
         kit_note = "Free for everyone: paste each prompt into your own app's chat, then paste the reply back to grade it."
