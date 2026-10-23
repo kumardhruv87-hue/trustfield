@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import threading
 
-from . import config
+from . import config, storage
 
 _lock = threading.Lock()
 
@@ -14,9 +14,17 @@ def append(order: dict) -> None:
     with _lock:
         with config.ORDERS_FILE.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(order, ensure_ascii=False) + "\n")
+    if storage.enabled():
+        rows = storage.get_json("orders.json") or []
+        rows.append(order)
+        storage.put_json("orders.json", rows[-5000:])
 
 
 def all_orders(limit: int = 5000) -> list[dict]:
+    if storage.enabled():
+        remote = storage.get_json("orders.json")
+        if remote:
+            return remote[-limit:]
     if not config.ORDERS_FILE.exists():
         return []
     out: list[dict] = []
