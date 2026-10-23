@@ -573,7 +573,7 @@ class Handler(BaseHTTPRequestHandler):
         indexstore.record(record)
         if email and emailer.configured():
             try:
-                emailer.send_report(record)
+                emailer.send_free_report(record)
             except Exception:
                 pass
         if email:
