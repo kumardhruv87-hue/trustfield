@@ -13,7 +13,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import config
+from . import config, storage
 
 ID_RE = __import__("re").compile(r"^[a-z0-9]{6,24}$")
 _lock = threading.Lock()
@@ -38,6 +38,7 @@ def save_scan(record: dict) -> str:
     payload = json.dumps(record, ensure_ascii=False, indent=None)
     tmp.write_text(payload, encoding="utf-8")
     os.replace(tmp, target)
+    storage.put_json(f"scans/{scan_id}.json", record)
     return scan_id
 
 
@@ -47,6 +48,13 @@ def load_scan(scan_id: str) -> dict | None:
     except ValueError:
         return None
     if not path.exists():
+        remote = storage.get_json(f"scans/{scan_id}.json")
+        if remote is not None:
+            try:
+                path.write_text(json.dumps(remote, ensure_ascii=False), encoding="utf-8")
+            except OSError:
+                pass
+            return remote
         return None
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -80,6 +88,10 @@ def save_lead(email: str, scan_id: str = "", source: str = "web") -> None:
     with _lock:
         with config.LEADS_FILE.open("a", encoding="utf-8") as fh:
             fh.write(line + "\n")
+    if storage.enabled():
+        leads = storage.get_json("leads.json") or []
+        leads.append(json.loads(line))
+        storage.put_json("leads.json", leads[-5000:])
 
 
 def counts() -> dict:
