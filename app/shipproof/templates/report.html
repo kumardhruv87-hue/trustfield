@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report {{SCAN_ID}} · {{BRAND}}</title>
+  <meta name="robots" content="noindex">
+  <meta name="sp-scan" content="{{SCAN_ID}}">
+  <meta name="sp-unlocked" content="{{UNLOCKED}}">
+  <meta name="sp-pay" content="{{PAY_LINK}}">
+  <meta name="sp-price-inr" content="₹">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z' fill='%235eead4'/%3E%3C/svg%3E">
+</head>
+<body class="report-body">
+  <header class="nav">
+    <a class="brand" href="/">
+      <svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+        <path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor" opacity=".9"/>
+        <path d="M11 16l4 4 7-8" stroke="#0b1020" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>{{BRAND}}</span>
+    </a>
+    <nav class="nav-links"><a href="/#checks">What we check</a><a href="/#pricing">Pricing</a></nav>
+    <a class="btn small" href="/#scan">Scan another</a>
+  </header>
+
+  <main class="wrap report">
+    <div class="report-head">
+      <div class="ring" style="--score: {{SCORE}}">
+        <div class="ring-inner"><b>{{SCORE}}</b><span>{{GRADE}}</span></div>
+      </div>
+      <div class="report-intro">
+        <div class="eyebrow">{{KIND}} · scanned {{SCANNED_AT}}</div>
+        <h1>{{HEADLINE}}</h1>
+        <p class="target">{{TARGET}}</p>
+        <p class="verdict">{{VERDICT}}</p>
+        <p class="fine">{{CHECKS_RUN}} checks run · {{CHECKS_PASSED}} passed</p>
+        <p class="mode-note">{{MODE_NOTE}}</p>
+      </div>
+    </div>
+
+    {{COUNTS}}
+
+    <div class="hinglish">
+      <strong>In plain English:</strong> {{SUMMARY_EN}}
+    </div>
+
+    <div class="risk-grid">{{RISKS}}</div>
+
+    <section class="block">
+      <h2>Fix these first</h2>
+      {{ACTIONS}}
+    </section>
+
+    <section class="block">
+      <h2>All findings <span class="count-total">{{TOTAL}}</span></h2>
+      <p class="muted">Worst first. Open any row for the evidence, the fix and a copy-paste prompt for your AI builder.</p>
+      {{FINDINGS}}
+      {{LOCK}}
+    </section>
+
+    <section class="block">
+      <h2>Where the problems are</h2>
+      {{CATEGORIES}}
+    </section>
+
+    <section class="block">
+      <h2>Prompt-injection kit</h2>
+      <p class="muted">{{KIT_NOTE}}</p>
+      {{KIT}}
+    </section>
+
+    <section class="block">
+      <h2>What we checked</h2>
+      <p class="muted">A check is a point in time, not a promise about the future.</p>
+      {{CHECKS}}
+      {{META}}
+    </section>
+
+    <section class="block">
+      <h2>What this scan could not check</h2>
+      <p class="muted">Saying what we did not look at is part of an honest report.</p>
+      {{NOT_CHECKED}}
+    </section>
+
+    <div class="report-actions">
+      {{PDF_BUTTON}}
+      <button class="btn print-btn" type="button">Print / Save as PDF</button>
+      <a class="btn ghost" href="/#scan">Scan another app</a>
+      <a class="btn ghost" href="/t/{{SCAN_ID}}">Proof page</a>
+    </div>
+    <p class="fine">Only share this report with people you trust — evidence can include short snippets from your app.</p>
+  </main>
+
+  <footer class="footer wrap">
+    <p class="fine">{{BRAND}} is an independent tool. Not affiliated with any AI builder. Not a penetration test.</p>
+  </footer>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

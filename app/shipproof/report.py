@@ -1,0 +1,549 @@
+"""HTML rendering. Templates live in templates/, every dynamic value is escaped."""
+from __future__ import annotations
+
+import html
+import re
+from pathlib import Path
+
+from . import config, sign
+from .findings import SEVERITY_COLOR, SEVERITY_LABEL, Finding, sort_findings
+
+BACKTICK_RE = re.compile(r"`([^`]{1,120})`")
+
+
+def esc(value) -> str:  # noqa: ANN001
+    return html.escape("" if value is None else str(value), quote=True)
+
+
+def inline_code(text: str) -> str:
+    """Escape, then turn `backticks` into <code> spans."""
+    safe = esc(text)
+    return BACKTICK_RE.sub(lambda m: f"<code>{m.group(1)}</code>", safe)
+
+
+def _template(name: str) -> str:
+    return (config.TEMPLATES_DIR / name).read_text(encoding="utf-8")
+
+
+def _fill(template: str, mapping: dict) -> str:
+    for key, value in mapping.items():
+        template = template.replace("{{" + key + "}}", str(value))
+    return template
+
+
+def _as_finding(item) -> Finding:  # noqa: ANN001
+    return item if isinstance(item, Finding) else Finding(**item)
+
+
+# --------------------------------------------------------------------------
+# fragments
+# --------------------------------------------------------------------------
+
+
+def severity_pill(severity: str) -> str:
+    label = SEVERITY_LABEL.get(severity, severity.title())
+    return f'<span class="pill sev-{esc(severity)}">{esc(label)}</span>'
+
+
+def counts_grid(counts: dict) -> str:
+    cells = []
+    for severity in ("critical", "high", "medium", "low", "info"):
+        cells.append(
+            f'<div class="count sev-{severity}">'
+            f'<span class="count-n">{int(counts.get(severity, 0))}</span>'
+            f'<span class="count-l">{esc(SEVERITY_LABEL[severity])}</span></div>'
+        )
+    return '<div class="counts">' + "".join(cells) + "</div>"
+
+
+def finding_card(item, open_card: bool = False) -> str:  # noqa: ANN001
+    finding = _as_finding(item)
+    marker = " open" if open_card else ""
+    return f"""
+    <details class="finding sev-border-{esc(finding.severity)}"{marker}>
+      <summary>
+        {severity_pill(finding.severity)}
+        <span class="f-title">{esc(finding.title)}</span>
+        <span class="f-effort">{esc(finding.effort)}</span>
+      </summary>
+      <div class="f-body">
+        <p class="f-why">{inline_code(finding.why)}</p>
+        <p class="f-label">Evidence</p>
+        <p class="f-evidence"><code>{esc(finding.evidence) or "—"}</code></p>
+        <p class="f-label">Fix</p>
+        <p class="f-fix">{inline_code(finding.fix)}</p>
+        <p><button type="button" class="btn ghost small copy-fix-btn" data-prompt="{esc(_fix_prompt(finding))}">Copy fix prompt</button></p>
+        <p class="f-meta">{esc(finding.category)} · confidence {esc(finding.confidence)}</p>
+      </div>
+    </details>"""
+
+
+def findings_html(findings: list, limit: int | None = None) -> str:
+    items = [_as_finding(f) for f in findings]
+    items = sort_findings(items)
+    if limit is not None:
+        items = items[:limit]
+    if not items:
+        return '<p class="muted">Nothing to show here.</p>'
+    return '<div class="findings">' + "".join(finding_card(f) for f in items) + "</div>"
+
+
+def risk_card(risk: dict, kind: str) -> str:
+    level = esc(risk.get("level", "low"))
+    math = risk.get("math", "")
+    math_html = f'<p class="risk-math">{esc(math)}</p>' if math else ""
+    return f"""
+    <div class="risk risk-{level}">
+      <div class="risk-head"><span class="dot dot-{level}"></span>{esc(risk.get("title", ""))}</div>
+      <p>{inline_code(risk.get("explain", ""))}</p>
+      {math_html}
+      <p class="risk-kind">{esc(kind)}</p>
+    </div>"""
+
+
+def top_actions_html(actions: list) -> str:
+    if not actions:
+        return ""
+    rows = []
+    for i, action in enumerate(actions, 1):
+        rows.append(
+            f'<li><span class="num">{i}</span><div>'
+            f'<div class="action-title">{esc(action["title"])}</div>'
+            f'<div class="action-meta">{severity_pill(action["severity"])}'
+            f'<span class="effort">~{esc(action["effort"])}</span></div>'
+            f"</div></li>"
+        )
+    return '<ol class="actions">' + "".join(rows) + "</ol>"
+
+
+def checks_html(checks: list) -> str:
+    if not checks:
+        return '<p class="muted">No checks recorded.</p>'
+    rows = []
+    for check in checks:
+        icon = "✓" if check.get("ok") else "✕"
+        css = "ok" if check.get("ok") else "miss"
+        detail = check.get("detail", "")
+        detail_html = f'<span class="check-detail">{esc(detail)}</span>' if detail else ""
+        rows.append(
+            f'<li class="{css}"><span class="check-icon">{icon}</span>'
+            f'<span class="check-name">{esc(check.get("name", ""))}</span>{detail_html}</li>'
+        )
+    return '<ul class="checks">' + "".join(rows) + "</ul>"
+
+
+def meta_table(meta: dict) -> str:
+    interesting = {
+        "host": "Host",
+        "status": "HTTP status",
+        "platform": "Detected platform",
+        "stack": "Stack",
+        "files_scanned": "Files scanned",
+        "bundles_scanned": "JS bundles scanned",
+        "api_routes": "API routes",
+        "tables": "Tables in migrations",
+        "rls_enabled": "Tables with RLS",
+        "supabase_project": "Supabase project",
+        "supabase_key_type": "Supabase key type",
+        "supabase_tables": "Tables probed with the public key",
+        "supabase_readable_tables": "Tables readable without login",
+        "server_side_data": "Data access is server-side",
+        "client_side_ai": "AI called from browser",
+        "scan_seconds": "Scan time (s)",
+    }
+    rows = []
+    for key, label in interesting.items():
+        if key not in meta or meta[key] in ("", None, [], 0, False):
+            if not (key in ("client_side_ai", "server_side_data") and meta.get(key) is False):
+                continue
+        value = meta[key]
+        if isinstance(value, list):
+            value = ", ".join(str(v) for v in value)
+        elif isinstance(value, bool):
+            value = "yes" if value else "no"
+        rows.append(f"<tr><th>{esc(label)}</th><td>{esc(value)}</td></tr>")
+    if not rows:
+        return ""
+    return '<table class="meta-table">' + "".join(rows) + "</table>"
+
+
+def kit_html(record: dict, unlocked: bool) -> str:
+    results = {r.get("payload_id"): r for r in (record.get("kit_results") or [])}
+    cards = []
+    for payload in (record.get("kit_payloads") or [])[:12]:
+        pid = payload["id"]
+        result = results.get(pid)
+        if result:
+            verdict = result.get("verdict", "UNCLEAR")
+            verdict_html = (
+                f'<div class="verdict verdict-{esc(verdict.lower())}">'
+                f'{esc(verdict)}<span>{esc(result.get("evidence", ""))}</span></div>'
+            )
+        else:
+            verdict_html = '<div class="verdict verdict-none">Not tested</div>'
+        interactive = ""
+        if unlocked:
+            interactive = (
+                f'<div class="kit-test" data-payload="{esc(pid)}">'
+                f'<textarea rows="2" placeholder="Paste the reply your app gave…"></textarea>'
+                f'<button type="button" class="btn small grade-btn">Grade answer</button>'
+                f"</div>"
+            )
+        cards.append(
+            f'<div class="kit-card" data-payload="{esc(pid)}">'
+            f'<div class="kit-head"><span class="kit-name">{esc(payload["name"])}</span>'
+            f'{severity_pill(payload["severity_if_leaked"])}</div>'
+            f'<p class="kit-goal">{esc(payload["goal"])}</p>'
+            f'<pre class="kit-payload">{esc(payload["payload"])}</pre>'
+            f'<button type="button" class="btn ghost small copy-btn">Copy prompt</button>'
+            f'<p class="kit-expect"><strong>Safe looks like:</strong> {esc(payload["safe_example"])}</p>'
+            f"{interactive}{verdict_html}</div>"
+        )
+    return '<div class="kit-grid">' + "".join(cards) + "</div>"
+
+
+# --------------------------------------------------------------------------
+# pages
+# --------------------------------------------------------------------------
+
+
+def index_page() -> str:
+    return _fill(
+        _template("index.html"),
+        {
+            "BRAND": esc(config.BRAND),
+            "TAGLINE": esc(config.TAGLINE),
+            "PRICE_INR": esc(config.PRICE_INR),
+            "PRICE_USD": esc(config.PRICE_USD),
+            "WATCH_INR": esc(config.WATCH_INR),
+            "WATCH_USD": esc(config.WATCH_USD),
+            "AGENCY_INR": esc(config.AGENCY_INR),
+            "AGENCY_USD": esc(config.AGENCY_USD),
+            "PAYMENT_LINK": esc(config.PAYMENT_LINK),
+            "CONTACT_EMAIL": esc(config.CONTACT_EMAIL),
+            "BASE_URL": esc(config.BASE_URL),
+            "YEAR": config.now().year,
+            "BADGE_DAYS": config.BADGE_VALID_DAYS,
+        },
+    )
+
+
+def legal_page(name: str) -> str:
+    return _fill(
+        _template(f"{name}.html"),
+        {
+            "BRAND": esc(config.BRAND),
+            "CONTACT_EMAIL": esc(config.CONTACT_EMAIL),
+            "CITY": esc(config.CITY),
+            "YEAR": config.now().year,
+        },
+    )
+
+
+def _fix_prompt(finding: Finding) -> str:
+    """A prompt the founder can paste into Cursor / Lovable / Bolt / Claude."""
+    parts = [
+        f"Fix this security finding in my app: {finding.title}.",
+        f"Why it matters: {finding.why}",
+    ]
+    if finding.evidence:
+        parts.append(f"Evidence: {finding.evidence}.")
+    parts.append(f"Suggested fix: {finding.fix}")
+    parts.append(
+        "Make the smallest change that fixes it, keep the existing behaviour, and tell me "
+        "exactly which files you changed."
+    )
+    return " ".join(parts)
+
+
+def category_summary(findings: list) -> str:
+    if not findings:
+        return ""
+    items = [_as_finding(f) for f in findings]
+    groups: dict[str, list[Finding]] = {}
+    for finding in items:
+        groups.setdefault(finding.category, []).append(finding)
+    rows = []
+    for category, group in sorted(groups.items(), key=lambda pair: (-len(pair[1]), pair[0])):
+        worst = sort_findings(group)[0].severity
+        rows.append(
+            f"<tr><td>{esc(category)}</td><td>{severity_pill(worst)}</td>"
+            f"<td class=\"num-cell\">{len(group)}</td></tr>"
+        )
+    return (
+        '<table class="meta-table category-table"><tr><th>Area</th><th>Worst finding</th>'
+        '<th>Count</th></tr>' + "".join(rows) + "</table>"
+    )
+
+
+def not_checked_html() -> str:
+    items = "".join(
+        f'<li class="miss"><span class="check-icon">–</span>'
+        f'<span class="check-name">{esc(item)}</span></li>'
+        for item in config.NOT_CHECKED
+    )
+    return f'<ul class="checks not-checked">{items}</ul>'
+
+
+def upsell_html(record: dict) -> str:
+    if not config.FREE_REPORTS:
+        return ""
+    pay_target = config.PAYMENT_LINK or f"mailto:{config.CONTACT_EMAIL}?subject=Watch%20plan"
+    sep = "&" if "?" in pay_target else "?"
+    pay_url = f"{pay_target}{sep}ref={record.get('id', '')}"
+    return f"""
+    <div class="locked free-upsell">
+      <div class="lock-icon">🛡️</div>
+      <h3>This scan is free — the watching is not.</h3>
+      <p>Every finding above is yours to keep, for free. What you can pay for is proof and
+         follow-through: a dated badge, re-scans after every deploy, and someone to call when
+         something looks wrong.</p>
+      <p class="fine">Watch — ₹{esc(config.WATCH_INR)} / ${esc(config.WATCH_USD)} per month ·
+         Agency pack — ₹{esc(config.AGENCY_INR)} / ${esc(config.AGENCY_USD)} for 10 audits</p>
+      <a class="btn primary" href="{esc(pay_url)}" target="_blank" rel="noopener">
+        Start Watch — ₹{esc(config.WATCH_INR)}/month
+      </a>
+    </div>"""
+
+
+def teaser_html(findings: list) -> str:
+    """Free scan: every issue is visible as a title + severity. Evidence and fix are paid."""
+    items = [_as_finding(f) for f in findings]
+    items = sort_findings(items)
+    if not items:
+        return '<p class="muted">No issues found in this scan.</p>'
+    rows = []
+    for finding in items[:40]:
+        rows.append(
+            f'<div class="finding teaser sev-border-{esc(finding.severity)}">'
+            f'<div class="teaser-row">{severity_pill(finding.severity)}'
+            f'<span class="f-title">{esc(finding.title)}</span>'
+            f'<span class="f-effort">evidence + fix locked</span></div></div>'
+        )
+    more = ""
+    if len(items) > 40:
+        more = f'<p class="fine">+ {len(items) - 40} more issues in the paid report.</p>'
+    return '<div class="findings teaser-list">' + "".join(rows) + "</div>" + more
+
+
+def pdf_button(record: dict) -> str:
+    scan_id = str(record.get("id", ""))
+    token = sign.sign(scan_id, "pdf")
+    return (
+        f'<a class="btn primary" href="/pdf/{esc(scan_id)}?token={esc(token)}">'
+        f"Download the PDF report</a>"
+    )
+
+
+def watch_upsell_html(record: dict) -> str:
+    target = config.WATCH_PAYMENT_LINK or config.PAYMENT_LINK
+    url = target or f"mailto:{config.CONTACT_EMAIL}?subject=Watch%20plan"
+    sep = "&" if "?" in url else "?"
+    url = f"{url}{sep}ref={record.get('id', '')}"
+    return f"""
+    <div class="locked free-upsell">
+      <div class="lock-icon">🛡️</div>
+      <h3>Keep this proof current</h3>
+      <p>A finding fixed today can come back with your next deploy. Watch re-scans every week,
+         emails you only when something new appears, and keeps your badge valid.</p>
+      <p class="fine">Watch — ₹{esc(config.WATCH_INR)} / ${esc(config.WATCH_USD)} per month</p>
+      <a class="btn primary" href="{esc(url)}" target="_blank" rel="noopener">
+        Start Watch — ₹{esc(config.WATCH_INR)}/month
+      </a>
+    </div>"""
+
+
+def report_page(record: dict) -> str:
+    score = record.get("score") or {}
+    findings = record.get("findings") or []
+    paid = (
+        bool(record.get("unlocked"))
+        or config.UNLOCK_ALL
+        or config.FREE_REPORTS
+        or len(findings) <= 3
+    )
+    counts = score.get("counts") or {}
+    critical_count = int(counts.get("critical", 0))
+    checks = record.get("checks") or []
+    checks_run = len(checks)
+    checks_passed = sum(1 for check in checks if check.get("ok"))
+    pay_target = config.PAYMENT_LINK or f"mailto:{config.CONTACT_EMAIL}?subject=Unlock%20report%20{record.get('id','')}"
+    sep = "&" if "?" in pay_target else "?"
+    pay_url = f"{pay_target}{sep}ref={record.get('id','')}"
+
+    if paid:
+        findings_block = findings_html(findings)
+        lock_block = watch_upsell_html(record)
+        kit_block = kit_html(record, unlocked=True)
+        kit_note = "Free for everyone: paste each prompt into your own app's chat, then paste the reply back to grade it."
+        pdf_block = pdf_button(record)
+        mode_note = "Full report unlocked - evidence, fixes and the PDF report are below."
+        price_note = ""
+    else:
+        findings_block = teaser_html(findings)
+        lock_block = f"""
+        <div class="locked">
+          <div class="lock-icon">🔒</div>
+          <h3>You can see every issue. Unlock the fixes.</h3>
+          <p>The free scan gives you the score and all {len(findings)} issue titles.
+             The paid report adds the evidence for each one, the plain-English fix,
+             the copy-paste fix prompt, the 12-attack prompt-injection kit and the PDF report.</p>
+          <a class="btn primary" href="{esc(pay_url)}" target="_blank" rel="noopener">
+            Get the full report - ₹{esc(config.PRICE_INR)} / ${esc(config.PRICE_USD)}
+          </a>
+          <p class="fine">One-time payment. No subscription. Report link stays live for 90 days.</p>
+        </div>"""
+        kit_block = kit_html(record, unlocked=True)
+        kit_note = "Free for everyone: paste each prompt into your own app's chat, then paste the reply back to grade it."
+        pdf_block = ""
+        mode_note = "Free scan: score + every issue we found. Evidence, fixes and PDF are in the paid report."
+        price_note = f"₹{config.PRICE_INR} / ${config.PRICE_USD}"
+
+    target_label = esc(record.get("target", ""))
+    kind_label = "Live URL" if record.get("kind") == "url" else "GitHub repo"
+    actions = score.get("top_actions") or []
+
+    return _fill(
+        _template("report.html"),
+        {
+            "BRAND": esc(config.BRAND),
+            "SCAN_ID": esc(record.get("id", "")),
+            "TARGET": target_label,
+            "KIND": kind_label,
+            "SCANNED_AT": esc(record.get("created_at", "")),
+            "SCORE": int(score.get("score", 0)),
+            "GRADE": esc(score.get("grade", "?")),
+            "HEADLINE": esc(score.get("headline", "")),
+            "VERDICT": esc(score.get("verdict", "")),
+            "SUMMARY_HI": esc(score.get("summary_hi", "")),
+            "SUMMARY_EN": esc(score.get("summary_en") or score.get("summary_hi", "")),
+            "COUNTS": counts_grid(counts),
+            "TOTAL": int(score.get("total", 0)),
+            "ACTIONS": top_actions_html(actions),
+            "RISKS": risk_card(score.get("cost_risk") or {}, "Money risk")
+            + risk_card(score.get("breach_risk") or {}, "Data risk"),
+            "FINDINGS": findings_block,
+            "LOCK": lock_block,
+            "KIT": kit_block,
+            "KIT_NOTE": esc(kit_note),
+            "PDF_BUTTON": pdf_block,
+            "MODE_NOTE": esc(mode_note),
+            "CHECKS": checks_html(record.get("checks") or []),
+            "CHECKS_RUN": checks_run,
+            "CHECKS_PASSED": checks_passed,
+            "CATEGORIES": category_summary(findings),
+            "NOT_CHECKED": not_checked_html(),
+            "FREE_MODE": "" if paid else "1",
+            "META": meta_table(record.get("meta") or {}),
+            "UNLOCKED": "1" if paid else "",
+            "PAY_LINK": esc(config.PAYMENT_LINK),
+            "PRICE_INR": esc(config.PRICE_INR),
+            "PRICE_USD": esc(config.PRICE_USD),
+            "CONTACT_EMAIL": esc(config.CONTACT_EMAIL),
+            "YEAR": config.now().year,
+            "BADGE_DAYS": config.BADGE_VALID_DAYS,
+            "CRITICAL_COUNT": critical_count,
+        },
+    )
+
+
+def trust_page(record: dict) -> str:
+    score = record.get("score") or {}
+    checks = record.get("checks") or []
+    passed = [c["name"] for c in checks if c.get("ok")]
+    import datetime as _dt
+    expires = str(record.get("expires_at") or "")
+    expired = bool(expires) and expires < _dt.date.today().isoformat()
+    eligible = int(score.get("score", 0)) >= 80 and not score.get("has_critical") and not expired
+    page = _fill(
+        _template("trust.html"),
+        {
+            "BRAND": esc(config.BRAND),
+            "TARGET": esc(record.get("target", "")),
+            "SCORE": esc(score.get("score", 0)),
+            "GRADE": esc(score.get("grade", "?")),
+            "SCANNED_AT": esc(record.get("created_at", "")),
+            "EXPIRES_AT": esc(record.get("expires_at", "")),
+            "PASSED_COUNT": len(passed),
+            "CHECKS": checks_html(checks),
+            "ELIGIBLE": "1" if eligible else "",
+            "SCAN_ID": esc(record.get("id", "")),
+            "BADGE_DAYS": config.BADGE_VALID_DAYS,
+            "YEAR": config.now().year,
+        },
+    )
+    if not eligible:
+        page = page.replace(f"{esc(config.BRAND)} Verified", f"{esc(config.BRAND)} scanned - not verified")
+    return page
+
+
+def badge_svg(record: dict) -> str:
+    score = record.get("score") or {}
+    value = int(score.get("score", 0))
+    eligible = value >= 80 and not (score.get("has_critical"))
+    color = "#16a34a" if eligible and value >= 85 else "#eab308" if eligible else "#64748b"
+    label = config.BRAND if eligible else config.BRAND + " (not verified)"
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="190" height="28" role="img" aria-label="{esc(label)}: {value}/100">
+  <rect width="190" height="28" rx="6" fill="#0f172a"/>
+  <rect x="98" width="92" height="28" rx="6" fill="{color}"/>
+  <text x="12" y="19" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11" fill="#e2e8f0">{esc(label)}</text>
+  <text x="144" y="19" font-family="Verdana,DejaVu Sans,sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">{value}/100</text>
+</svg>"""
+
+
+def public_index_page(data: dict) -> str:
+    rows = ""
+    for issue in data.get("top_issues") or []:
+        rows += (
+            f'<tr><td><code>{esc(issue["id"])}</code></td>'
+            f'<td class="num-cell">{issue["count"]}</td>'
+            f'<td class="num-cell"><strong>{issue["rate"]}%</strong></td></tr>'
+        )
+    platforms = "".join(
+        f'<li><span>{esc(item["name"])}</span><strong>{item["rate"]}%</strong></li>'
+        for item in data.get("platforms") or []
+    )
+    return _fill(
+        _template("public_index.html"),
+        {
+            "BRAND": esc(config.BRAND),
+            "SCANS": int(data.get("scans", 0)),
+            "UPDATED": esc(str(data.get("updated", ""))[:10] or "just now"),
+            "ROWS": rows or '<tr><td colspan="3" class="muted">Not enough scans yet. Be the first.</td></tr>',
+            "PLATFORMS": platforms or '<li class="muted">No platform data yet.</li>',
+            "CONTACT_EMAIL": esc(config.CONTACT_EMAIL),
+            "YEAR": config.now().year,
+        },
+    )
+
+
+def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str) -> str:
+    rows = ""
+    for scan in scans:
+        score = (scan.get("score") or {}).get("score", 0)
+        counts = (scan.get("score") or {}).get("counts") or {}
+        status = "PAID" if scan.get("unlocked") else "free"
+        rows += (
+            f"<tr><td><a href='/r/{esc(scan.get('id',''))}'>{esc(scan.get('id',''))}</a></td>"
+            f"<td>{esc(str(scan.get('target',''))[:48])}</td>"
+            f"<td class='num-cell'>{score}</td>"
+            f"<td class='num-cell'>{int(counts.get('critical', 0))}</td>"
+            f"<td>{status}</td>"
+            f"<td>{esc(str(scan.get('created_at',''))[:16])}</td>"
+            f"<td><a href='/admin/pdf/{esc(scan.get('id',''))}?token={esc(token)}'>PDF</a> · "
+            f"<a href='/admin/email/{esc(scan.get('id',''))}?token={esc(token)}'>Email</a> · "
+            f"<a href='/admin/unlock?id={esc(scan.get('id',''))}&token={esc(token)}'>Unlock</a></td></tr>"
+        )
+    return _fill(
+        _template("admin.html"),
+        {
+            "BRAND": esc(config.BRAND),
+            "TOKEN": esc(token),
+            "SCAN_COUNT": len(scans),
+            "PAID_COUNT": int(revenue.get("orders", 0)),
+            "REVENUE": esc(f"{revenue.get('revenue_inr', 0):,.0f}"),
+            "INDEX_SCANS": int(index_data.get("scans", 0)),
+            "ROWS": rows or '<tr><td colspan="7" class="muted">No scans yet.</td></tr>',
+            "YEAR": config.now().year,
+        },
+    )

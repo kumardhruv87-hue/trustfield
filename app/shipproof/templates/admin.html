@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin · {{BRAND}}</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="report-body">
+  <header class="nav">
+    <a class="brand" href="/"><span>{{BRAND}}</span> <span class="pill sev-low">admin</span></a>
+    <nav class="nav-links"><a href="/">Site</a><a href="/index">Public index</a></nav>
+  </header>
+
+  <main class="wrap report">
+    <h1>Operations</h1>
+    <div class="counts">
+      <div class="count"><span class="count-n">{{SCAN_COUNT}}</span><span class="count-l">Scans</span></div>
+      <div class="count"><span class="count-n">{{PAID_COUNT}}</span><span class="count-l">Paid orders</span></div>
+      <div class="count"><span class="count-n">₹{{REVENUE}}</span><span class="count-l">Revenue</span></div>
+      <div class="count"><span class="count-n">{{INDEX_SCANS}}</span><span class="count-l">Indexed</span></div>
+    </div>
+
+    <section class="block">
+      <h2>Recent scans</h2>
+      <table class="meta-table">
+        <tr><th>ID</th><th>Target</th><th>Score</th><th>Crit</th><th>Status</th><th>Time</th><th>Actions</th></tr>
+        {{ROWS}}
+      </table>
+      <p class="fine">Actions: PDF generates a signed download link. Email sends the paid report (needs buyer email). Unlock marks the report paid — use this after a manual/UPI payment.</p>
+    </section>
+
+    <section class="block">
+      <h2>Quick links</h2>
+      <ul>
+        <li><a href="/index">Public vulnerability index</a></li>
+        <li><a href="/healthz">Health check</a></li>
+      </ul>
+      <p class="fine">Bookmark this page with the token: /admin?token={{TOKEN}}</p>
+    </section>
+  </main>
+
+  <footer class="footer wrap"><p class="fine">© {{YEAR}} {{BRAND}}</p></footer>
+</body>
+</html>

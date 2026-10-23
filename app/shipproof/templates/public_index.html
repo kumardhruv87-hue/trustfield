@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The AI-Built App Vulnerability Index · {{BRAND}}</title>
+  <meta name="description" content="Anonymised data from {{BRAND}} scans: which security issues show up most in apps built with Lovable, Bolt, v0, Cursor and Supabase.">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z' fill='%235eead4'/%3E%3C/svg%3E">
+</head>
+<body class="report-body">
+  <header class="nav">
+    <a class="brand" href="/">
+      <svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+        <path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor" opacity=".9"/>
+        <path d="M11 16l4 4 7-8" stroke="#0b1020" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>{{BRAND}}</span>
+    </a>
+    <nav class="nav-links"><a href="/">Scan an app</a><a href="/#pricing">Pricing</a></nav>
+    <a class="btn small" href="/#scan">Free scan</a>
+  </header>
+
+  <main class="wrap narrow report">
+    <div class="eyebrow">Live data · updated {{UPDATED}}</div>
+    <h1>The AI-Built App Vulnerability Index</h1>
+    <p class="sub">
+      Every scan feeds this index. We store no target, no email and no evidence — only which
+      issues appeared, anonymised. <strong>{{SCANS}} scans</strong> analysed so far.
+    </p>
+
+    <section class="block">
+      <h2>Most common issues</h2>
+      <p class="muted">Share of scanned apps where we found this issue.</p>
+      <table class="meta-table category-table">
+        <tr><th>Issue</th><th>Apps</th><th>Rate</th></tr>
+        {{ROWS}}
+      </table>
+    </section>
+
+    <section class="block">
+      <h2>By builder</h2>
+      <p class="muted">Where the apps in the index were built.</p>
+      <ul class="index-platforms">{{PLATFORMS}}</ul>
+    </section>
+
+    <section class="block">
+      <div class="hinglish">
+        <strong>Why this data matters:</strong> har scan se pata chalta hai kaunsi galti
+        sabse zyada ho rahi hai. Aap apne app ka scan karke dekho ki aap us list me kahan ho.
+      </div>
+      <a class="btn primary" href="/#scan">Scan my app — free</a>
+    </section>
+
+    <p class="fine">
+      Method: automated external checks only (headers, DNS, exposed files, client bundles,
+      database-rule signals, payment webhooks). No exploitation, no row data read.
+      Counts are shares of scans in which an issue was detected, not a random sample of all apps.
+      Questions: <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>
+    </p>
+  </main>
+
+  <footer class="footer wrap">
+    <p class="fine">© {{YEAR}} {{BRAND}} · An independent check, not a penetration test.</p>
+  </footer>
+</body>
+</html>

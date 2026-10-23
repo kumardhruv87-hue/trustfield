@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proof page {{SCAN_ID}} · {{BRAND}}</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="report-body">
+  <header class="nav">
+    <a class="brand" href="/"><span>{{BRAND}}</span></a>
+    <a class="btn small" href="/#scan">Check your app</a>
+  </header>
+
+  <main class="wrap narrow trust">
+    <div class="card trust-card">
+      <div class="trust-badge">
+        <svg viewBox="0 0 32 32" width="42" height="42" aria-hidden="true">
+          <path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="#5eead4"/>
+          <path d="M11 16l4 4 7-8" stroke="#0b1020" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <div class="eyebrow">Dated check · expires in {{BADGE_DAYS}} days</div>
+          <h1>{{BRAND}} Verified</h1>
+        </div>
+      </div>
+
+      <p class="target">{{TARGET}}</p>
+      <div class="trust-score"><b>{{SCORE}}</b><span>/100 · grade {{GRADE}}</span></div>
+      <p class="muted">Scanned {{SCANNED_AT}} · valid until {{EXPIRES_AT}} · {{PASSED_COUNT}} checks passed</p>
+
+      <div class="trust-note">
+        This page confirms that on the date above, the app passed an automated external check of
+        transport security, exposed files, client-side secrets, database-rule configuration visible
+        in code, and baseline privacy pages. It is <strong>not</strong> a penetration test and does
+        not guarantee the app is free of vulnerabilities.
+      </div>
+
+      <h2>Checks run</h2>
+      {{CHECKS}}
+
+      <p class="fine">
+        Verify this badge: <code>{{BRAND}}/t/{{SCAN_ID}}</code>. A badge is only meaningful while it
+        is inside its validity window — that is why it expires.
+      </p>
+    </div>
+  </main>
+
+  <footer class="footer wrap">
+    <p class="fine">© {{YEAR}} {{BRAND}}</p>
+  </footer>
+</body>
+</html>

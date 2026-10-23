@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ProofKaro mark">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#5eead4"/><stop offset="1" stop-color="#818cf8"/>
+  </linearGradient></defs>
+  <rect width="512" height="512" rx="112" fill="#0b1020"/>
+  <path d="M256 64 408 124v132c0 98-64 152-152 186C168 408 104 354 104 256V124z" fill="url(#g)"/>
+  <path d="M178 258l54 54 108-120" stroke="#0b1020" stroke-width="36" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
