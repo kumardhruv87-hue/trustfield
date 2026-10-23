@@ -318,6 +318,24 @@ class Handler(BaseHTTPRequestHandler):
                 raise HTTPProblem(429, "Too many requests — slow down a little.")
             if path in ("/", "/pricing", "/scan"):
                 return self._html(200, report.index_page())
+            if path.startswith("/pay/"):
+                scan_id = path[len("/pay/"):].strip("/")
+                record = store.load_scan(scan_id)
+                if not record:
+                    raise HTTPProblem(404, "That report does not exist.")
+                link = record.get("payment_link") or ""
+                if not link:
+                    link = payments.create_payment_link(scan_id, config.PRICE_INR)
+                    if link:
+                        record["payment_link"] = link
+                        store.save_scan(record)
+                if not link:
+                    raise HTTPProblem(503, "Payment link could not be created. Email " + config.CONTACT_EMAIL)
+                self.send_response(302)
+                self.send_header("Location", link)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
             if path == "/delete-account":
                 body = (
                     "<!doctype html><html><head><meta charset='utf-8'><title>Delete your data</title>"
