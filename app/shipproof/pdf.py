@@ -158,7 +158,7 @@ class Doc:
 
 def _footer(page: Page, record: dict, page_no: int, total: int) -> None:
     page.line(MARGIN, 34, A4_W - MARGIN, 34, (0.85, 0.88, 0.92), 0.5)
-    page.text(MARGIN, 22, 7.5, f"{config.BRAND} - independent check, not a penetration test", color=MUTED)
+    page.text(MARGIN, 22, 7.5, f"{config.BRAND} - independent check, not a penetration test · wrong finding? {config.CONTACT_EMAIL}", color=MUTED)
     page.text(A4_W - MARGIN - 60, 22, 7.5, f"{page_no}/{total}", color=MUTED)
 
 
