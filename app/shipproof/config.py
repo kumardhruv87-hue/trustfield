@@ -53,6 +53,11 @@ ADMIN_TOKEN = os.environ.get("SHIPPROOF_ADMIN_TOKEN", "")
 SECRET_KEY = os.environ.get("SHIPPROOF_SECRET_KEY", "") or ADMIN_TOKEN or "dev-secret-change-me"
 TOKEN_TTL_DAYS = int(os.environ.get("SHIPPROOF_TOKEN_TTL_DAYS", "90"))
 
+# ------------------------------------------------------------ ai copilot ----
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+DEEPSEEK_URL = os.environ.get("DEEPSEEK_URL", "https://api.deepseek.com/chat/completions")
+
 # ---------------------------------------------------------- supabase store ----
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
