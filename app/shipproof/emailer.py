@@ -8,7 +8,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from . import config, pdf, sign
+from . import config, pdf, sign, usage
 
 
 def configured() -> bool:
@@ -47,7 +47,10 @@ def send(to: str, subject: str, html: str, attachments: list | None = None) -> d
     )
     try:
         with urllib.request.urlopen(request, timeout=20, context=ssl.create_default_context()) as response:
-            return {"ok": 200 <= response.status < 300, "mode": "resend", "status": response.status}
+            ok = 200 <= response.status < 300
+            if ok:
+                usage.bump("emails")
+            return {"ok": ok, "mode": "resend", "status": response.status}
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         return {"ok": False, "error": str(exc)[:200]}
 
