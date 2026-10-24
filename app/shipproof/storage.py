@@ -70,3 +70,29 @@ def get_json(key: str):
         return json.loads(data) if data else None
     except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, json.JSONDecodeError):
         return None
+
+
+def list_prefix(prefix: str, limit: int = 1000) -> list:
+    """List object names under a prefix (Supabase Storage list API)."""
+    if not enabled():
+        return []
+    try:
+        body = json.dumps({"prefix": prefix, "limit": limit}).encode()
+        _, raw = _request("POST", f"/storage/v1/object/list/{config.SUPABASE_BUCKET}", body,
+                          {"Content-Type": "application/json"})
+        return json.loads(raw) or []
+    except Exception:
+        return []
+
+
+def delete_many(keys: list) -> bool:
+    """Delete up to 100 objects per call."""
+    if not enabled() or not keys:
+        return False
+    try:
+        body = json.dumps({"prefixes": keys[:100]}).encode()
+        _request("DELETE", f"/storage/v1/object/{config.SUPABASE_BUCKET}", body,
+                 {"Content-Type": "application/json"})
+        return True
+    except Exception:
+        return False
