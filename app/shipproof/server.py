@@ -13,7 +13,7 @@ from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from . import ai_kit, aicopilot, config, usage, emailer, indexstore, live, net, orders, payments, pdf, repo, report, score, sign, store, watch, web_tools
+from . import ai_kit, aicopilot, config, usage, emailer, indexstore, live, net, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
@@ -401,6 +401,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._html(200, report.legal_page("status"))
             if path == "/methodology":
                 return self._html(200, report.legal_page("methodology"))
+            if path == "/tools/rls":
+                return self._html(200, report.rls_tool_page("", ""))
             if path == "/tools/headers":
                 url_value = (query.get("url") or [""])[0][:300]
                 result_html = ""
@@ -446,6 +448,7 @@ class Handler(BaseHTTPRequestHandler):
                     f"<url><loc>{config.BASE_URL}/methodology</loc></url>"
                     f"<url><loc>{config.BASE_URL}/integrations</loc></url>"
                     f"<url><loc>{config.BASE_URL}/tools/headers</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/tools/rls</loc></url>"
                     f"<url><loc>{config.BASE_URL}/static/sample-report.html</loc></url>"
                     "</urlset>"
                 )
@@ -541,6 +544,16 @@ class Handler(BaseHTTPRequestHandler):
                     raise HTTPProblem(404, "That Watch link is not valid.")
                 watch.cancel(row["id"])
                 return self._json(200, {"ok": True})
+            if path == "/tools/rls":
+                length = int(self.headers.get("Content-Length") or 0)
+                if length < 0 or length > 20_000:
+                    raise HTTPProblem(413, "That form is too large.")
+                raw = self.rfile.read(length) if length else b""
+                form = parse_qs(raw.decode("utf-8", "replace"))
+                url_value = (form.get("url") or [""])[0][:300]
+                key_value = (form.get("key") or [""])[0][:400]
+                result = supabase_tool.check(url_value, key_value)
+                return self._html(200, report.rls_tool_page(url_value, supabase_tool.result_html(result)))
             if path == "/api/lead":
                 return self._lead()
             if path == "/api/grade":
