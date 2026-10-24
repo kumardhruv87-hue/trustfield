@@ -1,0 +1,39 @@
+name: "Trustfield Security Scan"
+description: "Scan a deployed app for leaked keys, open database rules, missing security headers and unverified webhooks. Fails the check when critical issues are found."
+author: "Trustfield"
+branding:
+  icon: "shield"
+  color: "green"
+
+inputs:
+  url:
+    description: "Public URL of the app to scan (e.g. https://app.example.com)"
+    required: true
+  fail-on:
+    description: "Fail the job when this severity is found: critical | high | never"
+    required: false
+    default: "critical"
+  comment:
+    description: "Post a summary comment on the pull request (true/false)"
+    required: false
+    default: "true"
+  ai:
+    description: "Set to true if the app has an AI chat or agent (adds prompt-injection checks)"
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run Trustfield scan
+      shell: bash
+      run: python3 "${{ github.action_path }}/action/scan.py"
+      env:
+        TRUSTFIELD_URL: ${{ inputs.url }}
+        TRUSTFIELD_FAIL_ON: ${{ inputs.fail-on }}
+        TRUSTFIELD_COMMENT: ${{ inputs.comment }}
+        TRUSTFIELD_AI: ${{ inputs.ai }}
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_API_URL: ${{ github.api_url }}
