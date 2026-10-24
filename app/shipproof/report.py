@@ -1,6 +1,8 @@
 """HTML rendering. Templates live in templates/, every dynamic value is escaped."""
 from __future__ import annotations
 
+from urllib.parse import quote
+
 import html
 import re
 from pathlib import Path
@@ -56,9 +58,15 @@ def counts_grid(counts: dict) -> str:
     return '<div class="counts">' + "".join(cells) + "</div>"
 
 
-def finding_card(item, open_card: bool = False) -> str:  # noqa: ANN001
+def finding_card(item, open_card: bool = False, scan_id: str = "") -> str:  # noqa: ANN001
     finding = _as_finding(item)
     marker = " open" if open_card else ""
+    dispute = (
+        f'<p class="fine"><a href="mailto:{config.CONTACT_EMAIL}'
+        f'?subject={quote("Wrong finding: " + finding.title)}'
+        f'&body={quote("Report: " + config.BASE_URL + "/r/" + scan_id + chr(10) + chr(10) + "Finding: " + finding.title + chr(10) + "Why I think it is wrong: ")}">'
+        f'Is this wrong? Tell us</a> — we fix the check, add a test, and refund if you paid.</p>'
+    )
     return f"""
     <details class="finding sev-border-{esc(finding.severity)}"{marker}>
       <summary>
@@ -74,18 +82,19 @@ def finding_card(item, open_card: bool = False) -> str:  # noqa: ANN001
         <p class="f-fix">{inline_code(finding.fix)}</p>
         <p><button type="button" class="btn ghost small copy-fix-btn" data-prompt="{esc(_fix_prompt(finding))}">Copy fix prompt</button></p>
         <p class="f-meta">{esc(finding.category)} · confidence {esc(finding.confidence)}</p>
+        {dispute}
       </div>
     </details>"""
 
 
-def findings_html(findings: list, limit: int | None = None) -> str:
+def findings_html(findings: list, limit: int | None = None, scan_id: str = "") -> str:
     items = [_as_finding(f) for f in findings]
     items = sort_findings(items)
     if limit is not None:
         items = items[:limit]
     if not items:
         return '<p class="muted">Nothing to show here.</p>'
-    return '<div class="findings">' + "".join(finding_card(f) for f in items) + "</div>"
+    return '<div class="findings">' + "".join(finding_card(f, scan_id=scan_id) for f in items) + "</div>"
 
 
 def risk_card(risk: dict, kind: str) -> str:
@@ -366,7 +375,7 @@ def report_page(record: dict) -> str:
     pay_url = f"{config.BASE_URL}/pay/{record.get('id', '')}"
 
     if paid:
-        findings_block = findings_html(findings)
+        findings_block = findings_html(findings, scan_id=record.get('id',''))
         lock_block = watch_upsell_html(record)
         kit_block = kit_html(record, unlocked=True)
         kit_note = "Free for everyone: paste each prompt into your own app's chat, then paste the reply back to grade it."
