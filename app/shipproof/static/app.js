@@ -353,3 +353,47 @@
     }, 2500);
   } catch (e) {}
 })();
+
+/* Report copilot: ask questions grounded in this report. */
+(function () {
+  var panel = document.querySelector(".ai-panel");
+  if (!panel) return;
+  var input = document.getElementById("ai-question");
+  var btn = document.getElementById("ai-ask");
+  var log = document.getElementById("ai-log");
+  var note = document.getElementById("ai-note");
+  var scan = panel.getAttribute("data-scan") || "";
+  function add(role, text) {
+    var row = document.createElement("div");
+    row.className = "ai-msg ai-" + role;
+    var span = document.createElement("span");
+    span.textContent = text;
+    row.appendChild(span);
+    log.appendChild(row);
+    log.scrollTop = log.scrollHeight;
+  }
+  function ask() {
+    var q = (input.value || "").trim();
+    if (q.length < 3 || btn.disabled) return;
+    btn.disabled = true;
+    note.textContent = "Thinking...";
+    add("you", q);
+    input.value = "";
+    fetch("/api/report/" + encodeURIComponent(scan) + "/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: q })
+    }).then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+      .then(function (out) {
+        if (out.data && out.data.ok) add("ai", out.data.answer);
+        else add("ai", (out.data && out.data.error) || "Could not answer right now.");
+      })
+      .catch(function () { add("ai", "Network error. Try again."); })
+      .then(function () {
+        btn.disabled = false;
+        note.textContent = "Answers are AI-generated from your report. Not a new security test.";
+      });
+  }
+  if (btn) btn.addEventListener("click", ask);
+  if (input) input.addEventListener("keydown", function (e) { if (e.key === "Enter") ask(); });
+})();
