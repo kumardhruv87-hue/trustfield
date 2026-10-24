@@ -134,3 +134,6 @@ def ensure_dirs() -> None:
     SCANS_DIR.mkdir(parents=True, exist_ok=True)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+
+# ------------------------------------------------------------- analytics ----
+AHREFS_KEY = os.environ.get("AHREFS_KEY", "gLBPCAyOg9uZUDtLmDAQ3Q")
