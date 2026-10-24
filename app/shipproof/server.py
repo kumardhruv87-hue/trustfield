@@ -257,8 +257,9 @@ class Handler(BaseHTTPRequestHandler):
             "X-Frame-Options": "DENY",
             "Referrer-Policy": "strict-origin-when-cross-origin",
             "Content-Security-Policy": (
-                "default-src 'self'; font-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
-                "script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'"
+                "default-src 'self'; font-src 'self'; img-src 'self' data: https://*.ahrefs.com; style-src 'self' 'unsafe-inline'; "
+                "script-src 'self' https://analytics.ahrefs.com; connect-src 'self' https://analytics.ahrefs.com https://*.ahrefs.com; "
+                "base-uri 'none'; form-action 'self'"
             ),
             "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
             "Cache-Control": "no-store",
