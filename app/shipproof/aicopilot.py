@@ -10,7 +10,7 @@ import ssl
 import urllib.error
 import urllib.request
 
-from . import config
+from . import config, usage
 
 SYSTEM = """You are Trustfield's report copilot. You help a founder understand ONE security report.
 Rules:
@@ -110,7 +110,7 @@ def ask(record: dict, question: str) -> dict:
         answer = ((data.get("choices") or [{}])[0].get("message") or {}).get("content", "").strip()
         if not answer:
             return {"ok": False, "error": "The copilot returned an empty answer. Try a shorter question."}
-        _bump_usage()
+        usage.bump("ai")
         return {"ok": True, "answer": answer, "model": config.DEEPSEEK_MODEL}
     except urllib.error.HTTPError as exc:
         return {"ok": False, "error": f"The copilot is unavailable right now ({exc.code})."}
