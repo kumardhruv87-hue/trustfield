@@ -248,3 +248,28 @@ body.landing-v2 .foot-legal { border-top: 1px solid var(--line); padding-top: 20
 @media (prefers-reduced-motion: reduce) {
   body.landing-v2 *, body.landing-v2 *::before, body.landing-v2 *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+
+/* round-2 polish: no legacy glow, single button height, tighter type scale */
+body.landing-v2 .btn { height: 48px; }
+body.landing-v2 .btn.small { height: 44px; }
+body.landing-v2 .btn.big { height: 48px; }
+body.landing-v2 .btn.primary,
+body.landing-v2 .btn.primary:hover { box-shadow: none; }
+body.landing-v2 .btn { white-space: nowrap; }
+body.landing-v2 .watch-soon .btn { flex: none; }
+body.landing-v2 .fine, body.landing-v2 .scan-note { font-size: 13px; }
+body.landing-v2 .field em, body.landing-v2 .checkline em { font-size: 13px; }
+body.landing-v2 .hint { font-size: 14px; }
+body.landing-v2 .price-sub { font-size: 14px; }
+body.landing-v2 .step p { font-size: 15px; }
+body.landing-v2 .proof-item span { font-size: 14px; }
+body.landing-v2 .mock-row { font-size: 14px; }
+body.landing-v2 .mock-row span:last-child { font-size: 13px; }
+body.landing-v2 .faq { margin: 30px 0 0; }
+body.landing-v2 .faq details { padding: 0; }
+body.landing-v2 .faq summary { padding: 16px 0; }
+body.landing-v2 summary { list-style: none; }
+body.landing-v2 summary::-webkit-details-marker { display: none; }
+body.landing-v2 .hero-cta { margin: 22px 0 0; }
+body.landing-v2 .hero-cta .btn { min-width: 220px; }
