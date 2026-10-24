@@ -349,13 +349,15 @@ def pdf_button(record: dict) -> str:
 
 
 def watch_upsell_html(record: dict) -> str:
-    return """
+    watch_price = esc(config.WATCH_INR)
+    scan_id = esc(record.get("id", ""))
+    return f"""
     <div class="locked free-upsell">
       <div class="lock-icon">🛡️</div>
-      <h3>Watch is coming soon</h3>
-      <p>Automatic re-checks after every deploy, email alerts and a badge that renews itself are on
-         the roadmap. Until then, re-scan after each deploy - it takes a minute and keeps you honest.</p>
-      <p class="fine">Not on sale yet.</p>
+      <h3>Watch this app</h3>
+      <p>Daily re-checks after your next deploy. We email you only when a new finding appears, and the report page updates with the newest score.</p>
+      <p class="fine">₹{watch_price} per 30 days · beta billing: one payment, no auto-renew · cancel anytime</p>
+      <a class="btn primary" href="/watch/start/{scan_id}">Start Watch — ₹{watch_price} / 30 days</a>
     </div>"""
 
 
@@ -374,7 +376,7 @@ def ai_panel_html(record: dict) -> str:
       <p class="muted">Answers are grounded in this report only. It will say "I don't know" rather than invent something.</p>
       <div class="ai-log" id="ai-log">{seeded}</div>
       <div class="ai-row">
-        <input id="ai-question" type="text" maxlength="500" placeholder="e.g. Which finding should I fix first? Explain the Supabase one." autocomplete="off">
+        <input id="ai-question" type="text" maxlength="500" placeholder="e.g. Which finding should I fix first?" autocomplete="off">
         <button class="btn primary" type="button" id="ai-ask">Ask</button>
       </div>
       <p class="fine" id="ai-note">Answers are AI-generated from your report. Not a new security test.</p>
@@ -543,7 +545,7 @@ def public_index_page(data: dict) -> str:
     )
 
 
-def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str) -> str:
+def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, watches: list | None = None) -> str:
     from . import usage
 
     emails_today = usage.today("emails")
@@ -605,7 +607,13 @@ def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str) -
             "AI_COST": f"{ai_cost:,.2f}",
             "FEE": f"{fee:,.2f}",
             "PAYOUT": f"{payout:,.2f}",
-            "WATCH_COUNT": 0,
+            "WATCH_COUNT": len(watches or []),
+            "WATCH_ROWS": "".join(
+                f"<tr><td>{esc(str(w.get('target',''))[:44])}</td><td>{esc(w.get('email',''))}</td>"
+                f"<td>{'active' if w.get('active') else 'paused'}</td><td>{esc(str(w.get('next_check_at',''))[:16])}</td>"
+                f"<td><a href='/watch/manage?token={esc(w.get('cancel_token',''))}'>manage</a></td></tr>"
+                for w in (watches or [])[-20:]
+            ) or '<tr><td colspan="5" class="muted">No Watch subscriptions yet.</td></tr>',
             "ALERTS": alert_html,
             "YEAR": config.now().year,
         },
