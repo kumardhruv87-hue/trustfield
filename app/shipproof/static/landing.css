@@ -288,3 +288,10 @@ body.landing-v2 .legal-doc th, body.landing-v2 .legal-doc td { text-align: left;
 body.landing-v2 .legal-doc th { color: var(--ink); font-weight: 600; background: var(--soft); }
 body.landing-v2 .legal-doc code { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
 body.landing-v2 .legal-doc .note { background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; font-size: 15px; }
+
+/* accessibility: links must not rely on colour alone; darker muted for contrast */
+body.landing-v2 a:not(.btn):not(.logo) { text-decoration: underline; text-underline-offset: 2px; }
+body.landing-v2 .nav-links a, body.landing-v2 .foot-grid a, body.landing-v2 .site-foot a { text-decoration: none; }
+body.landing-v2 .nav-links a:hover, body.landing-v2 .foot-grid a:hover { text-decoration: underline; }
+body.landing-v2 { --muted: #4b5563; }
+body.landing-v2 .foot-grid h3.foot-h { font-size: 13px; font-weight: 700; color: var(--ink); margin: 0 0 10px; letter-spacing: 0; }
