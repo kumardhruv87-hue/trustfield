@@ -359,6 +359,28 @@ def watch_upsell_html(record: dict) -> str:
     </div>"""
 
 
+def ai_panel_html(record: dict) -> str:
+    chat = record.get("chat") or []
+    messages = []
+    for item in chat[-20:]:
+        role = "you" if item.get("role") == "user" else "ai"
+        messages.append(
+            f'<div class="ai-msg ai-{role}"><span>{esc(item.get("content", ""))}</span></div>'
+        )
+    seeded = "".join(messages)
+    return f"""
+    <section class="block ai-panel" data-scan="{esc(record.get('id', ''))}">
+      <h2>Ask about this report</h2>
+      <p class="muted">Answers are grounded in this report only. It will say "I don't know" rather than invent something.</p>
+      <div class="ai-log" id="ai-log">{seeded}</div>
+      <div class="ai-row">
+        <input id="ai-question" type="text" maxlength="500" placeholder="e.g. Which finding should I fix first? Explain the Supabase one." autocomplete="off">
+        <button class="btn primary" type="button" id="ai-ask">Ask</button>
+      </div>
+      <p class="fine" id="ai-note">Answers are AI-generated from your report. Not a new security test.</p>
+    </section>"""
+
+
 def report_page(record: dict) -> str:
     score = record.get("score") or {}
     findings = record.get("findings") or []
@@ -430,6 +452,7 @@ def report_page(record: dict) -> str:
             "KIT": kit_block,
             "KIT_NOTE": esc(kit_note),
             "PDF_BUTTON": pdf_block,
+            "AI_PANEL": ai_panel_html(record) if paid else "",
             "MODE_NOTE": esc(mode_note),
             "CHECKS": checks_html(record.get("checks") or []),
             "CHECKS_RUN": checks_run,
