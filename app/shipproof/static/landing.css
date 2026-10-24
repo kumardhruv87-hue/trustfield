@@ -273,3 +273,18 @@ body.landing-v2 summary { list-style: none; }
 body.landing-v2 summary::-webkit-details-marker { display: none; }
 body.landing-v2 .hero-cta { margin: 22px 0 0; }
 body.landing-v2 .hero-cta .btn { width: auto; min-width: 0; padding: 0 30px; }
+
+/* light legal / trust pages */
+body.landing-v2.legal-page { background:#fff; }
+body.landing-v2 .legal-doc { max-width: 780px; margin: 0 auto; padding: 56px 0 80px; }
+body.landing-v2 .legal-doc h1 { font-size: clamp(1.9rem, 3.4vw, 2.6rem); margin-bottom: 6px; }
+body.landing-v2 .legal-doc .updated { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+body.landing-v2 .legal-doc h2 { font-size: 1.25rem; margin: 34px 0 10px; }
+body.landing-v2 .legal-doc h3 { font-size: 1.02rem; margin: 22px 0 8px; }
+body.landing-v2 .legal-doc p, body.landing-v2 .legal-doc li { color: #38414d; font-size: 16px; }
+body.landing-v2 .legal-doc ul { padding-left: 20px; }
+body.landing-v2 .legal-doc table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 14.5px; }
+body.landing-v2 .legal-doc th, body.landing-v2 .legal-doc td { text-align: left; border-bottom: 1px solid var(--line); padding: 10px 12px; vertical-align: top; }
+body.landing-v2 .legal-doc th { color: var(--ink); font-weight: 600; background: var(--soft); }
+body.landing-v2 .legal-doc code { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
+body.landing-v2 .legal-doc .note { background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; font-size: 15px; }
