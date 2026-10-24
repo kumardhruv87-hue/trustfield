@@ -142,7 +142,7 @@
           </label>
 
           <label class="field">
-            <span>Email <em>(optional — we send the report link, and the PDF receipt after payment)</em></span>
+            <span>Email <em>(optional — we send the report link; after payment, your PDF report)</em></span>
             <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" maxlength="200">
           </label>
 
@@ -163,16 +163,16 @@
           <span><a href="/static/sample-report.html">Open a sample ₹{{PRICE_INR}} report</a> — every section, no signup.</span>
         </div>
         <div class="proof-item">
-          <b>Wrong finding = refund</b>
-          <span>Show us why a finding is wrong and we refund that report.</span>
+          <b>Evidence first</b>
+          <span>Every finding ships with the file, header or URL we saw it in.</span>
         </div>
         <div class="proof-item">
-          <b>Email answered in 1 day</b>
-          <span>A real person: Dhruv Kumar, Faridabad, India.</span>
+          <b>Answered by the founder</b>
+          <span>Usually within 1 business day — escalation reaches the person who built it.</span>
         </div>
         <div class="proof-item">
           <b>We run what we check</b>
-          <span>HSTS, CSP, frame protection and security.txt on this site too.</span>
+          <span>HSTS, CSP, frame protection and security.txt on this site too. <a href="/security">See /security</a>.</span>
         </div>
       </div>
     </section>
@@ -309,8 +309,8 @@
             <ul>
               <li>Evidence for every finding</li>
               <li>Plain-English fix + copy-paste prompt for your AI builder</li>
-              <li>PDF report and a public proof page with a dated badge ({{BADGE_DAYS}} days)</li>
-              <li>Wrong finding = refund</li>
+              <li>PDF report + public proof page with scan date, score and check results ("Verified" badge only when the published criteria are met)</li>
+              <li>Wrong finding = refund (<a href="/refund">criteria</a>)</li>
             </ul>
             <a class="btn primary" href="#scan">Scan first, then unlock</a>
           </div>
@@ -319,7 +319,7 @@
           <span><b>Watch — re-scan after every deploy.</b> Not on sale yet. Email <a href="mailto:{{CONTACT_EMAIL}}?subject=Notify%20me%20about%20Watch">us</a> if you want it first.</span>
           <a class="btn small" href="mailto:{{CONTACT_EMAIL}}?subject=Notify%20me%20about%20Watch">Notify me</a>
         </div>
-        <p class="fine center">₹{{PRICE_INR}} incl. GST, paid by UPI or card via Razorpay; invoice on request. USD {{PRICE_USD}} for international cards.</p>
+        <p class="fine center">₹{{PRICE_INR}} — taxes as applicable, shown at checkout. UPI or card via Razorpay. USD {{PRICE_USD}} is indicative for international cards; your bank's rate applies.</p>
       </div>
     </section>
 
@@ -377,7 +377,7 @@
             </svg>
             <span>{{BRAND}}</span>
           </div>
-          <p class="fine">Independent security review for AI-built and hand-written web apps. Not affiliated with any AI builder, not a penetration test.</p>
+          <p class="fine">Independent security review for AI-built and hand-written web apps. Not a penetration test, not a certification, not affiliated with any AI builder.</p>
         </div>
         <div>
           <h4>Product</h4>
@@ -388,21 +388,22 @@
         </div>
         <div>
           <h4>Company</h4>
-          <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms &amp; refunds</a>
-          <a href="/delete-account">Delete my data</a>
+          <a href="/about">About</a>
+          <a href="/security">Security</a>
+          <a href="/subprocessors">Subprocessors</a>
+          <a href="/changelog">Changelog</a>
         </div>
         <div>
-          <h4>Trust</h4>
-          <a href="/.well-known/security.txt">security.txt</a>
-          <a href="/llms.txt">llms.txt</a>
-          <a href="/sitemap.xml">Sitemap</a>
+          <h4>Legal</h4>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/refund">Refund policy</a>
+          <a href="/delete-account">Delete my data</a>
         </div>
       </div>
       <div class="foot-legal">
-        <span>Operated by Dhruv Kumar, Faridabad, India. Email answered within 1 business day.</span>
-        <span>© {{YEAR}} {{BRAND}}</span>
+        <span>© {{YEAR}} {{BRAND}} · Independent security review for AI-built apps</span>
+        <span>Contact: <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a></span>
       </div>
     </div>
   </footer>
