@@ -57,6 +57,8 @@ TOKEN_TTL_DAYS = int(os.environ.get("SHIPPROOF_TOKEN_TTL_DAYS", "90"))
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
 DEEPSEEK_URL = os.environ.get("DEEPSEEK_URL", "https://api.deepseek.com/chat/completions")
+# Hard stop: maximum AI answers per day across the whole service (loss guard).
+AI_DAILY_LIMIT = int(os.environ.get("SHIPPROOF_AI_DAILY_LIMIT", "300"))
 
 # ---------------------------------------------------------- supabase store ----
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
