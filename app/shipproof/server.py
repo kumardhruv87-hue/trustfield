@@ -816,6 +816,7 @@ def make_server(host: str = config.HOST, port: int = config.PORT) -> ThreadingHT
         from . import storage
         storage.ensure_bucket()
         indexstore.hydrate()
+        usage.hydrate()
     except Exception:
         pass
     server = ThreadingHTTPServer((host, port), Handler)
