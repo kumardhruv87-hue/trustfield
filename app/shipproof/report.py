@@ -545,6 +545,34 @@ def public_index_page(data: dict) -> str:
     )
 
 
+def headers_tool_page(url_value: str, result_html: str) -> str:
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Security headers checker · {esc(config.BRAND)}</title>
+  <meta name="description" content="Free security headers check: HSTS, CSP, X-Frame-Options, referrer and permissions policy. Paste a URL, get a grade and copy-paste fixes.">
+  <link rel="canonical" href="{esc(config.BASE_URL)}/tools/headers">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/landing.css">
+</head>
+<body class="landing-v2 legal-page">
+  <header class="site-head"><div class="wrap head-in"><a class="logo" href="/"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/><path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{esc(config.BRAND)}</span></a><a class="btn small" href="/">Back to site</a></div></header>
+  <main class="legal-doc wrap">
+    <h1>Security headers checker</h1>
+    <p class="updated">Free · no signup · one request.</p>
+    <form method="get" action="/tools/headers" style="display:flex;gap:8px;margin:20px 0 26px;flex-wrap:wrap">
+      <input name="url" value="{esc(url_value)}" placeholder="https://your-app.com" style="flex:1 1 320px;min-width:0;height:48px;border:1px solid var(--line);border-radius:10px;padding:0 14px;font:inherit">
+      <button class="btn primary" type="submit" style="height:48px">Check headers</button>
+    </form>
+    {result_html}
+    <p class="fine">We only read the public response headers. No login, no exploitation. <a href="/methodology">Methodology</a> · <a href="/security">Security</a></p>
+  </main>
+</body>
+</html>"""
+
+
 def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, watches: list | None = None) -> str:
     from . import usage
 
