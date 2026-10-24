@@ -688,6 +688,12 @@ class Handler(BaseHTTPRequestHandler):
         if not email:
             raise HTTPProblem(400, "Add an email to the report first, then start Watch.")
         row = watch.create(scan_id, email, str(record.get("target") or ""))
+        if not row.get("last_findings"):
+            watch.mark_checked(
+                row["id"], scan_id,
+                [str(f.get("id") or "") for f in (record.get("findings") or []) if f.get("id")],
+                hours=24,
+            )
         if row.get("active"):
             self.send_response(302)
             self.send_header("Location", "/r/" + scan_id + "?watch=on")
