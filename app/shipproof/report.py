@@ -545,6 +545,35 @@ def public_index_page(data: dict) -> str:
     )
 
 
+def rls_tool_page(url_value: str, result_html: str) -> str:
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Supabase RLS checker · {esc(config.BRAND)}</title>
+  <meta name="description" content="Free Supabase RLS check: paste your project URL and anon key to see whether any table returns rows to the public key.">
+  <link rel="canonical" href="{esc(config.BASE_URL)}/tools/rls">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/landing.css">
+</head>
+<body class="landing-v2 legal-page">
+  <header class="site-head"><div class="wrap head-in"><a class="logo" href="/"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/><path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{esc(config.BRAND)}</span></a><a class="btn small" href="/">Back to site</a></div></header>
+  <main class="legal-doc wrap">
+    <h1>Supabase RLS checker</h1>
+    <p class="updated">Free · only for projects you own · the key is used for this check and not stored.</p>
+    <form method="post" action="/tools/rls" style="display:grid;gap:10px;margin:20px 0 26px">
+      <input name="url" value="{esc(url_value)}" placeholder="https://abcdefghijklmnopqrst.supabase.co" style="height:48px;border:1px solid var(--line);border-radius:10px;padding:0 14px;font:inherit">
+      <input name="key" type="password" placeholder="anon / publishable key" autocomplete="off" style="height:48px;border:1px solid var(--line);border-radius:10px;padding:0 14px;font:inherit">
+      <button class="btn primary" type="submit" style="height:48px;justify-self:start">Check my tables</button>
+    </form>
+    {result_html}
+    <p class="fine">Use the <strong>anon/public</strong> key, never the service_role key. This checks one thing: whether the public key can read rows. Not a full audit. <a href="/methodology">Methodology</a></p>
+  </main>
+</body>
+</html>"""
+
+
 def headers_tool_page(url_value: str, result_html: str) -> str:
     return f"""<!doctype html>
 <html lang="en">
