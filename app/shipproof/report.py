@@ -544,6 +544,31 @@ def public_index_page(data: dict) -> str:
 
 
 def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str) -> str:
+    from . import usage
+
+    emails_today = usage.today("emails")
+    emails_month = usage.month("emails")
+    ai_today = usage.today("ai")
+    ai_month = usage.month("ai")
+    scans_month = usage.month("scans")
+    ai_cost = round(ai_month * 0.12, 2)
+    gross = float(revenue.get("revenue_inr", 0) or 0)
+    fee = round(gross * 0.0236, 2)
+    payout = round(gross - fee, 2)
+    alerts = []
+    if emails_today >= 80:
+        alerts.append("Email: 80/day free-tier limit is close. Resend paid plan or slow down.")
+    if emails_month >= 2400:
+        alerts.append("Email: 2,400 of 3,000 monthly free emails used.")
+    if ai_today >= 240:
+        alerts.append("AI: 240 of 300 daily answers used. Watch the balance.")
+    if ai_cost > 0 and ai_cost >= 200:
+        alerts.append("AI: estimated spend crossed Rs 200 this month. Top up / raise guard?")
+    if gross <= 0:
+        alerts.append("Revenue: Rs 0 so far - distribution is the bottleneck, not the product.")
+    alert_html = "".join(f'<li>{esc(a)}</li>' for a in alerts) or "<li>All clear.</li>"
+    email_left_day = max(0, 100 - emails_today)
+    email_left_month = max(0, 3000 - emails_month)
     rows = ""
     for scan in scans:
         score = (scan.get("score") or {}).get("score", 0)
@@ -570,6 +595,18 @@ def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str) -
             "REVENUE": esc(f"{revenue.get('revenue_inr', 0):,.0f}"),
             "INDEX_SCANS": int(index_data.get("scans", 0)),
             "ROWS": rows or '<tr><td colspan="7" class="muted">No scans yet.</td></tr>',
+            "SCANS_MONTH": scans_month,
+            "EMAIL_TODAY": emails_today,
+            "EMAIL_MONTH": emails_month,
+            "EMAIL_LEFT_DAY": email_left_day,
+            "EMAIL_LEFT_MONTH": email_left_month,
+            "AI_TODAY": ai_today,
+            "AI_MONTH": ai_month,
+            "AI_COST": f"{ai_cost:,.2f}",
+            "FEE": f"{fee:,.2f}",
+            "PAYOUT": f"{payout:,.2f}",
+            "WATCH_COUNT": 0,
+            "ALERTS": alert_html,
             "YEAR": config.now().year,
         },
     )
