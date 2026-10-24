@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Methodology · {{BRAND}}</title>
+  <meta name="description" content="How the Trustfield scan works, its confidence labels, and its published limitations.">
+  <link rel="canonical" href="{{BASE_URL}}/methodology">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/landing.css">
+</head>
+<body class="landing-v2 legal-page">
+  <header class="site-head"><div class="wrap head-in"><a class="logo" href="/"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/><path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{{BRAND}}</span></a><a class="btn small" href="/">Back to site</a></div></header>
+  <main class="legal-doc wrap">
+<h1>Methodology</h1>
+<p class="updated">What each check actually does, and how it can be wrong.</p>
+<p>Trustfield is an <strong>external, read-only review</strong>. We fetch public pages and headers, resolve DNS, and probe a small set of well-known paths. We do not log in, do not exploit, and never store source code.</p>
+<h2>How a scan works</h2>
+<ol>
+  <li><strong>Fetch</strong> the public page and follow redirects (public IPs only — private ranges are blocked).</li>
+  <li><strong>Read</strong> HTML, JavaScript bundles and response headers.</li>
+  <li><strong>Resolve</strong> DNS records (SPF, DMARC, CAA, MX) and TLS certificate details.</li>
+  <li><strong>Probe</strong> a short list of commonly exposed files (<code>/.env</code>, <code>/.git/config</code>, source maps) — read-only GETs.</li>
+  <li><strong>Check</strong> compliance pages by following the links the homepage itself advertises, then common paths (privacy, terms, deletion).</li>
+  <li><strong>Score</strong> findings by severity, with confidence labels on each one.</li>
+</ol>
+<h2>Confidence labels</h2>
+<ul>
+  <li><strong>High</strong> — direct evidence: we saw the thing itself (a key in the bundle, a header, a file).</li>
+  <li><strong>Medium</strong> — strong inference: shared hosting behaviour, framework defaults, a rule that may be intentional.</li>
+  <li><strong>Low</strong> — heuristic or informational. Treat it as a question, not a verdict.</li>
+</ul>
+<h2>Known limitations (published on purpose)</h2>
+<ul>
+  <li>No authentication testing, no exploitation, no privilege escalation.</li>
+  <li>No mobile binaries, browser extensions or Shopify admin apps.</li>
+  <li>Server-side code is only reviewed when you attach a public GitHub repo.</li>
+  <li>A clean scan is <strong>not</strong> a guarantee: it is a point-in-time check of what is publicly visible.</li>
+  <li>Some pages render with JavaScript; we read what a browser would receive without executing user actions.</li>
+</ul>
+<h2>When we are wrong</h2>
+<p>If a finding is factually wrong, tell us and we fix the check, add a test for it, and refund that report (<a href="/refund">/refund</a>). Corrections are listed in the <a href="/changelog">changelog</a>.</p>
+  </main>
+  <footer class="site-foot"><div class="wrap"><div class="foot-legal"><span>© {{{{YEAR}}}} {{{{BRAND}}}} · Independent security review for AI-built apps</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:{{{{CONTACT_EMAIL}}}}">{{{{CONTACT_EMAIL}}}}</a></span></div></div></footer>
+</body>
+</html>
