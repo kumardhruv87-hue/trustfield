@@ -739,9 +739,53 @@ def _check_client_js(
 # compliance / trust pages
 # --------------------------------------------------------------------------
 
-PRIVACY_PATHS = ("/privacy", "/privacy-policy", "/privacy.html", "/legal/privacy", "/legal/privacy-policy")
-TERMS_PATHS = ("/terms", "/terms-of-service", "/terms.html", "/legal/terms", "/legal/terms-of-service")
-DELETE_PATHS = ("/delete-account", "/account/delete", "/data-deletion", "/delete-my-data")
+PRIVACY_PATHS = (
+    "/privacy", "/privacy-policy", "/privacy.html", "/legal/privacy", "/legal/privacy-policy",
+    "/policies/privacy-policy", "/pages/privacy-policy", "/privacy_policy", "/privacy/",
+)
+TERMS_PATHS = (
+    "/terms", "/terms-of-service", "/terms.html", "/legal/terms", "/legal/terms-of-service",
+    "/policies/terms-of-service", "/pages/terms-of-service", "/terms_of_service", "/terms/",
+)
+DELETE_PATHS = (
+    "/delete-account", "/account/delete", "/data-deletion", "/delete-my-data",
+    "/account/delete-account", "/pages/delete-account",
+)
+
+
+_HREF_RE = re.compile(r"""href\s*=\s*["']([^"'>]{1,300})["']""", re.I)
+
+
+def _candidate_links(base: str, html_text: str, keyword: str) -> list[str]:
+    """Absolute same-site links whose URL mentions the keyword."""
+    from urllib.parse import urljoin, urlsplit
+    base_host = (urlsplit(base).hostname or "").lower()
+    seen: list[str] = []
+    for raw in _HREF_RE.findall(html_text or "")[:4000]:
+        low = raw.lower()
+        if keyword not in low:
+            continue
+        absolute = urljoin(base, raw)
+        parts = urlsplit(absolute)
+        if parts.scheme not in ("http", "https"):
+            continue
+        if (parts.hostname or "").lower() != base_host:
+            continue
+        clean = absolute.split("#")[0]
+        if clean not in seen:
+            seen.append(clean)
+    return seen[:4]
+
+
+def _find_link(base: str, html_text: str, keyword: str, budget: net.Budget) -> tuple[str, net.FetchResult] | None:
+    """Follow a link that the page itself advertises (Shopify, WordPress, Webflow...)."""
+    for url in _candidate_links(base, html_text, keyword):
+        if budget.expired():
+            return None
+        res = net.safe_fetch(url, budget=budget, max_bytes=250_000, timeout=6)
+        if res.status == 200 and not _looks_like_404(res) and keyword in res.text.lower():
+            return url, res
+    return None
 
 
 def _find_page(base: str, paths: tuple[str, ...], budget: net.Budget) -> tuple[str, net.FetchResult] | None:
@@ -754,9 +798,9 @@ def _find_page(base: str, paths: tuple[str, ...], budget: net.Budget) -> tuple[s
     return None
 
 
-def _check_compliance(base: str, budget: net.Budget, c: Collector, has_ai: bool) -> dict:
+def _check_compliance(base: str, budget: net.Budget, c: Collector, has_ai: bool, html_text: str = "") -> dict:
     out: dict = {}
-    privacy = _find_page(base, PRIVACY_PATHS, budget)
+    privacy = _find_link(base, html_text, "privacy", budget) or _find_page(base, PRIVACY_PATHS, budget)
     if privacy:
         out["privacy"] = privacy[0]
         c.check("compliance.privacy", "Privacy policy page", True, privacy[0])
@@ -775,12 +819,12 @@ def _check_compliance(base: str, budget: net.Budget, c: Collector, has_ai: bool)
                 fix="Publish a plain-English /privacy page listing what you collect, "
                 "why, where it is stored, how long you keep it and how to delete it. "
                 "Start from the template in your repo's gtm/17-legal-pages.md.",
-                evidence="checked: " + ", ".join(PRIVACY_PATHS[:3]),
+                evidence="no privacy link found on the homepage; checked common paths: " + ", ".join(PRIVACY_PATHS[:3]),
                 effort="30 min",
             ),
         )
 
-    terms = _find_page(base, TERMS_PATHS, budget)
+    terms = _find_link(base, html_text, "terms", budget) or _find_page(base, TERMS_PATHS, budget)
     if terms:
         out["terms"] = terms[0]
         c.check("compliance.terms", "Terms of service page", True, terms[0])
@@ -797,12 +841,12 @@ def _check_compliance(base: str, budget: net.Budget, c: Collector, has_ai: bool)
                 "Payment providers and B2B buyers expect them to exist.",
                 fix="Publish a /terms page. A plain-language version is enough to start; "
                 "see gtm/17-legal-pages.md.",
-                evidence="checked: " + ", ".join(TERMS_PATHS[:3]),
+                evidence="no terms link found on the homepage; checked common paths: " + ", ".join(TERMS_PATHS[:3]),
                 effort="30 min",
             ),
         )
 
-    deletion = _find_page(base, DELETE_PATHS, budget)
+    deletion = _find_link(base, html_text, "delete", budget) or _find_page(base, DELETE_PATHS, budget)
     if deletion:
         out["data_deletion"] = deletion[0]
         c.check("compliance.deletion", "Data deletion path", True, deletion[0])
@@ -817,7 +861,7 @@ def _check_compliance(base: str, budget: net.Budget, c: Collector, has_ai: bool)
                 "Without a path, a single request becomes a support emergency.",
                 fix="Add a /delete-account page or a documented email request flow, and "
                 "make sure it actually deletes rows across tables and storage buckets.",
-                evidence="checked: " + ", ".join(DELETE_PATHS[:3]),
+                evidence="no data-deletion link found on the homepage; checked common paths: " + ", ".join(DELETE_PATHS[:3]),
                 effort="1 h",
                 confidence="medium",
             )
@@ -1033,7 +1077,7 @@ def scan_live(raw_url: str, has_ai: bool = False, budget_seconds: float | None =
     webdeep.check_tls(host, scheme, collector, js_info)
     webdeep.check_methods(base, budget, collector)
     webdeep.check_extra_files(base, budget, collector)
-    compliance = _check_compliance(base, budget, collector, has_ai)
+    compliance = _check_compliance(base, budget, collector, has_ai, html_text)
     _check_security_txt(base, budget, collector)
 
     result.findings = dedupe(collector.findings)
