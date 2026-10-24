@@ -23,6 +23,25 @@
     </div>
 
     <section class="block">
+      <h2>Costs &amp; quotas</h2>
+      <div class="counts">
+        <div class="count"><span class="count-n">{{EMAIL_TODAY}}</span><span class="count-l">Emails today · {{EMAIL_LEFT_DAY}} left</span></div>
+        <div class="count"><span class="count-n">{{EMAIL_MONTH}}</span><span class="count-l">Emails this month · {{EMAIL_LEFT_MONTH}} left</span></div>
+        <div class="count"><span class="count-n">{{AI_TODAY}}</span><span class="count-l">AI answers today</span></div>
+        <div class="count"><span class="count-n">₹{{AI_COST}}</span><span class="count-l">Est. AI spend (month)</span></div>
+      </div>
+      <div class="counts">
+        <div class="count"><span class="count-n">{{SCANS_MONTH}}</span><span class="count-l">Scans this month</span></div>
+        <div class="count"><span class="count-n">{{WATCH_COUNT}}</span><span class="count-l">Watch subscriptions</span></div>
+        <div class="count"><span class="count-n">₹{{FEE}}</span><span class="count-l">Est. Razorpay fees</span></div>
+        <div class="count"><span class="count-n">₹{{PAYOUT}}</span><span class="count-l">Est. net payout</span></div>
+      </div>
+      <h3>Alerts</h3>
+      <ul>{{ALERTS}}</ul>
+      <p class="fine">AI guard: 300 answers/day. Email free tier: 100/day, 3,000/month (Resend). Fees ≈ 2.36% (Razorpay 2% + GST). Counters reset on redeploy if storage is unavailable.</p>
+    </section>
+
+    <section class="block">
       <h2>Recent scans</h2>
       <table class="meta-table">
         <tr><th>ID</th><th>Target</th><th>Score</th><th>Crit</th><th>Status</th><th>Time</th><th>Actions</th></tr>
@@ -36,6 +55,8 @@
       <ul>
         <li><a href="/index">Public vulnerability index</a></li>
         <li><a href="/healthz">Health check</a></li>
+        <li><a href="/status">Public status page</a></li>
+        <li><a href="/changelog">Changelog</a></li>
       </ul>
       <p class="fine">Bookmark this page with the token: /admin?token={{TOKEN}}</p>
     </section>
