@@ -37,6 +37,23 @@ def record(scan: dict) -> None:
         storage.put_json("index.json", rows[-20000:])
 
 
+def hydrate() -> int:
+    """Restore the anonymous index from Supabase after a restart."""
+    config.ensure_dirs()
+    if config.INDEX_FILE.exists() and config.INDEX_FILE.stat().st_size > 0:
+        return 0
+    rows = storage.get_json("index.json") or []
+    if not rows:
+        return 0
+    try:
+        with config.INDEX_FILE.open("w", encoding="utf-8") as handle:
+            for row in rows:
+                handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+        return len(rows)
+    except OSError:
+        return 0
+
+
 def aggregate(limit: int = 20000) -> dict:
     if not config.INDEX_FILE.exists():
         return {
