@@ -10,7 +10,7 @@ from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from . import ai_kit, aicopilot, config, emailer, indexstore, live, net, orders, payments, pdf, repo, report, score, sign, store
+from . import ai_kit, aicopilot, config, usage, emailer, indexstore, live, net, orders, payments, pdf, repo, report, score, sign, store
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
@@ -608,6 +608,7 @@ class Handler(BaseHTTPRequestHandler):
             "expires_at": (config.now() + timedelta(days=config.BADGE_VALID_DAYS)).date().isoformat(),
         }
         store.save_scan(record)
+        usage.bump("scans")
         indexstore.record(record)
         if email and emailer.configured():
             try:
