@@ -175,7 +175,7 @@
         "</div>" +
         '<p class="fine">' +
           (locked
-            ? "You are seeing the top 3 findings. The full report has every finding, the evidence for each one, the exact fix, the fix prompt and the PDF report."
+            ? "Free scan: score + every issue title. The full report adds the evidence, the exact fix, the fix prompt and the PDF report."
             : "Full report unlocked.") +
         "</p>";
 
