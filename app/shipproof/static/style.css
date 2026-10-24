@@ -422,3 +422,11 @@ pre { white-space: pre-wrap; word-break: break-word; }
   .f-evidence code, .risk-math, .kit-payload { background: #f3f3f3 !important; color: #111 !important; }
   .count-n, .risk-head, .f-label, .count-l, .muted, .fine, p, li, h1, h2, h3 { color: #111 !important; }
 }
+
+/* report copilot */
+.ai-panel .ai-log { max-height: 300px; overflow: auto; display: grid; gap: 8px; margin: 14px 0 10px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-soft); }
+.ai-panel .ai-msg { max-width: 88%; padding: 9px 12px; border-radius: 10px; font-size: .9rem; line-height: 1.55; white-space: pre-wrap; }
+.ai-panel .ai-you { justify-self: end; background: var(--accent); color: #04211d; }
+.ai-panel .ai-ai { justify-self: start; background: var(--panel-2); color: var(--text); }
+.ai-panel .ai-row { display: flex; gap: 8px; }
+.ai-panel .ai-row input { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; color: var(--text); font: inherit; }
