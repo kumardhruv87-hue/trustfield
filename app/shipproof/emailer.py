@@ -197,3 +197,43 @@ def send_free_report(record: dict) -> dict:
         f"One-time report: {config.BASE_URL}/r/{record.get('id', '')}",
     )
     return send(email, f"Your {config.BRAND} scan - {value}/100 ({grade})", html)
+
+
+def send_watch_alert(watch_row: dict, new_findings: list, scan_data: dict) -> dict:
+    email = str(watch_row.get("email") or "").strip().lower()
+    if not email:
+        return {"ok": False, "error": "no email on watch"}
+    rows = "".join(
+        f"<li style='margin:6px 0;color:#38414d'>{f.get('title', '')} "
+        f"<span style='color:#5b6675'>({f.get('severity', '')})</span></li>"
+        for f in new_findings[:8]
+    )
+    report_url = f"{config.BASE_URL}/r/{scan_data.get('id', '')}"
+    html = _shell(
+        "New issue found on your app",
+        f"Watch re-scanned {watch_row.get('target', '')} and found {len(new_findings)} new finding(s). "
+        f"Score is now {scan_data.get('score', '?')}/100.",
+        f"<ul style='padding-left:18px;margin:10px 0'>{rows}</ul>"
+        f"<p style='color:#5b6675;font-size:13px'>Open the report for evidence and the exact fix.</p>",
+        "Open the new report",
+        report_url,
+        f"You receive this because Watch is active for this app. Manage: {config.BASE_URL}/watch/manage?token="
+        + str(watch_row.get("cancel_token", "")),
+    )
+    return send(email, f"{config.BRAND} Watch: {len(new_findings)} new finding(s)", html)
+
+
+def send_watch_active(watch_row: dict) -> dict:
+    email = str(watch_row.get("email") or "").strip().lower()
+    if not email:
+        return {"ok": False, "error": "no email on watch"}
+    html = _shell(
+        "Watch is active",
+        f"We will re-scan {watch_row.get('target', '')} daily and email you only when something new appears.",
+        f"<p style='color:#5b6675;font-size:13px'>Paid until {watch_row.get('paid_until', '')}. "
+        f"Cancel anytime: <a href='{config.BASE_URL}/watch/manage?token={watch_row.get('cancel_token', '')}'>manage Watch</a>.</p>",
+        "See the report",
+        f"{config.BASE_URL}/r/{watch_row.get('scan_id', '')}",
+        "Watch (beta): one payment per 30 days, no auto-renew.",
+    )
+    return send(email, f"{config.BRAND} Watch is active", html)
