@@ -446,12 +446,12 @@ class Handler(BaseHTTPRequestHandler):
                     f"- {config.BASE_URL}/privacy, /terms, /refund - policies\n"
                     f"- {config.BASE_URL}/security, /subprocessors, /about, /changelog - trust pages\n\n"
                     "## Contact\n"
-                    f"{config.CONTACT_EMAIL} (support), {config.SECURITY_EMAIL} (security)\n"
+                    f"{config.CONTACT_EMAIL} (support and security)\n"
                 )
                 return self._send(200, body.encode(), "text/plain; charset=utf-8")
             if path == "/.well-known/security.txt":
                 body = (
-                    f"Contact: mailto:{config.SECURITY_EMAIL}\n"
+                    f"Contact: mailto:{config.CONTACT_EMAIL}\n"
                     f"Policy: {config.BASE_URL}/security\n"
                     f"Acknowledgments: {config.BASE_URL}/security\n"
                     "Expires: 2027-12-31T23:59:00.000Z\n"
