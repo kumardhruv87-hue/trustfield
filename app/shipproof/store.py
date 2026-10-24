@@ -116,4 +116,14 @@ def purge_old(days: int = 30) -> int:
                 removed += 1
         except OSError:
             continue
+    if storage.enabled():
+        cutoff_iso = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(cutoff))
+        stale = []
+        for item in storage.list_prefix("scans/"):
+            created = str(item.get("created_at") or "")
+            if created and created[:19] < cutoff_iso:
+                stale.append("scans/" + str(item.get("name") or ""))
+        if stale:
+            storage.delete_many(stale)
+            removed += len(stale)
     return removed
