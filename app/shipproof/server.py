@@ -4,7 +4,10 @@ from __future__ import annotations
 import json
 import os
 import re
+import ssl
 import threading
+import time
+import urllib.request
 import traceback
 from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -150,6 +153,34 @@ def _fulfill(
             email_result={k: v for k, v in result.items() if k != "path"},
         ) or record
     return record
+
+
+def _run_due_watches(limit: int = 3) -> int:
+    """Re-scan due Watch targets through our own public API and email new findings."""
+    checked = 0
+    for row in watch.due(limit):
+        try:
+            payload = json.dumps({"kind": "url", "target": row.get("target"), "consent": True}).encode()
+            request = urllib.request.Request(
+                config.BASE_URL.rstrip("/") + "/api/scan", data=payload, method="POST",
+                headers={"Content-Type": "application/json", "User-Agent": "Trustfield-Watch/1.0"},
+            )
+            with urllib.request.urlopen(request, timeout=240, context=ssl.create_default_context()) as response:
+                data = json.loads(response.read() or b"{}")
+            teaser = data.get("teaser") or []
+            ids = [str(item.get("id") or "") for item in teaser]
+            old = set(row.get("last_findings") or [])
+            new = [item for item in teaser if str(item.get("id") or "") not in old]
+            watch.mark_checked(row["id"], str(data.get("id") or ""), ids)
+            if new:
+                try:
+                    emailer.send_watch_alert(row, new, data)
+                except Exception:
+                    pass
+            checked += 1
+        except Exception:
+            continue
+    return checked
 
 
 def _record_preview(record: dict) -> dict:
@@ -371,6 +402,16 @@ class Handler(BaseHTTPRequestHandler):
                 return self._html(200, report.legal_page("methodology"))
             if path == "/integrations":
                 return self._html(200, report.legal_page("integrations"))
+            if path == "/api/watch/run":
+                token = (query.get("token") or [""])[0]
+                if not _safe_eq(token, config.ADMIN_TOKEN):
+                    raise HTTPProblem(403, "Admin token missing or wrong.")
+                return self._json(200, {"ok": True, "checked": _run_due_watches(5)})
+            if path == "/watch/manage":
+                return self._watch_manage((query.get("token") or [""])[0])
+            match = re.fullmatch(r"/watch/start/([a-z0-9]{6,24})", path)
+            if match:
+                return self._watch_start(match.group(1))
             if path == "/bot":
                 return self._html(200, report.legal_page("bot"))
             if path == "/healthz":
@@ -477,6 +518,13 @@ class Handler(BaseHTTPRequestHandler):
                 raise HTTPProblem(429, "Too many requests — slow down a little.")
             if path == "/api/scan":
                 return self._create_scan()
+            if path == "/watch/cancel":
+                body = self._read_json()
+                row = watch.by_cancel_token(str(body.get("token") or ""))
+                if row is None:
+                    raise HTTPProblem(404, "That Watch link is not valid.")
+                watch.cancel(row["id"])
+                return self._json(200, {"ok": True})
             if path == "/api/lead":
                 return self._lead()
             if path == "/api/grade":
@@ -625,6 +673,53 @@ class Handler(BaseHTTPRequestHandler):
         payload["checks_passed"] = len(result.passed)
         payload["checks_total"] = len(result.checks)
         return self._json(200, payload)
+
+    def _watch_start(self, scan_id: str) -> None:
+        record = store.load_scan(scan_id)
+        if record is None:
+            raise HTTPProblem(404, "That report does not exist.")
+        if not _is_paid(record):
+            self.send_response(302)
+            self.send_header("Location", "/r/" + scan_id)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        email = str(record.get("email") or "").strip()
+        if not email:
+            raise HTTPProblem(400, "Add an email to the report first, then start Watch.")
+        row = watch.create(scan_id, email, str(record.get("target") or ""))
+        if row.get("active"):
+            self.send_response(302)
+            self.send_header("Location", "/r/" + scan_id + "?watch=on")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        url = row.get("checkout_url") or payments.create_watch_link(scan_id, row["id"])
+        if not url:
+            raise HTTPProblem(503, "Watch checkout is unavailable right now. Email " + config.CONTACT_EMAIL)
+        watch.set_checkout(row["id"], url)
+        self.send_response(302)
+        self.send_header("Location", url)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def _watch_manage(self, token: str) -> None:
+        row = watch.by_cancel_token(token)
+        if row is None:
+            raise HTTPProblem(404, "That Watch link is not valid.")
+        status = "active" if row.get("active") else "paused"
+        body = (
+            "<!doctype html><html><head><meta charset='utf-8'><title>Watch · " + config.BRAND + "</title>"
+            "<link rel='stylesheet' href='/static/style.css'></head><body class='report-body'>"
+            "<main class='wrap narrow legal'><h1>Watch</h1>"
+            f"<p class='muted'>{row.get('target','')}</p>"
+            f"<p>Status: <strong>{status}</strong> · last checked {row.get('last_checked_at','never')}</p>"
+            f"<p class='fine'>Email: {row.get('email','')} · paid until {row.get('paid_until','')}</p>"
+            f"<form method='post' action='/watch/cancel'><input type='hidden' name='token' value='{row.get('cancel_token','')}'>"
+            "<button class='btn' type='submit'>Cancel Watch</button></form>"
+            f"<p><a href='/r/{row.get('scan_id','')}'>Back to report</a></p></main></body></html>"
+        )
+        return self._html(200, body)
 
     def _report_ask(self, scan_id: str) -> None:
         body = self._read_json()
@@ -788,9 +883,23 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, {"ok": True, "ignored": True})
         if not event.get("report_id"):
             return self._json(200, {"ok": True, "ignored": "no report_id"})
+        product = event.get("product") or "report"
+        if product not in ("report", "watch"):
+            return self._json(200, {"ok": True, "ignored": "unknown product"})
+        if product == "watch":
+            row = watch.by_id(event.get("watch_id") or "")
+            if row is None:
+                return self._json(200, {"ok": True, "ignored": "unknown watch"})
+            expected_watch = int(float(config.WATCH_INR) * 100)
+            if event.get("amount_minor") and event["amount_minor"] != expected_watch:
+                return self._json(200, {"ok": True, "ignored": "amount mismatch"})
+            row = watch.activate(row["id"], 30) or row
+            try:
+                emailer.send_watch_active(row)
+            except Exception:
+                pass
+            return self._json(200, {"ok": True, "watch": row["id"]})
         expected = {"INR": int(float(config.PRICE_INR) * 100), "USD": int(float(config.PRICE_USD) * 100)}
-        if event.get("product") != "report":
-            return self._json(200, {"ok": True, "ignored": "not a report order"})
         if event.get("amount_minor") and event["amount_minor"] != expected.get(event.get("currency", "INR")):
             return self._json(200, {"ok": True, "ignored": "amount mismatch"})
         if event.get("provider_id") and orders.exists(event["provider_id"]):
@@ -819,6 +928,15 @@ def make_server(host: str = config.HOST, port: int = config.PORT) -> ThreadingHT
         usage.hydrate()
     except Exception:
         pass
+    if os.environ.get("SHIPPROOF_WATCH_RUNNER", "1") != "0":
+        def _watch_loop() -> None:
+            while True:
+                try:
+                    _run_due_watches(2)
+                except Exception:
+                    pass
+                time.sleep(1800)
+        threading.Thread(target=_watch_loop, daemon=True).start()
     server = ThreadingHTTPServer((host, port), Handler)
     server.daemon_threads = True
     return server
