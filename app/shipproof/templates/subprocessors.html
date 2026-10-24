@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subprocessors · {{BRAND}}</title>
+  <meta name="description" content="The vendors Trustfield uses to host, store, email and take payments.">
+  <link rel="canonical" href="{{BASE_URL}}/subprocessors">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/landing.css">
+</head>
+<body class="landing-v2 legal-page">
+  <header class="site-head"><div class="wrap head-in"><a class="logo" href="/"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/><path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{{BRAND}}</span></a><div class="head-cta"><a class="btn small" href="/">Back to site</a></div></div></header>
+  <main class="legal-doc wrap">
+<h1>Subprocessors</h1>
+<p class="updated">Last updated: {{YEAR}}</p>
+<p>This is the complete list of third parties that may process data as part of running Trustfield. We keep it short on purpose.</p>
+<table>
+  <tr><th>Vendor</th><th>Purpose</th><th>Data involved</th><th>Region</th></tr>
+  <tr><td>Render</td><td>Application hosting</td><td>Report data in transit and at rest during processing</td><td>United States</td></tr>
+  <tr><td>Supabase</td><td>Report storage</td><td>Report JSON, findings, evidence snippets, target URL, email</td><td>United States</td></tr>
+  <tr><td>Cloudflare</td><td>DNS, TLS and traffic proxy</td><td>Request metadata (IP, headers) in transit</td><td>Global edge</td></tr>
+  <tr><td>Razorpay</td><td>Payments and refunds</td><td>Payment details, email, amount (card data stays with Razorpay)</td><td>India</td></tr>
+  <tr><td>Resend</td><td>Transactional email</td><td>Email address, report link, receipt details</td><td>United States</td></tr>
+  <tr><td>Hostinger</td><td>Domain and mailbox</td><td>Email address and message contents</td><td>European Union</td></tr>
+</table>
+<p>We do not sell data and we do not share it for advertising. A data-processing agreement is available on request for business customers: <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>.</p>
+<p>Reports are deleted after 30 days; email addresses are kept until you ask us to delete them. See <a href="/security">/security</a> and <a href="/privacy">/privacy</a>.</p>
+  </main>
+  <footer class="site-foot"><div class="wrap"><div class="foot-legal"><span>© {{YEAR}} {{BRAND}} · Independent security review for AI-built apps</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a></span></div></div></footer>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
