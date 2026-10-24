@@ -369,6 +369,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._html(200, report.legal_page("status"))
             if path == "/methodology":
                 return self._html(200, report.legal_page("methodology"))
+            if path == "/integrations":
+                return self._html(200, report.legal_page("integrations"))
             if path == "/bot":
                 return self._html(200, report.legal_page("bot"))
             if path == "/healthz":
@@ -394,6 +396,7 @@ class Handler(BaseHTTPRequestHandler):
                     f"<url><loc>{config.BASE_URL}/changelog</loc></url>"
                     f"<url><loc>{config.BASE_URL}/status</loc></url>"
                     f"<url><loc>{config.BASE_URL}/methodology</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/integrations</loc></url>"
                     f"<url><loc>{config.BASE_URL}/static/sample-report.html</loc></url>"
                     "</urlset>"
                 )
