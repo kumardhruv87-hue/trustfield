@@ -13,7 +13,7 @@ from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from . import ai_kit, aicopilot, config, usage, emailer, indexstore, live, net, orders, payments, pdf, repo, report, score, sign, store, watch
+from . import ai_kit, aicopilot, config, usage, emailer, indexstore, live, net, orders, payments, pdf, repo, report, score, sign, store, watch, web_tools
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
@@ -400,6 +400,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self._html(200, report.legal_page("status"))
             if path == "/methodology":
                 return self._html(200, report.legal_page("methodology"))
+            if path == "/tools/headers":
+                url_value = (query.get("url") or [""])[0][:300]
+                result_html = ""
+                if url_value:
+                    result_html = web_tools.result_html(web_tools.headers_report(url_value))
+                return self._html(200, report.headers_tool_page(url_value, result_html))
             if path == "/integrations":
                 return self._html(200, report.legal_page("integrations"))
             if path == "/api/watch/run":
@@ -438,6 +444,7 @@ class Handler(BaseHTTPRequestHandler):
                     f"<url><loc>{config.BASE_URL}/status</loc></url>"
                     f"<url><loc>{config.BASE_URL}/methodology</loc></url>"
                     f"<url><loc>{config.BASE_URL}/integrations</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/tools/headers</loc></url>"
                     f"<url><loc>{config.BASE_URL}/static/sample-report.html</loc></url>"
                     "</urlset>"
                 )
