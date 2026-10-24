@@ -62,6 +62,7 @@ def razorpay_event(payload: dict) -> dict | None:
         "currency": str(entity.get("currency") or "INR").upper(),
         "product": str(notes.get("product") or "report").lower(),
         "report_id": _safe_report_id(str(notes.get("report_id") or entity.get("receipt") or "")),
+        "watch_id": str(notes.get("watch_id") or "")[:40],
     }
 
 
@@ -103,6 +104,36 @@ def create_payment_link(scan_id: str, amount_inr: int) -> str:
         data=_json.dumps(payload).encode(),
         method="POST",
         headers={"Authorization": f"Basic {auth}", "Content-Type": "application/json"},
+    )
+    try:
+        with _url.urlopen(request, timeout=20, context=_ssl.create_default_context()) as resp:
+            return _json.loads(resp.read()).get("short_url", "")
+    except Exception:
+        return ""
+
+
+def create_watch_link(scan_id: str, watch_id: str) -> str:
+    """One-time link for 30 days of Watch (beta billing)."""
+    import base64 as _b64, json as _json, ssl as _ssl, urllib.request as _url
+    if not (config.RAZORPAY_KEY_ID and config.RAZORPAY_KEY_SECRET):
+        return ""
+    auth = _b64.b64encode(f"{config.RAZORPAY_KEY_ID}:{config.RAZORPAY_KEY_SECRET}".encode()).decode()
+    amount = int(float(config.WATCH_INR)) * 100
+    payload = {
+        "amount": amount,
+        "currency": "INR",
+        "accept_partial": False,
+        "description": f"{config.BRAND} Watch - 30 days",
+        "notes": {"report_id": scan_id, "product": "watch", "watch_id": watch_id},
+        "callback_url": f"{config.BASE_URL}/r/{scan_id}?watch=1",
+        "callback_method": "get",
+    }
+    request = _url.Request(
+        "https://api.razorpay.com/v1/payment_links",
+        data=_json.dumps(payload).encode(),
+        method="POST",
+        headers={"Authorization": f"Basic {auth}", "Content-Type": "application/json",
+                 "User-Agent": "Trustfield/1.0"},
     )
     try:
         with _url.urlopen(request, timeout=20, context=_ssl.create_default_context()) as resp:
