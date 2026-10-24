@@ -13,7 +13,7 @@ from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from . import ai_kit, aicopilot, config, usage, emailer, indexstore, live, net, orders, payments, pdf, repo, report, score, sign, store
+from . import ai_kit, aicopilot, config, usage, emailer, indexstore, live, net, orders, payments, pdf, repo, report, score, sign, store, watch
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
