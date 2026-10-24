@@ -483,6 +483,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._grade()
             if path == "/api/unlock":
                 return self._admin_unlock_json()
+            match = re.fullmatch(r"/api/report/([a-z0-9]{6,24})/ask", path)
+            if match:
+                return self._report_ask(match.group(1))
             match = re.fullmatch(r"/api/scan/([a-z0-9]{6,24})/kit", path)
             if match:
                 return self._save_kit(match.group(1))
@@ -621,6 +624,27 @@ class Handler(BaseHTTPRequestHandler):
         payload["checks_passed"] = len(result.passed)
         payload["checks_total"] = len(result.checks)
         return self._json(200, payload)
+
+    def _report_ask(self, scan_id: str) -> None:
+        body = self._read_json()
+        question = str(body.get("question") or "").strip()
+        if len(question) < 3:
+            raise HTTPProblem(400, "Ask a short question about the report.")
+        record = store.load_scan(scan_id)
+        if record is None:
+            raise HTTPProblem(404, "That report does not exist.")
+        if not _is_paid(record):
+            raise HTTPProblem(402, "The AI copilot is part of the paid report.")
+        chat = list(record.get("chat") or [])
+        if len(chat) >= 80:
+            raise HTTPProblem(429, "You reached the question limit for this report. Email " + config.CONTACT_EMAIL)
+        result = aicopilot.ask(record, question)
+        if not result.get("ok"):
+            return self._json(200, result)
+        chat.append({"role": "user", "content": question, "at": config.now_iso()})
+        chat.append({"role": "assistant", "content": result["answer"], "at": config.now_iso()})
+        store.update_scan(scan_id, chat=chat[-80:])
+        return self._json(200, {"ok": True, "answer": result["answer"]})
 
     def _lead(self) -> None:
         body = self._read_json()
