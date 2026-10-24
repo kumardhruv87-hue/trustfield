@@ -49,9 +49,41 @@ def report_context(record: dict) -> str:
     return "\n".join(lines)
 
 
+def _usage_path():
+    import datetime as _dt
+    return config.DATA_DIR / "ai_usage.json", _dt.date.today().isoformat()
+
+
+def _used_today() -> int:
+    import json as _json
+    path, today = _usage_path()
+    try:
+        data = _json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return 0
+    return int(data.get(today, 0))
+
+
+def _bump_usage() -> None:
+    import json as _json
+    path, today = _usage_path()
+    config.ensure_dirs()
+    try:
+        data = _json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        data = {}
+    data = {today: int(data.get(today, 0)) + 1}
+    try:
+        path.write_text(_json.dumps(data), encoding="utf-8")
+    except OSError:
+        pass
+
+
 def ask(record: dict, question: str) -> dict:
     if not config.DEEPSEEK_API_KEY:
         return {"ok": False, "error": "The AI copilot is not configured yet."}
+    if _used_today() >= config.AI_DAILY_LIMIT:
+        return {"ok": False, "error": "The copilot reached today's limit. Try again tomorrow or email support."}
     question = _clip(question, 600)
     body = {
         "model": config.DEEPSEEK_MODEL,
@@ -78,6 +110,7 @@ def ask(record: dict, question: str) -> dict:
         answer = ((data.get("choices") or [{}])[0].get("message") or {}).get("content", "").strip()
         if not answer:
             return {"ok": False, "error": "The copilot returned an empty answer. Try a shorter question."}
+        _bump_usage()
         return {"ok": True, "answer": answer, "model": config.DEEPSEEK_MODEL}
     except urllib.error.HTTPError as exc:
         return {"ok": False, "error": f"The copilot is unavailable right now ({exc.code})."}
