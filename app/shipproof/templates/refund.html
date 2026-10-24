@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Refunds · {{BRAND}}</title>
+  <meta name="description" content="When Trustfield refunds a report, how to claim it, and how long it takes.">
+  <link rel="canonical" href="{{BASE_URL}}/refund">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/landing.css">
+</head>
+<body class="landing-v2 legal-page">
+  <header class="site-head"><div class="wrap head-in"><a class="logo" href="/"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/><path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{{BRAND}}</span></a><div class="head-cta"><a class="btn small" href="/">Back to site</a></div></div></header>
+  <main class="legal-doc wrap">
+<h1>Refunds</h1>
+<p class="updated">Last updated: {{YEAR}}</p>
+<p>We would rather refund a report than keep money for something that did not work. Two cases are covered, in plain language.</p>
+<h2>1. The report was not delivered</h2>
+<p>You paid, but the report link does not open or the PDF cannot be downloaded. Email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> with the payment id or the email you used. We either re-run the scan and send a working report, or refund the full amount — your choice.</p>
+<h2>2. A finding is factually wrong</h2>
+<p>If the report states something about your app that is not true (for example, it says a file is public when it is not, or a key is live when it was already revoked), show us the evidence. If we agree, the report is refunded in full.</p>
+<h2>How to claim</h2>
+<ul>
+  <li>Email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> with the report link or payment id inside 7 days of purchase.</li>
+  <li>Include what is wrong and, where possible, how you verified it.</li>
+  <li>We decide within 3 business days and reply either way.</li>
+</ul>
+<h2>What is not covered</h2>
+<ul>
+  <li>Changing your mind after a correct report was delivered — the information cannot be taken back.</li>
+  <li>Findings you simply disagree with, without evidence that they are factually wrong.</li>
+  <li>Issues outside the scope we publish on the site (for example, mobile app binaries, browser extensions and Shopify apps are not scanned).</li>
+</ul>
+<h2>How refunds are paid</h2>
+<p>Refunds go back to the original payment method through Razorpay, usually within 5–7 business days depending on your bank. We also log the refund in your order record. Please write to us before opening a chargeback — we can almost always resolve it faster directly.</p>
+  </main>
+  <footer class="site-foot"><div class="wrap"><div class="foot-legal"><span>© {{YEAR}} {{BRAND}} · Independent security review for AI-built apps</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a></span></div></div></footer>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
