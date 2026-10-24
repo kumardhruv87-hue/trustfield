@@ -35,6 +35,21 @@ def _save(data: dict) -> None:
     storage.put_json("usage.json", data)
 
 
+def hydrate() -> int:
+    """Restore counters from Supabase after a redeploy (Render free disk is ephemeral)."""
+    if _path().exists() and _path().stat().st_size > 0:
+        return 0
+    data = storage.get_json("usage.json") or {}
+    if not data:
+        return 0
+    try:
+        config.ensure_dirs()
+        _path().write_text(json.dumps(data), encoding="utf-8")
+        return len(data)
+    except OSError:
+        return 0
+
+
 def bump(kind: str, amount: int = 1) -> None:
     data = _load()
     bucket = data.setdefault(kind, {})
