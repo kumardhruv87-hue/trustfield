@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{BRAND}} — free security scan for AI-built apps (Lovable, Bolt, v0)</title>
-  <meta name="description" content="Paste your app URL. In about a minute, {{BRAND}} shows the leaked API keys, open database rules and broken payment flows a stranger could use — with a plain-English fix for each. Free scan: score + every issue title. Full report with evidence, fixes and PDF: ₹{{PRICE_INR}}. No GitHub, no signup, no card.">
+  <title>Free security scan for AI-built apps · {{BRAND}}</title>
+  <meta name="description" content="Free security scan for AI-built web apps: leaked keys, open database rules, broken payment webhooks and AI prompt injection. Fix-ready report ₹{{PRICE_INR}}.">
   <meta name="theme-color" content="#ffffff">
   <link rel="canonical" href="{{BASE_URL}}/">
 
@@ -33,7 +33,20 @@
       {"@type": "Offer", "name": "Free scan", "price": "0", "priceCurrency": "INR"},
       {"@type": "Offer", "name": "Full report with evidence, fixes and PDF", "price": "{{PRICE_INR}}", "priceCurrency": "INR"}
     ],
-    "publisher": {"@type": "Organization", "name": "{{BRAND}}", "url": "{{BASE_URL}}/", "founder": {"@type": "Person", "name": "Dhruv Kumar"}}
+    "publisher": {"@type": "Organization", "name": "{{BRAND}}", "url": "{{BASE_URL}}/", "founder": {"@type": "Person", "name": "Dhruv Kumar"}},
+    "datePublished": "2026-10-23",
+    "dateModified": "2026-10-24"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "{{BRAND}} — free security scan for AI-built apps",
+    "url": "{{BASE_URL}}/",
+    "datePublished": "2026-10-23",
+    "dateModified": "2026-10-24",
+    "isPartOf": {"@type": "WebSite", "name": "{{BRAND}}", "url": "{{BASE_URL}}/"}
   }
   </script>
   <script type="application/ld+json">
@@ -90,6 +103,7 @@
             <a href="#pricing">Pricing</a>
           <a href="/integrations">Integrations</a>
           <a href="/tools/headers">Headers checker</a>
+          <a href="/tools/rls">RLS checker</a>
             <a href="#faq">FAQ</a>
             <a href="/static/sample-report.html">Sample report</a>
             <a href="#scan">Run free scan</a>
