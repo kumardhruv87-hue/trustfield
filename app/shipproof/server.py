@@ -355,8 +355,20 @@ class Handler(BaseHTTPRequestHandler):
                 return self._html(200, report.legal_page("privacy"))
             if path == "/terms":
                 return self._html(200, report.legal_page("terms"))
+            if path == "/about":
+                return self._html(200, report.legal_page("about"))
+            if path == "/security":
+                return self._html(200, report.legal_page("security"))
+            if path == "/subprocessors":
+                return self._html(200, report.legal_page("subprocessors"))
+            if path == "/refund":
+                return self._html(200, report.legal_page("refund"))
+            if path == "/changelog":
+                return self._html(200, report.legal_page("changelog"))
+            if path == "/bot":
+                return self._html(200, report.legal_page("bot"))
             if path == "/healthz":
-                return self._json(200, {"ok": True, **store.counts()})
+                return self._json(200, {"ok": True})
             if path == "/robots.txt":
                 body = (
                     f"User-agent: *\nAllow: /\nDisallow: /r/\nDisallow: /api/\nDisallow: /t/\n"
@@ -371,6 +383,12 @@ class Handler(BaseHTTPRequestHandler):
                     f"<url><loc>{config.BASE_URL}/index</loc></url>"
                     f"<url><loc>{config.BASE_URL}/privacy</loc></url>"
                     f"<url><loc>{config.BASE_URL}/terms</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/about</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/security</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/subprocessors</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/refund</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/changelog</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/static/sample-report.html</loc></url>"
                     "</urlset>"
                 )
                 return self._send(200, body.encode(), "application/xml; charset=utf-8")
@@ -419,21 +437,25 @@ class Handler(BaseHTTPRequestHandler):
                     "## What it does\n"
                     "- Free scan: score + every issue title (no signup, no card).\n"
                     "- Paid report: evidence, plain-English fixes, copy-paste fix prompts, PDF report.\n"
-                    "- Watch: weekly re-scan and a dated verified badge.\n\n"
+                    "- Watch (planned, not on sale): re-scan after each deploy.\n"
+                    "- Not a penetration test and not a certification.\n\n"
                     "## Pages\n"
                     f"- {config.BASE_URL}/ - scan an app\n"
                     f"- {config.BASE_URL}/index - anonymised vulnerability index\n"
                     f"- {config.BASE_URL}/#pricing - pricing\n"
-                    f"- {config.BASE_URL}/privacy, /terms - policies\n\n"
+                    f"- {config.BASE_URL}/privacy, /terms, /refund - policies\n"
+                    f"- {config.BASE_URL}/security, /subprocessors, /about, /changelog - trust pages\n\n"
                     "## Contact\n"
-                    f"{config.CONTACT_EMAIL}\n"
+                    f"{config.CONTACT_EMAIL} (support), {config.SECURITY_EMAIL} (security)\n"
                 )
                 return self._send(200, body.encode(), "text/plain; charset=utf-8")
             if path == "/.well-known/security.txt":
                 body = (
-                    f"Contact: mailto:{config.CONTACT_EMAIL}\n"
+                    f"Contact: mailto:{config.SECURITY_EMAIL}\n"
+                    f"Policy: {config.BASE_URL}/security\n"
+                    f"Acknowledgments: {config.BASE_URL}/security\n"
                     "Expires: 2027-12-31T23:59:00.000Z\n"
-                    "Preferred-Languages: en, hi\n"
+                    "Preferred-Languages: en\n"
                     f"Canonical: {config.BASE_URL}/.well-known/security.txt\n"
                 )
                 return self._send(200, body.encode(), "text/plain; charset=utf-8")
@@ -759,6 +781,7 @@ def make_server(host: str = config.HOST, port: int = config.PORT) -> ThreadingHT
     try:
         from . import storage
         storage.ensure_bucket()
+        indexstore.hydrate()
     except Exception:
         pass
     server = ThreadingHTTPServer((host, port), Handler)
