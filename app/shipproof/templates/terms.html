@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Terms · {{BRAND}}</title>
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/landing.css">
 </head>
-<body>
-  <header class="nav"><a class="brand" href="/"><span>{{BRAND}}</span></a><a class="btn small" href="/">← Back</a></header>
-  <main class="wrap narrow legal">
+<body class="landing-v2 legal-page">
+  <header class="site-head"><div class="wrap head-in"><a class="logo" href="/"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/><path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{{BRAND}}</span></a><a class="btn small" href="/">Back to site</a></div></header>
+  <main class="legal-doc wrap">
     <h1>Terms of Service</h1>
     <p class="fine">Last updated: {{YEAR}}</p>
 
@@ -25,7 +26,7 @@
     <p>A scan is a point-in-time observation. Findings may be incomplete, may change with any deployment, and may include false positives or false negatives. You are responsible for testing any fix before deploying it. Nothing in a report is a warranty of security or fitness for a particular purpose.</p>
 
     <h2>5. Payment and refunds</h2>
-    <p>Paid reports are one-time purchases. Prices are shown at checkout in your currency. If a paid report is not delivered, or the report link does not open, write to <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> within 7 days and we will re-run it or refund the full amount. If we report a finding that is factually wrong and you show us why, we refund that report. Refunds are not available for reports that were successfully delivered and materially correct, because the information cannot be returned.</p>
+    <p>Paid reports are one-time purchases. Checkout is in INR; USD prices are indicative for international cards. If a paid report is not delivered, or the report link does not open, write to <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> within 7 days and we will re-run it or refund the full amount. If we report a finding that is factually wrong and you show us why, we refund that report. Refunds are not available for reports that were successfully delivered and materially correct, because the information cannot be returned. The full policy is at <a href="/refund">/refund</a>.</p>
 
     <h2>6. Acceptable use</h2>
     <ul>
@@ -48,7 +49,7 @@
 
     <h2>11. Contact</h2>
     <p><a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a></p>
-    <p class="fine">{{BRAND}} is operated by {{LEGAL_NAME}}, {{CITY}}, India. Contact: <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>. Questions? Email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>.</p>
+    <p class="fine">{{BRAND}} is a sole proprietorship of {{LEGAL_NAME}}, {{CITY}}, India. Contact: <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>. Data-processing questions: <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>.</p>
   </main>
 </body>
 </html>
