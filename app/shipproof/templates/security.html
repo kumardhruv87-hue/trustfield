@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Security · {{BRAND}}</title>
+  <meta name="description" content="How Trustfield handles data, what we store, which subprocessors we use, and how to report a vulnerability.">
+  <link rel="canonical" href="{{BASE_URL}}/security">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/landing.css">
+</head>
+<body class="landing-v2 legal-page">
+  <header class="site-head"><div class="wrap head-in"><a class="logo" href="/"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/><path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{{BRAND}}</span></a><div class="head-cta"><a class="btn small" href="/">Back to site</a></div></div></header>
+  <main class="legal-doc wrap">
+<h1>Security at Trustfield</h1>
+<p class="updated">Last updated: {{YEAR}}</p>
+<p class="note">This page describes mechanisms that are live today. It is deliberately narrow: we do not claim certifications, audits or guarantees we have not completed.</p>
+<h2>What the scan stores</h2>
+<ul>
+  <li>The report: findings, short evidence snippets, the target URL, the score and the email you provide.</li>
+  <li>We do not copy your source code, do not run or store your database, and never ask for model API keys.</li>
+  <li>Reports are deleted from our servers 30 days after the scan. Anonymous aggregate statistics (no target, no email) may be kept to publish issue trends.</li>
+  <li>Deletion requests: <a href="/delete-account">/delete-account</a> or email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>. We delete within 7 days.</li>
+</ul>
+<h2>Payments and card data</h2>
+<p>Payments run through Razorpay's hosted checkout. Card details are entered on Razorpay's page, not on ours, so card data never touches Trustfield servers. Payment webhooks are verified with HMAC-SHA256 signatures and the expected amount, currency and report id before any report is unlocked.</p>
+<h2>Subprocessors</h2>
+<p>We use a small set of vendors to run the product. The current list, with what each one handles, is on <a href="/subprocessors">/subprocessors</a>.</p>
+<h2>What we do not use</h2>
+<ul>
+  <li>No third-party analytics or advertising scripts. The page's CSP only allows scripts from trustfield.dev itself.</li>
+  <li>No tracking cookies. The marketing site sets no cookies.</li>
+</ul>
+<h2>Headers on this site</h2>
+<table>
+  <tr><th>Header</th><th>Value</th></tr>
+  <tr><td>Strict-Transport-Security</td><td>max-age=31536000; includeSubDomains</td></tr>
+  <tr><td>Content-Security-Policy</td><td>default-src 'self'; no third-party script; object-src locked down</td></tr>
+  <tr><td>X-Frame-Options</td><td>DENY</td></tr>
+  <tr><td>X-Content-Type-Options</td><td>nosniff</td></tr>
+  <tr><td>Referrer-Policy</td><td>strict-origin-when-cross-origin</td></tr>
+  <tr><td>Permissions-Policy</td><td>camera, microphone and geolocation disabled</td></tr>
+</table>
+<h2>Responsible disclosure</h2>
+<p>If you believe you found a vulnerability in Trustfield itself, email <a href="mailto:{{SECURITY_EMAIL}}">{{SECURITY_EMAIL}}</a> with steps to reproduce. We will acknowledge within 2 business days, tell you honestly what we can fix, and we will not pursue legal action for good-faith testing that stays within your own account and data.</p>
+<h2>Scanner identity</h2>
+<p>Our scanner identifies itself with a User-Agent that includes <code>Trustfield</code> and a link to <a href="/bot">/bot</a>. If you want your site excluded from scans, email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> and we will block it.</p>
+  </main>
+  <footer class="site-foot"><div class="wrap"><div class="foot-legal"><span>© {{YEAR}} {{BRAND}} · Independent security review for AI-built apps</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a></span></div></div></footer>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
