@@ -19,6 +19,10 @@ STATIC_FILES = {
     "logo.svg": "image/svg+xml",
     "logo-mark.svg": "image/svg+xml",
     "og.png": "image/png",
+    "apple-touch-icon.png": "image/png",
+    "landing.css": "text/css; charset=utf-8",
+    "inter-latin.woff2": "font/woff2",
+    "sample-report.html": "text/html; charset=utf-8",
 }
 
 RATE_LIMITS = {"scan_hour": (10, 3600), "post_min": (20, 60), "get_min": (120, 60)}
@@ -222,7 +226,7 @@ class Handler(BaseHTTPRequestHandler):
             "X-Frame-Options": "DENY",
             "Referrer-Policy": "strict-origin-when-cross-origin",
             "Content-Security-Policy": (
-                "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
+                "default-src 'self'; font-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
                 "script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'"
             ),
             "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
