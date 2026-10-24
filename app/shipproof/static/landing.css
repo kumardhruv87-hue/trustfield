@@ -295,3 +295,9 @@ body.landing-v2 .nav-links a, body.landing-v2 .foot-grid a, body.landing-v2 .sit
 body.landing-v2 .nav-links a:hover, body.landing-v2 .foot-grid a:hover { text-decoration: underline; }
 body.landing-v2 { --muted: #4b5563; }
 body.landing-v2 .foot-grid h3.foot-h { font-size: 13px; font-weight: 700; color: var(--ink); margin: 0 0 10px; letter-spacing: 0; }
+
+/* contrast: 13px helper text inside labels needs 4.5:1 on white */
+body.landing-v2 .checkline em,
+body.landing-v2 .field em,
+body.landing-v2 .scan-note,
+body.landing-v2 .fine { color: #374151; }
