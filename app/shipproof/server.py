@@ -718,6 +718,23 @@ class Handler(BaseHTTPRequestHandler):
                 if self._admin_ok():
                     return self._redirect("/admin")
                 return self._login_page()
+            if path == "/admin/diag":
+                if not self._admin_ok(query):
+                    raise HTTPProblem(403, "Admin token missing or wrong.")
+                from . import watch as _watch, agency as _agency, apikeys as _apikeys
+                return self._json(200, {
+                    "storage_enabled": storage.enabled(),
+                    "bucket": config.SUPABASE_BUCKET,
+                    "supabase_url_set": bool(config.SUPABASE_URL),
+                    "service_key_len": len(config.SUPABASE_SERVICE_KEY),
+                    "remote_watch": len(storage.get_json("watch.json") or []),
+                    "remote_agencies": len(storage.get_json("agencies.json") or []),
+                    "remote_keys": len(storage.get_json("apikeys.json") or []),
+                    "local_scans": len(list(config.SCANS_DIR.glob("*.json"))),
+                    "local_watch": len(_watch.load()),
+                    "local_agencies": len(_agency.load()),
+                    "local_keys": len(_apikeys.public_list()),
+                })
             if path == "/admin/logout":
                 return self._redirect("/", f"{self.ADMIN_COOKIE}=; Path=/admin; HttpOnly; Secure; SameSite=Strict; Max-Age=0")
             if path == "/admin":
