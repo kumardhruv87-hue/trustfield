@@ -474,6 +474,7 @@ def report_page(record: dict) -> str:
             "KIT": kit_block,
             "KIT_NOTE": esc(kit_note),
             "PDF_BUTTON": pdf_block,
+            "SHARE_BUTTON": share_button(record),
             "AI_PLAN": (
                 f'<section class="block ai-plan"><h2>Your action plan (AI)</h2><p>{esc(record.get("ai_plan")).replace(chr(10), "<br>")}</p><p class="fine">Generated from this report only. Not a guarantee.</p></section>'
             ) if record.get("ai_plan") else "",
@@ -819,3 +820,49 @@ def admin_login_page(error: str = "") -> str:
   </form>
   <p class="fine" style="margin-top:18px"><a href="/">← Back to site</a></p>
 </main></body></html>"""
+
+
+def share_card(record: dict) -> str:
+    from urllib.parse import urlsplit, quote as _q
+    score = record.get("score") or {}
+    value = int(score.get("score") or 0)
+    grade = esc(score.get("grade") or "?")
+    target = str(record.get("target") or "")
+    host = urlsplit(target).hostname or target
+    sid = esc(str(record.get("id") or ""))
+    share_url = f"{config.BASE_URL}/s/{sid}"
+    message = f"My AI-built app scored {value}/100 on Trustfield. Check yours free in 60 seconds: {config.BASE_URL}/#scan"
+    wa = "https://wa.me/?text=" + _q(message)
+    tw = "https://twitter.com/intent/tweet?text=" + _q(message)
+    li = "https://www.linkedin.com/sharing/share-offsite/?url=" + _q(share_url)
+    tone = "#0f766e" if value >= 80 else ("#b45309" if value >= 50 else "#b91c1c")
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{esc(host)} scored {value}/100 · {esc(config.BRAND)}</title>
+<meta name="description" content="Independent 60-second security check for AI-built apps. Free score, paid evidence + fixes.">
+<meta property="og:title" content="{esc(host)} scored {value}/100 on Trustfield">
+<meta property="og:description" content="Free 60-second security check for AI-built apps. See what a stranger can reach.">
+<meta property="og:image" content="{esc(config.BASE_URL)}/static/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="{esc(share_url)}">
+<link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/landing.css">
+</head><body class="landing-v2 legal-page"><main class="legal-doc wrap" style="max-width:640px;text-align:center">
+<p class="fine">Independent security check · {esc(config.BRAND)}</p>
+<h1 style="margin:6px 0">{esc(host)}</h1>
+<p style="font-size:64px;font-weight:800;color:{tone};line-height:1;margin:14px 0">{value}<span style="font-size:22px">/100</span></p>
+<p style="font-size:18px;color:#5b6675">Grade {grade} · scanned {esc(str(record.get("created_at",""))[:10])}</p>
+<p style="margin:18px 0">Free scan shows your score and every issue title.<br>The ₹{esc(config.PRICE_INR)} report adds evidence, the exact fix, a copy-paste AI prompt and a PDF.</p>
+<p style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:20px 0">
+  <a class="btn" href="{wa}" rel="noopener">Share on WhatsApp</a>
+  <a class="btn ghost" href="{tw}" rel="noopener">Share on X</a>
+  <a class="btn ghost" href="{li}" rel="noopener">LinkedIn</a>
+</p>
+<p><a class="btn primary" href="/#scan">Scan your own app — free</a></p>
+<p class="fine">Scores are produced by an automated passive check and are not a certification or an audit. Targets are only shown at host level.</p>
+</main></body></html>"""
+
+
+def share_button(record: dict) -> str:
+    sid = esc(str(record.get("id") or ""))
+    return f'<p class="fine" style="margin:10px 0"><a class="btn ghost small" href="/s/{sid}" rel="noopener">Share this score</a></p>'
