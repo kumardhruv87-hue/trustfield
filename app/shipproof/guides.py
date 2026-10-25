@@ -84,11 +84,13 @@ GUIDES: list[dict] = [
 
 
 def _page(title: str, description: str, body: str, slug: str, schema: str = "") -> str:
+    canonical = f"{config.BASE_URL}/guides" if slug == "guides" else f"{config.BASE_URL}/guides/{slug}"
+    canonical = f"{config.BASE_URL}/guides" if slug == "guides" else f"{config.BASE_URL}/guides/{slug}"
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title} · {config.BRAND}</title>
 <meta name="description" content="{description}">
-<link rel="canonical" href="{config.BASE_URL}/guides/{slug}">
+<link rel="canonical" href="{canonical}">
 <link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/landing.css">
 <script type="application/ld+json">{schema}</script>
 <script src="https://analytics.ahrefs.com/analytics.js" data-key="gLBPCAyOg9uZUDtLmDAQ3Q" async></script>
