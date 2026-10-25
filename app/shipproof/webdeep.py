@@ -137,6 +137,10 @@ def check_dns(host: str, budget: net.Budget, c: "Collector", info: dict) -> None
         return
 
     mx_data = _doh(host, "MX", budget)
+    if mx_data is None:
+        info["dns_mx"] = -1
+        c.check("dns.email", "Email authentication (SPF/DMARC)", True, "DNS-over-HTTPS unavailable, not asserted")
+        return info
     mx = _answers(mx_data, 15)
     txt = _txt(_doh(host, "TXT", budget))
     spf = [value for value in txt if value.lower().startswith("v=spf1")]
