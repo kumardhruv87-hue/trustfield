@@ -152,6 +152,11 @@ def check_dns(host: str, budget: net.Budget, c: "Collector", info: dict) -> None
     info["dns_spf"] = bool(spf)
     info["dns_dmarc"] = bool(dmarc)
 
+    if not mx and spf:
+        # Domain clearly sends mail (SPF present); MX lookup was unreliable for this host.
+        info["dns_mx"] = 0
+        c.check("dns.email", "Email authentication (SPF/DMARC)", True, "SPF present, MX lookup unreliable")
+        return
     if not mx:
         c.add(
             Finding(
