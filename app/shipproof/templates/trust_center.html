@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trust center · {{BRAND}}</title>
+  <meta name="description" content="Trust center: how Trustfield stores data, our subprocessors, security controls, payment handling, AI usage, retention and disclosure policy — written for buyers.">
+  <link rel="canonical" href="{{BASE_URL}}/trust">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/landing.css">
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="gLBPCAyOg9uZUDtLmDAQ3Q" async></script>
+</head>
+<body class="landing-v2 legal-page">
+  <header class="site-head"><div class="wrap head-in"><a class="logo" href="/"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/><path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{{BRAND}}</span></a><a class="btn small" href="/">Back to site</a></div></header>
+  <main class="legal-doc wrap">
+    <h1>Trust center</h1>
+    <p class="updated">Everything a buyer, lawyer or platform reviewer asks — in plain English. No certificates we do not have.</p>
+    <p><a class="btn primary" href="/trust/questionnaire.pdf">Download the security overview (PDF)</a>
+       <a class="btn ghost" href="/trust/questionnaire">Read the questionnaire answers</a></p>
+
+    <h2>Quick facts</h2>
+    <table>
+      <tr><th>Topic</th><th>What we do</th></tr>
+      <tr><td>Data we store</td><td>Report findings, short evidence snippets, target URL, score, your email. No source code, no database contents.</td></tr>
+      <tr><td>Retention</td><td>Reports deleted 30 days after the scan; email kept until you ask us to delete it; anonymous aggregate stats may be kept.</td></tr>
+      <tr><td>Payments</td><td>Razorpay hosted checkout. Card data never touches our servers. Webhooks are HMAC-verified with amount and report id checks.</td></tr>
+      <tr><td>AI</td><td>Optional report copilot uses DeepSeek's API with the report text and your question. No model training on your data.</td></tr>
+      <tr><td>Subprocessors</td><td>Render, Supabase, Cloudflare, Razorpay, Resend, Hostinger, Ahrefs (cookieless aggregate analytics).</td></tr>
+      <tr><td>Certifications</td><td><strong>None.</strong> Not SOC 2, not ISO 27001, not a penetration test. We describe mechanisms instead of claiming certificates.</td></tr>
+    </table>
+
+    <h2>Read the details</h2>
+    <ul>
+      <li><a href="/security">Security page</a> — storage, payments, headers, disclosure.</li>
+      <li><a href="/subprocessors">Subprocessors</a> — every vendor, purpose, data and region.</li>
+      <li><a href="/methodology">Methodology</a> — what each check does and how it can be wrong.</li>
+      <li><a href="/refund">Refund policy</a> — what is covered and how to claim.</li>
+      <li><a href="/status">Status</a> — current state and known incidents, honestly.</li>
+      <li><a href="/changelog">Changelog</a> — dated changes, including fixes to our own false positives.</li>
+      <li><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></li>
+    </ul>
+
+    <h2>Requests we accept</h2>
+    <ul>
+      <li><strong>NDA</strong> — email us, we sign a mutual NDA for a real evaluation.</li>
+      <li><strong>DPA</strong> — data-processing addendum available on request for business customers.</li>
+      <li><strong>Data deletion</strong> — <a href="/delete-account">/delete-account</a> or email; done within 7 days.</li>
+      <li><strong>Security questionnaire</strong> — the <a href="/trust/questionnaire.pdf">PDF pack</a> answers the usual 16 questions; send us any extra ones and we answer by email.</li>
+      <li><strong>Vulnerability reports</strong> — responsible disclosure with safe harbour for good-faith testing: <a href="/security">/security</a>.</li>
+    </ul>
+
+    <p class="fine">Trustfield is a sole proprietorship of {{LEGAL_NAME}}, {{CITY}}, India. Contact: <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>. We answer usually within one business day.</p>
+  </main>
+  <footer class="site-foot"><div class="wrap"><div class="foot-legal"><span>© {{YEAR}} {{BRAND}} · Independent security review for AI-built apps</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a></span></div></div></footer>
+</body>
+</html>
