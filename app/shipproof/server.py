@@ -28,6 +28,8 @@ STATIC_FILES = {
     "og.png": "image/png",
     "apple-touch-icon.png": "image/png",
     "landing.css": "text/css; charset=utf-8",
+    "audit.css": "text/css; charset=utf-8",
+    "audit.js": "application/javascript; charset=utf-8",
     "inter-latin.woff2": "font/woff2",
     "sample-report.html": "text/html; charset=utf-8",
 }
@@ -581,6 +583,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._html(200, report.legal_page("status"))
             if path == "/methodology":
                 return self._html(200, report.legal_page("methodology"))
+            if path == "/audit":
+                return self._html(200, report.audit_page())
             if path == "/tools/speed":
                 from . import speedtool
                 target = (query.get("url") or [""])[0].strip()[:300]
@@ -687,6 +691,7 @@ class Handler(BaseHTTPRequestHandler):
                     f"<url><loc>{config.BASE_URL}/guides/lovable-app-security</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/guides/supabase-rls-checklist</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/guides/499-report-vs-pentest</loc><lastmod>2026-10-25</lastmod></url>"
+                    f"<url><loc>{config.BASE_URL}/audit</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/tools/headers</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/tools/rls</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/static/sample-report.html</loc><lastmod>2026-10-25</lastmod></url>"
@@ -1141,6 +1146,14 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError:
                 pass
 
+        try:
+            incoming_utm = body.get("utm") if isinstance(body, dict) else None
+            if isinstance(incoming_utm, dict):
+                clean_utm = {str(k)[:20]: str(v)[:80] for k, v in incoming_utm.items() if v}
+                if clean_utm:
+                    record = store.update_scan(record["id"], utm=clean_utm) or record
+        except Exception:
+            pass
         payload = _record_preview(record)
         payload["checks_passed"] = len(result.passed)
         webhook_row = getattr(self, "_webhook_row", None)
