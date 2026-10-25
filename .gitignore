@@ -1,0 +1,28 @@
+# env and secrets
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# data and generated files
+data/
+*.log
+*.sqlite
+
+# node
+node_modules/
+dist/
+build/
+.next/
+
+# OS
+.DS_Store
+Thumbs.db
