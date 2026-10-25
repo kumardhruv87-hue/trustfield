@@ -84,6 +84,7 @@ def ask(record: dict, question: str) -> dict:
         return {"ok": False, "error": "The AI copilot is not configured yet."}
     if _used_today() >= config.AI_DAILY_LIMIT:
         return {"ok": False, "error": "The copilot reached today's limit. Try again tomorrow or email support."}
+    _bump_usage()
     question = _clip(question, 600)
     body = {
         "model": config.DEEPSEEK_MODEL,
