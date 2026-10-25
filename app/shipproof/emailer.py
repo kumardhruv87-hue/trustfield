@@ -237,3 +237,18 @@ def send_watch_active(watch_row: dict) -> dict:
         "Watch (beta): one payment per 30 days, no auto-renew.",
     )
     return send(email, f"{config.BRAND} Watch is active", html)
+
+
+def send_watch_cancelled(watch_row: dict) -> dict:
+    email = str(watch_row.get("email") or "").strip().lower()
+    if not email:
+        return {"ok": False, "error": "no email on watch"}
+    html = _shell(
+        "Watch cancelled",
+        f"Watch for {watch_row.get('target', '')} has been cancelled. No further charges. You can start it again any time from your report.",
+        "",
+        "Open the report",
+        f"{config.BASE_URL}/r/{watch_row.get('scan_id', '')}",
+        "No auto-renew is active for this app.",
+    )
+    return send(email, f"{config.BRAND} Watch cancelled", html)
