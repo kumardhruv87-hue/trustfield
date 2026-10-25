@@ -111,12 +111,12 @@
     function startProgress() {
       var i = 0;
       statusBox.className = "scan-status";
-      setHTML(statusBox, '<span class="spinner"></span>' + esc(steps[0]));
+      setHTML(statusBox, '<span class="scan-beacon" aria-hidden="true"><i></i><b></b></span>' + esc(steps[0]));
       statusBox.classList.remove("hidden");
       clearInterval(timer);
       timer = setInterval(function () {
         i = (i + 1) % steps.length;
-        setHTML(statusBox, '<span class="spinner"></span>' + esc(steps[i]));
+        setHTML(statusBox, '<span class="scan-beacon" aria-hidden="true"><i></i><b></b></span>' + esc(steps[i]));
       }, 2600);
     }
 
