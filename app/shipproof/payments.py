@@ -46,9 +46,26 @@ def _safe_report_id(value: str) -> str:
 
 def razorpay_event(payload: dict) -> dict | None:
     event = str(payload.get("event") or "")
+    wrapper = payload.get("payload") or {}
+    if event == "payment_link.paid":
+        entity = ((wrapper.get("payment_link") or {}).get("entity")) or {}
+        notes = entity.get("notes") or {}
+        if not entity:
+            return None
+        return {
+            "provider": "razorpay",
+            "event": event,
+            "provider_id": str(entity.get("id") or ""),
+            "email": str(notes.get("email") or (entity.get("customer") or {}).get("email") or "").strip().lower()[:200],
+            "amount_minor": int(entity.get("amount_paid") or entity.get("amount") or 0),
+            "currency": str(entity.get("currency") or "INR").upper(),
+            "product": str(notes.get("product") or "report").lower(),
+            "report_id": _safe_report_id(str(notes.get("report_id") or "")),
+            "watch_id": str(notes.get("watch_id") or "")[:40],
+            "agency_name": str(notes.get("agency_name") or "")[:80],
+        }
     if event not in ("payment.captured", "order.paid"):
         return None
-    wrapper = payload.get("payload") or {}
     entity = ((wrapper.get("payment") or {}).get("entity")) or ((wrapper.get("order") or {}).get("entity")) or {}
     if not entity:
         return None
