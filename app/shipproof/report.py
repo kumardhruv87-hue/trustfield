@@ -474,6 +474,9 @@ def report_page(record: dict) -> str:
             "KIT": kit_block,
             "KIT_NOTE": esc(kit_note),
             "PDF_BUTTON": pdf_block,
+            "AI_PLAN": (
+                f'<section class="block ai-plan"><h2>Your action plan (AI)</h2><p>{esc(record.get("ai_plan")).replace(chr(10), "<br>")}</p><p class="fine">Generated from this report only. Not a guarantee.</p></section>'
+            ) if record.get("ai_plan") else "",
             "RESCAN_LINK": (f'<a class="btn" href="/verify/{esc(record.get("id",""))}">Re-scan and verify fixes</a>' if paid else ""),
             "VERIFY_BANNER": (
                 f'<div class="note" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46">'
