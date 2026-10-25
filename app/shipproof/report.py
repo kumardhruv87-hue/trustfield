@@ -603,7 +603,7 @@ def headers_tool_page(url_value: str, result_html: str) -> str:
 </html>"""
 
 
-def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, watches: list | None = None) -> str:
+def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, watches: list | None = None, keys: list | None = None, alerts_on: bool = False) -> str:
     from . import usage
 
     emails_today = usage.today("emails")
@@ -666,6 +666,12 @@ def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, w
             "FEE": f"{fee:,.2f}",
             "PAYOUT": f"{payout:,.2f}",
             "WATCH_COUNT": len(watches or []),
+            "ALERTS_STATUS": "configured" if alerts_on else "not configured (add SLACK_WEBHOOK_URL or DISCORD_WEBHOOK_URL)",
+            "KEY_ROWS": "".join(
+                f"<tr><td>{esc(str(k.get('name','')))}</td><td><code>{esc(str(k.get('prefix','')))}…</code></td>"
+                f"<td>{int(k.get('calls',0))}</td><td>{esc(str(k.get('last_used',''))[:16] or 'never')}</td></tr>"
+                for k in (keys or [])[-10:]
+            ) or '<tr><td colspan="4" class="muted">No API keys yet.</td></tr>',
             "WATCH_ROWS": "".join(
                 f"<tr><td>{esc(str(w.get('target',''))[:44])}</td><td>{esc(w.get('email',''))}</td>"
                 f"<td>{'active' if w.get('active') else 'paused'}</td><td>{esc(str(w.get('next_check_at',''))[:16])}</td>"
