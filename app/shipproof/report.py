@@ -835,3 +835,12 @@ def share_card(record: dict) -> str:
 def share_button(record: dict) -> str:
     sid = esc(str(record.get("id") or ""))
     return f'<p class="fine" style="margin:10px 0"><a class="btn ghost small" href="/s/{sid}" rel="noopener">Share this score</a></p>'
+
+
+def audit_page() -> str:
+    return _fill(_template("audit.html"), {
+        "BRAND": esc(config.BRAND),
+        "BASE_URL": config.BASE_URL,
+        "PRICE_INR": esc(config.PRICE_INR),
+        "YEAR": config.now().year,
+    })
