@@ -397,3 +397,30 @@
   if (btn) btn.addEventListener("click", ask);
   if (input) input.addEventListener("keydown", function (e) { if (e.key === "Enter") ask(); });
 })();
+
+/* Agency handover: unlock a report with a credit code. */
+(function () {
+  var btn = document.getElementById("agency-unlock");
+  if (!btn) return;
+  var codeInput = document.getElementById("agency-code");
+  var clientInput = document.getElementById("agency-client");
+  var note = document.getElementById("agency-note");
+  var scan = (document.querySelector('meta[name="sp-scan"]') || {}).content || "";
+  btn.addEventListener("click", function () {
+    var code = (codeInput.value || "").trim();
+    if (code.length < 5) return;
+    btn.disabled = true;
+    note.classList.remove("hidden");
+    note.textContent = "Checking code...";
+    fetch("/unlock-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: code, scan_id: scan, client: (clientInput.value || "").trim() })
+    }).then(function (res) { return res.json().then(function (data) { return { status: res.status, data: data }; }); })
+      .then(function (out) {
+        if (out.data && out.data.ok) { note.textContent = "Unlocked. Reloading..."; window.location.reload(); }
+        else { note.textContent = (out.data && out.data.error) || "That code did not work."; btn.disabled = false; }
+      })
+      .catch(function () { note.textContent = "Network error. Try again."; btn.disabled = false; });
+  });
+})();
