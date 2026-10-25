@@ -33,7 +33,7 @@ QUESTIONS: list[tuple[str, str]] = [
      "touch Trustfield servers. Webhooks are verified with HMAC-SHA256 signatures, and the expected amount, "
      "currency and report id are checked before a report is unlocked."),
     ("Do you use AI, and is our data used for training?",
-     "The report copilot ("Ask about this report") sends the report text and your question to DeepSeek's API "
+     "The report copilot (Ask about this report) sends the report text and your question to DeepSeek's API "
      "to generate an answer. We do not train models on customer data and we do not send your source code or "
      "database. The copilot is optional for buyers."),
     ("What security controls are in place?",
