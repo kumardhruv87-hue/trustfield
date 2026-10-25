@@ -663,7 +663,8 @@ class Handler(BaseHTTPRequestHandler):
                     "- Read-only external check of public pages. No login, no exploitation.\n"
                     "- URL scan runs 25-45 checks; attaching a public GitHub repo runs 60+.\n"
                     "- Reports are deleted from our servers 30 days after the scan.\n"
-                    "- Watch (daily re-checks with email alerts) is available per app.\n\n"
+                    "- Watch (daily re-checks with email alerts) is available per app.\n"
+                    "- Prices: Rs 499 one-time report; Rs 499/month Watch (auto-renews, cancel anytime); Rs 3,999 agency pack (10 reports). Last updated: 2026-10-25.\n\n"
                     "## Contact\n"
                     f"- [{config.CONTACT_EMAIL}](mailto:{config.CONTACT_EMAIL})\n"
                 )
