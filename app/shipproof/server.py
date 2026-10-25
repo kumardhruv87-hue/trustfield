@@ -298,6 +298,29 @@ class Handler(BaseHTTPRequestHandler):
             line = line.split("token=")[0] + "token=***"
         print(f"[{self.log_date_time_string()}] {self.address_string()} {line}", flush=True)
 
+    ADMIN_COOKIE = "tf_admin"
+
+    def _admin_ok(self, query: dict | None = None) -> bool:
+        if not config.ADMIN_TOKEN:
+            return False
+        supplied = (query or {}).get("token", [""])[0]
+        if supplied and _safe_eq(supplied, config.ADMIN_TOKEN):
+            return True
+        cookie = self.headers.get("Cookie") or ""
+        for part in cookie.split(";"):
+            name, _, value = part.strip().partition("=")
+            if name == self.ADMIN_COOKIE and value and sign.verify(value.strip(), "admin_session") == "admin":
+                return True
+        return False
+
+    def _redirect(self, location: str, cookie: str = "") -> None:
+        self.send_response(302)
+        self.send_header("Location", location)
+        self.send_header("Content-Length", "0")
+        if cookie:
+            self.send_header("Set-Cookie", cookie)
+        self.end_headers()
+
     def _send(
         self,
         status: int,
@@ -326,6 +349,8 @@ class Handler(BaseHTTPRequestHandler):
         for key, value in headers.items():
             self.send_header(key, value)
         self.end_headers()
+        if getattr(self, "_head_only", False):
+            return
         try:
             self.wfile.write(body)
         except (BrokenPipeError, ConnectionResetError):
@@ -520,8 +545,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/integrations":
                 return self._html(200, report.legal_page("integrations"))
             if path == "/api/watch/run":
-                token = (query.get("token") or [""])[0]
-                if not _safe_eq(token, config.ADMIN_TOKEN):
+                if not self._admin_ok(query):
                     raise HTTPProblem(403, "Admin token missing or wrong.")
                 return self._json(200, {"ok": True, "checked": _run_due_watches(5)})
             if path == "/watch/manage":
@@ -606,8 +630,7 @@ class Handler(BaseHTTPRequestHandler):
             if match:
                 return self._pdf(match.group(1), query)
             if path == "/admin/agency":
-                token = (query.get("token") or [""])[0]
-                if not _safe_eq(token, config.ADMIN_TOKEN):
+                if not self._admin_ok(query):
                     raise HTTPProblem(403, "Admin token missing or wrong.")
                 email = (query.get("email") or [""])[0][:200]
                 name = (query.get("name") or [""])[0][:80]
@@ -616,8 +639,7 @@ class Handler(BaseHTTPRequestHandler):
                 row = agency.create(email, name, 10)
                 return self._json(200, {"ok": True, "code": row.get("code"), "credits": row.get("credits")})
             if path == "/admin/key":
-                token = (query.get("token") or [""])[0]
-                if not _safe_eq(token, config.ADMIN_TOKEN):
+                if not self._admin_ok(query):
                     raise HTTPProblem(403, "Admin token missing or wrong.")
                 name = (query.get("name") or ["api"])[0][:60]
                 webhook = (query.get("webhook") or [""])[0].strip()[:400]
@@ -632,25 +654,24 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, {"ok": True, "key": apikeys.create(name, webhook),
                                         "note": "Copy this key now. It is stored hashed and cannot be shown again."})
             if path == "/admin/keys":
-                token = (query.get("token") or [""])[0]
-                if not _safe_eq(token, config.ADMIN_TOKEN):
+                if not self._admin_ok(query):
                     raise HTTPProblem(403, "Admin token missing or wrong.")
                 return self._json(200, {"ok": True, "keys": apikeys.public_list(), "alerts": notify.configured()})
             if path == "/admin/test-alert":
-                token = (query.get("token") or [""])[0]
-                if not _safe_eq(token, config.ADMIN_TOKEN):
+                if not self._admin_ok(query):
                     raise HTTPProblem(403, "Admin token missing or wrong.")
                 sent = notify.send("Trustfield alert test", "Alerts are configured correctly.", config.BASE_URL + "/admin")
                 return self._json(200, {"ok": sent, "configured": notify.configured()})
             if path == "/admin/last-error":
-                token = (query.get("token") or [""])[0]
-                if not _safe_eq(token, config.ADMIN_TOKEN):
+                if not self._admin_ok(query):
                     raise HTTPProblem(403, "Admin token missing or wrong.")
                 try:
                     text = (config.DATA_DIR / "last_error.txt").read_text(encoding="utf-8")
                 except OSError:
                     text = "no error recorded"
                 return self._send(200, text.encode(), "text/plain; charset=utf-8")
+            if path == "/admin/logout":
+                return self._redirect("/", f"{self.ADMIN_COOKIE}=; Path=/admin; HttpOnly; Secure; SameSite=Strict; Max-Age=0")
             if path == "/admin":
                 return self._admin_dashboard(query)
             match = re.fullmatch(r"/admin/(pdf|email)/([a-z0-9]{6,24})", path)
@@ -1089,9 +1110,8 @@ class Handler(BaseHTTPRequestHandler):
         return self._json(200, {"ok": True, "saved": len(graded), "summary": ai_kit.summarize(graded)})
 
     def _admin_unlock(self, query: dict) -> None:
-        supplied = (query.get("token") or [""])[0]
         scan_id = (query.get("id") or [""])[0]
-        if not config.ADMIN_TOKEN or not supplied or not _safe_eq(supplied, config.ADMIN_TOKEN):
+        if not self._admin_ok(query):
             return self._error_page(403, "Not allowed", "Admin token missing or wrong.")
         record = _fulfill(scan_id, provider="manual", product="report")
         if record is None:
@@ -1111,17 +1131,21 @@ class Handler(BaseHTTPRequestHandler):
         self._html(200, report.public_index_page(indexstore.aggregate()))
 
     def _admin_dashboard(self, query: dict) -> None:
-        token = (query.get("token") or [""])[0]
-        if not config.ADMIN_TOKEN or not _safe_eq(token, config.ADMIN_TOKEN):
+        supplied = (query.get("token") or [""])[0]
+        if supplied and config.ADMIN_TOKEN and _safe_eq(supplied, config.ADMIN_TOKEN):
+            session = sign.sign("admin", "admin_session", ttl_days=7)
+            cookie = (f"{self.ADMIN_COOKIE}={session}; Path=/admin; HttpOnly; Secure; "
+                      f"SameSite=Strict; Max-Age=604800")
+            return self._redirect("/admin", cookie)
+        if not self._admin_ok():
             raise HTTPProblem(403, "Admin token missing or wrong.")
         self._html(
             200,
-            report.admin_page(_recent_scans(60), orders.summary(), indexstore.aggregate(), token),
+            report.admin_page(_recent_scans(60), orders.summary(), indexstore.aggregate(), ""),
         )
 
     def _admin_action(self, action: str, scan_id: str, query: dict) -> None:
-        token = (query.get("token") or [""])[0]
-        if not config.ADMIN_TOKEN or not _safe_eq(token, config.ADMIN_TOKEN):
+        if not self._admin_ok(query):
             raise HTTPProblem(403, "Admin token missing or wrong.")
         record = store.load_scan(scan_id)
         if record is None:
@@ -1130,7 +1154,7 @@ class Handler(BaseHTTPRequestHandler):
             location = f"/pdf/{scan_id}?token={sign.sign(scan_id, 'pdf')}"
         else:
             record = self._send_admin_report(record, query)
-            location = f"/admin?token={token}&sent=1"
+            location = "/admin?sent=1"
         return self._send(302, b"", "text/plain; charset=utf-8", {"Location": location})
 
     def _send_admin_report(self, record: dict, query: dict) -> dict:
@@ -1261,6 +1285,19 @@ def make_server(host: str = config.HOST, port: int = config.PORT) -> ThreadingHT
         usage.hydrate()
     except Exception:
         pass
+    if os.environ.get("SHIPPROOF_RETENTION_RUNNER", "1") != "0":
+        def _retention_loop() -> None:
+            while True:
+                try:
+                    store.purge_old(30)
+                except Exception:
+                    pass
+                time.sleep(21600)
+        threading.Thread(target=_retention_loop, daemon=True).start()
+    if config.SECRET_KEY in ("dev-secret-change-me", "") and config.BASE_URL.startswith("https"):
+        import secrets as _secrets
+        config.SECRET_KEY = _secrets.token_hex(32)
+        print("WARNING: SECRET_KEY was the development default; generated an ephemeral production secret.")
     if os.environ.get("SHIPPROOF_WATCH_RUNNER", "1") != "0":
         def _watch_loop() -> None:
             while True:
