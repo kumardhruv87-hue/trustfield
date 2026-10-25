@@ -789,6 +789,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, body.encode(), "text/plain; charset=utf-8")
             return self._error_page(404, "Page not found", "That URL does not exist.")
 
+        if config.FOCUS_MODE and (
+            path.startswith("/watch/") or path in ("/agency", "/agency/start")
+            or path == "/unlock-code" or path.startswith("/api/v1/")
+        ):
+            return self._html(410, report.focus_coming_soon())
         if method == "POST":
             if path in ("/webhooks/razorpay", "/webhooks/stripe"):
                 return self._webhook(path)
