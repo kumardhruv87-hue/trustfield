@@ -141,3 +141,31 @@ def set_checkout(watch_id: str, url: str) -> None:
 
 def count_active() -> int:
     return sum(1 for r in load() if r.get("active"))
+
+
+def set_subscription(watch_id: str, subscription_id: str) -> None:
+    rows = load()
+    for row in rows:
+        if row.get("id") == watch_id:
+            row["subscription_id"] = subscription_id
+            save(rows)
+            return
+
+
+def extend(watch_id: str, until_iso: str = "", days: int = 30) -> dict | None:
+    """Activate or extend a subscription watch until the paid-through date."""
+    rows = load()
+    for row in rows:
+        if row.get("id") == watch_id:
+            now = _now()
+            row["active"] = True
+            row["checkout_pending"] = False
+            row["auto_renew"] = True
+            if until_iso:
+                row["paid_until"] = until_iso[:19]
+            else:
+                row["paid_until"] = _iso(now + dt.timedelta(days=days))
+            row["next_check_at"] = _iso(now)
+            save(rows)
+            return row
+    return None
