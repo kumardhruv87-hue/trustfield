@@ -63,6 +63,7 @@ def razorpay_event(payload: dict) -> dict | None:
         "product": str(notes.get("product") or "report").lower(),
         "report_id": _safe_report_id(str(notes.get("report_id") or entity.get("receipt") or "")),
         "watch_id": str(notes.get("watch_id") or "")[:40],
+        "agency_name": str(notes.get("agency_name") or "")[:80],
     }
 
 
@@ -241,3 +242,31 @@ def razorpay_subscription_event(payload: dict) -> dict | None:
         "until": until,
         "email": str((entity.get("customer") or {}).get("email") or "").strip().lower()[:200] if isinstance(entity.get("customer"), dict) else "",
     }
+
+
+def create_agency_link(email: str, agency_name: str) -> str:
+    """One-time Rs 3999 payment link for 10 report credits."""
+    import base64 as _b64, json as _json, ssl as _ssl, urllib.request as _url
+    if not (config.RAZORPAY_KEY_ID and config.RAZORPAY_KEY_SECRET):
+        return ""
+    auth = _b64.b64encode(f"{config.RAZORPAY_KEY_ID}:{config.RAZORPAY_KEY_SECRET}".encode()).decode()
+    payload = {
+        "amount": int(float(config.AGENCY_INR)) * 100,
+        "currency": "INR",
+        "accept_partial": False,
+        "description": f"{config.BRAND} Agency pack - 10 reports",
+        "notes": {"product": "agency", "email": email, "agency_name": agency_name},
+        "callback_url": f"{config.BASE_URL}/agency?paid=1",
+        "callback_method": "get",
+    }
+    request = _url.Request(
+        "https://api.razorpay.com/v1/payment_links",
+        data=_json.dumps(payload).encode(), method="POST",
+        headers={"Authorization": f"Basic {auth}", "Content-Type": "application/json",
+                 "User-Agent": "Trustfield/1.0"},
+    )
+    try:
+        with _url.urlopen(request, timeout=20, context=_ssl.create_default_context()) as response:
+            return _json.loads(response.read()).get("short_url", "")
+    except Exception:
+        return ""
