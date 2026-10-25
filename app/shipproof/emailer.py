@@ -268,3 +268,19 @@ def send_watch_expiring(watch_row: dict) -> dict:
         "You can also ignore this email and let it lapse.",
     )
     return send(email, f"{config.BRAND} Watch ends soon", html)
+
+
+def send_agency_welcome(agency_row: dict) -> dict:
+    email = str(agency_row.get("email") or "").strip().lower()
+    if not email:
+        return {"ok": False, "error": "no email on agency"}
+    html = _shell(
+        "Your agency pack is ready",
+        f"You have {agency_row.get('credits', 10)} client-ready reports. Use the code below on any report page to unlock it as a client handover.",
+        f"<p style='font-size:22px;font-weight:700;color:#0f766e;letter-spacing:.04em'>{agency_row.get('code','')}</p>"
+        f"<p style='color:#5b6675;font-size:13px'>Check remaining credits: <a href='{config.BASE_URL}/agency?code={agency_row.get('code','')}'>agency page</a></p>",
+        "See how to hand over a report",
+        f"{config.BASE_URL}/integrations",
+        "10 reports per pack. Reports are informational, not a penetration test.",
+    )
+    return send(email, f"{config.BRAND} agency pack - your code", html)
