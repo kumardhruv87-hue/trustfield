@@ -341,6 +341,15 @@ class Handler(BaseHTTPRequestHandler):
             self._json(exc.status, {"ok": False, "error": exc.message})
         except Exception:  # pragma: no cover - last resort
             traceback.print_exc()
+            try:
+                err = traceback.format_exc()
+                storage.put_json("last_error.json", {
+                    "at": config.now_iso(),
+                    "path": (self.path or "")[:200],
+                    "error": err[-1600:],
+                })
+            except Exception:
+                pass
             self._json(500, {"ok": False, "error": "internal error — please try again"})
 
     # --------------------------------------------------------------- routes --
