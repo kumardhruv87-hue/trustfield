@@ -13,7 +13,7 @@ from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from . import ai_kit, aicopilot, config, usage, emailer, indexstore, live, net, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
+from . import ai_kit, aicopilot, apikeys, config, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
@@ -140,6 +140,11 @@ def _fulfill(
                 "paid_at": config.now_iso(),
             }
         )
+    try:
+        notify.send("New paid report", f"{record.get('target', '')} - {record.get('email', '')}",
+                    config.BASE_URL + "/r/" + scan_id)
+    except Exception:
+        pass
     target_email = email or record.get("email", "")
     if target_email:
         try:
@@ -187,6 +192,11 @@ def _run_due_watches(limit: int = 3) -> int:
             if new:
                 try:
                     emailer.send_watch_alert(row, new, data)
+                except Exception:
+                    pass
+                try:
+                    notify.send("Watch: new findings", f"{row.get('target', '')} - {len(new)} new finding(s)",
+                                config.BASE_URL + "/r/" + str(data.get("id") or ""))
                 except Exception:
                     pass
             checked += 1
@@ -513,6 +523,24 @@ class Handler(BaseHTTPRequestHandler):
             match = re.fullmatch(r"/pdf/([a-z0-9]{6,24})", path)
             if match:
                 return self._pdf(match.group(1), query)
+            if path == "/admin/key":
+                token = (query.get("token") or [""])[0]
+                if not _safe_eq(token, config.ADMIN_TOKEN):
+                    raise HTTPProblem(403, "Admin token missing or wrong.")
+                name = (query.get("name") or ["api"])[0][:60]
+                return self._json(200, {"ok": True, "key": apikeys.create(name),
+                                        "note": "Copy this key now. It is stored hashed and cannot be shown again."})
+            if path == "/admin/keys":
+                token = (query.get("token") or [""])[0]
+                if not _safe_eq(token, config.ADMIN_TOKEN):
+                    raise HTTPProblem(403, "Admin token missing or wrong.")
+                return self._json(200, {"ok": True, "keys": apikeys.public_list(), "alerts": notify.configured()})
+            if path == "/admin/test-alert":
+                token = (query.get("token") or [""])[0]
+                if not _safe_eq(token, config.ADMIN_TOKEN):
+                    raise HTTPProblem(403, "Admin token missing or wrong.")
+                sent = notify.send("Trustfield alert test", "Alerts are configured correctly.", config.BASE_URL + "/admin")
+                return self._json(200, {"ok": sent, "configured": notify.configured()})
             if path == "/admin/last-error":
                 token = (query.get("token") or [""])[0]
                 if not _safe_eq(token, config.ADMIN_TOKEN):
@@ -574,6 +602,15 @@ class Handler(BaseHTTPRequestHandler):
             if not _rate_ok("post_min", self._client_ip()):
                 raise HTTPProblem(429, "Too many requests — slow down a little.")
             if path == "/api/scan":
+                return self._create_scan()
+            if path == "/api/v1/scan":
+                raw_key = self.headers.get("X-API-Key", "").strip()
+                key_row = apikeys.find(raw_key)
+                if key_row is None:
+                    raise HTTPProblem(401, "Missing or invalid API key. Create one at /admin or email support.")
+                if int(key_row.get("calls", 0)) >= 500:
+                    raise HTTPProblem(429, "This API key reached its monthly limit.")
+                apikeys.record_use(key_row)
                 return self._create_scan()
             if path == "/watch/cancel":
                 body = self._read_json()
