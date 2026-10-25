@@ -97,6 +97,7 @@ def create_payment_link(scan_id: str, amount_inr: int) -> str:
         "accept_partial": False,
         "description": f"{config.BRAND} full report",
         "notes": {"report_id": scan_id, "product": "report"},
+        "reference_id": scan_id,
         "callback_url": f"{config.BASE_URL}/r/{scan_id}?paid=1",
         "callback_method": "get",
     }
@@ -270,3 +271,24 @@ def create_agency_link(email: str, agency_name: str) -> str:
             return _json.loads(response.read()).get("short_url", "")
     except Exception:
         return ""
+
+
+def find_paid_link(scan_id: str) -> dict | None:
+    """Safety net: if the webhook was missed, ask Razorpay whether this report was paid."""
+    if not (config.RAZORPAY_KEY_ID and config.RAZORPAY_KEY_SECRET):
+        return None
+    import base64 as _b64, json as _json, ssl as _ssl, urllib.request as _url
+    auth = _b64.b64encode(f"{config.RAZORPAY_KEY_ID}:{config.RAZORPAY_KEY_SECRET}".encode()).decode()
+    url = f"https://api.razorpay.com/v1/payment_links?reference_id={scan_id}&count=10"
+    request = _url.Request(url, headers={"Authorization": f"Basic {auth}", "User-Agent": "Trustfield/1.0"})
+    try:
+        with _url.urlopen(request, timeout=15, context=_ssl.create_default_context()) as response:
+            data = _json.loads(response.read() or b"{}")
+    except Exception:
+        return None
+    for item in data.get("items") or []:
+        if str(item.get("status")) == "paid":
+            notes = item.get("notes") or {}
+            customer = item.get("customer") or {}
+            return {"id": str(item.get("id") or ""), "email": str(notes.get("email") or customer.get("email") or "").strip().lower()}
+    return None
