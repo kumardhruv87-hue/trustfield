@@ -1,6 +1,8 @@
 ﻿"""HTTP server (stdlib only). No framework, no dependencies, no surprises."""
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import os
 import re
@@ -158,6 +160,35 @@ def _fulfill(
             email_result={k: v for k, v in result.items() if k != "path"},
         ) or record
     return record
+
+
+def _fire_scan_webhook(row: dict, payload: dict) -> None:
+    """POST the finished scan to the key owner's webhook, signed with their key hash."""
+    url = str(row.get("webhook_url") or "")
+    if not url.startswith("https://"):
+        return
+    from urllib.parse import urlsplit
+    try:
+        net.check_public_host(urlsplit(url).hostname or "")
+    except Exception:
+        apikeys.set_webhook_result(row.get("prefix", ""), "blocked: private or invalid host")
+        return
+    body = json.dumps({"event": "scan.completed", "sent_at": config.now_iso(), "data": payload}).encode()
+    signature = hmac.new(str(row.get("hash", "")).encode(), body, hashlib.sha256).hexdigest()
+
+    def worker() -> None:
+        try:
+            request = urllib.request.Request(
+                url, data=body, method="POST",
+                headers={"Content-Type": "application/json", "X-Trustfield-Event": "scan.completed",
+                         "X-Trustfield-Signature": signature, "User-Agent": "Trustfield-Webhook/1.0"},
+            )
+            with urllib.request.urlopen(request, timeout=10, context=ssl.create_default_context()) as response:
+                apikeys.set_webhook_result(row.get("prefix", ""), f"HTTP {response.status}")
+        except Exception as exc:
+            apikeys.set_webhook_result(row.get("prefix", ""), "error: " + str(exc)[:80])
+
+    threading.Thread(target=worker, daemon=True).start()
 
 
 def _watch_expiry_check() -> int:
@@ -553,7 +584,16 @@ class Handler(BaseHTTPRequestHandler):
                 if not _safe_eq(token, config.ADMIN_TOKEN):
                     raise HTTPProblem(403, "Admin token missing or wrong.")
                 name = (query.get("name") or ["api"])[0][:60]
-                return self._json(200, {"ok": True, "key": apikeys.create(name),
+                webhook = (query.get("webhook") or [""])[0].strip()[:400]
+                if webhook:
+                    from urllib.parse import urlsplit as _urlsplit
+                    if not webhook.startswith("https://"):
+                        raise HTTPProblem(400, "Webhook must be an https URL.")
+                    try:
+                        net.check_public_host(_urlsplit(webhook).hostname or "")
+                    except Exception:
+                        raise HTTPProblem(400, "Webhook host must be public.")
+                return self._json(200, {"ok": True, "key": apikeys.create(name, webhook),
                                         "note": "Copy this key now. It is stored hashed and cannot be shown again."})
             if path == "/admin/keys":
                 token = (query.get("token") or [""])[0]
@@ -636,6 +676,7 @@ class Handler(BaseHTTPRequestHandler):
                 if int(key_row.get("calls", 0)) >= 500:
                     raise HTTPProblem(429, "This API key reached its monthly limit.")
                 apikeys.record_use(key_row)
+                self._webhook_row = key_row
                 return self._create_scan()
             if path == "/agency/start":
                 length = int(self.headers.get("Content-Length") or 0)
@@ -842,6 +883,13 @@ class Handler(BaseHTTPRequestHandler):
 
         payload = _record_preview(record)
         payload["checks_passed"] = len(result.passed)
+        webhook_row = getattr(self, "_webhook_row", None)
+        if webhook_row:
+            self._webhook_row = None
+            try:
+                _fire_scan_webhook(webhook_row, payload)
+            except Exception:
+                pass
         payload["checks_total"] = len(result.checks)
         return self._json(200, payload)
 
