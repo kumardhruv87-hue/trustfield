@@ -343,6 +343,10 @@ class Handler(BaseHTTPRequestHandler):
             traceback.print_exc()
             try:
                 err = traceback.format_exc()
+                try:
+                    (config.DATA_DIR / "last_error.txt").write_text(err[-4000:], encoding="utf-8")
+                except OSError:
+                    pass
                 storage.put_json("last_error.json", {
                     "at": config.now_iso(),
                     "path": (self.path or "")[:200],
@@ -494,6 +498,15 @@ class Handler(BaseHTTPRequestHandler):
             match = re.fullmatch(r"/pdf/([a-z0-9]{6,24})", path)
             if match:
                 return self._pdf(match.group(1), query)
+            if path == "/admin/last-error":
+                token = (query.get("token") or [""])[0]
+                if not _safe_eq(token, config.ADMIN_TOKEN):
+                    raise HTTPProblem(403, "Admin token missing or wrong.")
+                try:
+                    text = (config.DATA_DIR / "last_error.txt").read_text(encoding="utf-8")
+                except OSError:
+                    text = "no error recorded"
+                return self._send(200, text.encode(), "text/plain; charset=utf-8")
             if path == "/admin":
                 return self._admin_dashboard(query)
             match = re.fullmatch(r"/admin/(pdf|email)/([a-z0-9]{6,24})", path)
