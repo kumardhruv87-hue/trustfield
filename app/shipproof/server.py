@@ -1209,7 +1209,10 @@ class Handler(BaseHTTPRequestHandler):
             raise HTTPProblem(403, "Admin token missing or wrong.")
         self._html(
             200,
-            report.admin_page(_recent_scans(60), orders.summary(), indexstore.aggregate(), ""),
+            report.admin_page(
+                _recent_scans(60), orders.summary(), indexstore.aggregate(), "",
+                watch.load(), apikeys.public_list(), notify.configured(), agency.list_rows(),
+            ),
         )
 
     def _admin_action(self, action: str, scan_id: str, query: dict) -> None:
