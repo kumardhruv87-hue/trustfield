@@ -564,8 +564,10 @@ class Handler(BaseHTTPRequestHandler):
                 row = watch.by_cancel_token(str(body.get("token") or ""))
                 if row is None:
                     raise HTTPProblem(404, "That Watch link is not valid.")
-                if row.get("subscription_id") and row["subscription_id"] != "pending":
+                if row.get("subscription_id") and row["subscription_id"] not in ("", "pending"):
                     payments.cancel_subscription(row["subscription_id"])
+                    watch.disable_auto_renew(row["id"])
+                    return self._json(200, {"ok": True, "note": "Auto-renew stopped. Access continues until the paid-through date."})
                 watch.cancel(row["id"])
                 return self._json(200, {"ok": True})
             if path == "/tools/rls":
@@ -773,7 +775,10 @@ class Handler(BaseHTTPRequestHandler):
         row = watch.by_cancel_token(token)
         if row is None:
             raise HTTPProblem(404, "That Watch link is not valid.")
-        status = "active" if row.get("active") else "paused"
+        if row.get("active") and row.get("auto_renew") is False:
+            status = "active until " + str(row.get("paid_until", "")) + " (auto-renew off)"
+        else:
+            status = "active — auto-renews" if row.get("active") else "paused"
         body = (
             "<!doctype html><html><head><meta charset='utf-8'><title>Watch · " + config.BRAND + "</title>"
             "<link rel='stylesheet' href='/static/style.css'></head><body class='report-body'>"
