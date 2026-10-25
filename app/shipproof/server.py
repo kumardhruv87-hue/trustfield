@@ -406,11 +406,12 @@ class Handler(BaseHTTPRequestHandler):
         return forwarded or self.client_address[0]
 
     # --------------------------------------------------------------- verbs --
-    def do_HEAD(self) -> None:
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", "0")
-        self.end_headers()
+    def do_HEAD(self) -> None:  # noqa: N802
+        self._head_only = True
+        try:
+            self.do_GET()
+        finally:
+            self._head_only = False
 
     def do_GET(self) -> None:  # noqa: N802
         self._dispatch("GET")
