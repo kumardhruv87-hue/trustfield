@@ -479,6 +479,9 @@ class Handler(BaseHTTPRequestHandler):
                 code = (query.get("code") or [""])[0]
                 paid = (query.get("paid") or [""])[0] == "1"
                 return self._html(200, report.agency_page(agency.public(code), paid))
+            match = re.fullmatch(r"/verify/([a-z0-9]{6,24})", path)
+            if match:
+                return self._verify_rescan(match.group(1))
             if path == "/trust":
                 return self._html(200, report.legal_page("trust_center"))
             if path == "/trust/questionnaire":
@@ -892,6 +895,34 @@ class Handler(BaseHTTPRequestHandler):
                 pass
         payload["checks_total"] = len(result.checks)
         return self._json(200, payload)
+
+    def _verify_rescan(self, scan_id: str) -> None:
+        old = store.load_scan(scan_id)
+        if old is None:
+            raise HTTPProblem(404, "That report does not exist.")
+        if not _is_paid(old):
+            raise HTTPProblem(402, "Re-scan verification is part of the paid report.")
+        payload = json.dumps({"kind": "url", "target": old.get("target"), "consent": True}).encode()
+        request = urllib.request.Request(
+            config.BASE_URL.rstrip("/") + "/api/scan", data=payload, method="POST",
+            headers={"Content-Type": "application/json", "User-Agent": "Trustfield-Verify/1.0"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=300, context=ssl.create_default_context()) as response:
+                data = json.loads(response.read() or b"{}")
+        except Exception:
+            raise HTTPProblem(503, "The re-scan could not run right now. Try again in a minute.")
+        new_id = str(data.get("id") or "")
+        if not new_id:
+            raise HTTPProblem(503, "The re-scan did not return a report.")
+        old_ids = {str(f.get("id") or "") for f in (old.get("findings") or [])}
+        new_ids = {str(f.get("id") or "") for f in (data.get("teaser") or [])}
+        store.update_scan(new_id, verified_against=scan_id,
+                          fixed_count=len(old_ids - new_ids), new_count=len(new_ids - old_ids))
+        self.send_response(302)
+        self.send_header("Location", "/r/" + new_id + "?verified=1")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
     def _watch_start(self, scan_id: str) -> None:
         record = store.load_scan(scan_id)
