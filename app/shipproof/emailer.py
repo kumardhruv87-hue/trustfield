@@ -252,3 +252,19 @@ def send_watch_cancelled(watch_row: dict) -> dict:
         "No auto-renew is active for this app.",
     )
     return send(email, f"{config.BRAND} Watch cancelled", html)
+
+
+def send_watch_expiring(watch_row: dict) -> dict:
+    email = str(watch_row.get("email") or "").strip().lower()
+    if not email:
+        return {"ok": False, "error": "no email on watch"}
+    html = _shell(
+        "Watch ends in a few days",
+        f"Watch for {watch_row.get('target', '')} is paid until {watch_row.get('paid_until', '')}. "
+        "After that date we stop the daily re-checks.",
+        "<p style='color:#5b6675;font-size:13px'>If you want to keep the monitoring, restart Watch from the report page (one click, auto-renews monthly).</p>",
+        "Restart Watch",
+        f"{config.BASE_URL}/watch/start/{watch_row.get('scan_id', '')}",
+        "You can also ignore this email and let it lapse.",
+    )
+    return send(email, f"{config.BRAND} Watch ends soon", html)
