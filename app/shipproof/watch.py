@@ -181,3 +181,31 @@ def disable_auto_renew(watch_id: str) -> dict | None:
             save(rows)
             return row
     return None
+
+
+def expiring(days: int = 3) -> list[dict]:
+    """Active rows whose paid_until is within N days and not yet reminded for that date."""
+    now = _now()
+    out = []
+    for row in load():
+        if not row.get("active"):
+            continue
+        paid_until = str(row.get("paid_until") or "")
+        if not paid_until:
+            continue
+        try:
+            until = dt.datetime.fromisoformat(paid_until[:19]).replace(tzinfo=dt.timezone.utc)
+        except ValueError:
+            continue
+        if now <= until <= now + dt.timedelta(days=days) and row.get("expiry_reminded_for") != paid_until:
+            out.append(row)
+    return out
+
+
+def mark_expiry_reminded(watch_id: str) -> None:
+    rows = load()
+    for row in rows:
+        if row.get("id") == watch_id:
+            row["expiry_reminded_for"] = str(row.get("paid_until") or "")
+            save(rows)
+            return
