@@ -4,7 +4,11 @@
 
 For a solo founder or small agency about to launch or hand over an AI-built app: find common public security mistakes, understand the evidence, give the AI builder a fix prompt, then re-check.
 
-Free: score and every issue title. Rs 499 once: evidence, prioritized fixes, AI-builder prompts, dated PDF and one same-target verification re-check during the report's 30-day lifetime. Fix implementation is not included. A clean scan is not a certificate. URL-only scanning does not verify hidden payment/auth logic.
+Free: score and every issue title. Rs 499 once: evidence, prioritized fixes, individual AI-builder prompts, a complete downloadable AI Builder Fix Pack (.md), dated PDF and one same-target verification re-check during the report's 30-day lifetime. Fix implementation is not included. A clean scan is not a certificate. URL-only scanning does not verify hidden payment/auth logic.
+
+The Fix Pack includes acceptance checklists and owner actions, generated deterministically from findings with no additional AI API cost. Re-check outcomes distinguish relevant mapped checks that passed, issues still detected, new findings, and absent findings that could not be confirmed. Older scans without check mappings remain unconfirmed. The comparison is a point-in-time observation, not proof that every instance is fixed.
+
+Admin login: https://trustfield.dev/admin/login (also in the homepage footer). Existing credentials are unchanged.
 
 New Watch, Agency and API sales remain paused in focus mode. Existing subscriber management and cancellation routes stay available. Keep the old features for existing obligations; do not advertise them during this experiment.
 

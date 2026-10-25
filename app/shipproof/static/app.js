@@ -338,7 +338,9 @@
   /* copy-paste fix prompt for the AI builder */
   $$(".copy-fix-btn").forEach(function (button) {
     button.addEventListener("click", function () {
-      var text = button.getAttribute("data-prompt") || "";
+      var selector = button.getAttribute("data-copy-target");
+      var field = selector ? document.querySelector(selector) : null;
+      var text = field ? field.value : (button.getAttribute("data-prompt") || "");
       var done = function () {
         var old = button.textContent;
         button.textContent = "Copied";

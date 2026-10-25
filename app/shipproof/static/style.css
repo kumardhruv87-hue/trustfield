@@ -23,6 +23,10 @@
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 
+.fix-pack-text { display:block; width:100%; min-height:280px; margin-top:16px; padding:16px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#172033; font:13px/1.6 ui-monospace,monospace; resize:vertical; }
+.comparison-table { overflow-x:auto; }
+.comparison-table .pill { white-space:normal; }
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {

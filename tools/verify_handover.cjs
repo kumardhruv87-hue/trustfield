@@ -1,0 +1,38 @@
+/* Local acceptance fixtures are created by the preview server, not by production routes. */
+const { chromium } = require('playwright');
+const fs = require('fs');
+const path = require('path');
+(async () => {
+  const base = process.argv[2] || 'http://127.0.0.1:8766';
+  const output = path.resolve('data/browser-qa');
+  fs.mkdirSync(output, { recursive: true });
+  const browser = await chromium.launch({ channel: 'msedge', headless: true });
+  const context = await browser.newContext({ viewport: { width: 375, height: 812 } });
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: base });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto(base);
+  if (await page.locator('a[href="/admin/login"]').count() !== 1) throw Error('Admin link missing');
+  await page.goto(base + '/admin/login');
+  await page.locator('input[name="password"]').waitFor();
+  await page.goto(base + '/r/previewpaid1');
+  await page.getByText('Read or copy the complete plan').click();
+  await page.getByRole('button', { name: 'Copy the complete fix plan' }).click();
+  await page.getByRole('button', { name: 'Copied', exact: true }).waitFor();
+  if (!await page.evaluate(() => navigator.clipboard.readText()).then(t => t.includes('Acceptance checklist:'))) throw Error('Pack copy failed');
+  const pending = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Download Fix Pack (.md)' }).click();
+  const download = await pending;
+  await download.saveAs(path.join(output, 'verified-fix-pack.md'));
+  if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) throw Error('Report mobile overflow');
+  await page.screenshot({ path: path.join(output, 'fix-pack-mobile.png'), fullPage: true });
+  await page.goto(base + '/r/previewafter');
+  await page.getByText('Relevant check passed', { exact: true }).waitFor();
+  await page.screenshot({ path: path.join(output, 'comparison-mobile.png'), fullPage: true });
+  await page.goto(base + '/r/previewfree1');
+  if (await page.locator('#fix-pack-text').count()) throw Error('Unpaid pack leak');
+  if (errors.length) throw Error(errors.join('; '));
+  console.log(JSON.stringify({ adminLink: 'pass', loginPage: 'pass', paidPackDownload: 'pass', clipboard: 'pass', comparison: 'pass', unpaidAccess: 'pass', browserErrors: errors }));
+  await browser.close();
+})().catch(e => { console.error(e); process.exit(1); });

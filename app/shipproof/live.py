@@ -54,6 +54,7 @@ class Collector:
 
     def fail(self, cid: str, name: str, finding: Finding, detail: str = "") -> None:
         self.check(cid, name, False, detail)
+        self.checks[-1]["finding_id"] = finding.id
         self.add(finding)
 
 

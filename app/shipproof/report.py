@@ -7,7 +7,7 @@ import html
 import re
 from pathlib import Path
 
-from . import config, sign, usage
+from . import config, sign, usage, handover
 from .findings import SEVERITY_COLOR, SEVERITY_LABEL, Finding, sort_findings
 
 BACKTICK_RE = re.compile(r"`([^`]{1,120})`")
@@ -377,6 +377,36 @@ def pdf_button(record: dict) -> str:
     )
 
 
+def fix_pack_html(record: dict) -> str:
+    if not record.get("findings"):
+        return ""
+    scan_id = esc(record.get("id"))
+    return f'''<section class="block"><h2>Your AI Builder Fix Pack</h2>
+<p>One prioritized brief for the AI tool or developer that built your app: evidence, proposed fixes, regression checks and owner actions. Generated from this scan; no extra AI call.</p>
+<p><a class="btn primary" href="/fix-pack/{scan_id}.md">Download Fix Pack (.md)</a></p>
+<details><summary>Read or copy the complete plan</summary>
+<textarea id="fix-pack-text" class="fix-pack-text" readonly aria-label="AI Builder Fix Pack">{esc(handover.fix_pack(record))}</textarea>
+<p><button type="button" class="btn ghost small copy-fix-btn" data-copy-target="#fix-pack-text">Copy the complete fix plan</button></p></details>
+<p class="fine">Paste it into your builder after reviewing the evidence. It does not change your app automatically. Keep the file private and test changes before deploying.</p></section>'''
+
+
+def verification_html(record: dict) -> str:
+    if not record.get("verified_against"):
+        return ""
+    labels = {"check_passed": ("Relevant check passed", "low"),
+              "still_detected": ("Still detected", "high"),
+              "not_confirmed": ("Not observed — not confirmed", "medium"),
+              "new": ("New finding", "high")}
+    rows = []
+    for row in record.get("comparison") or []:
+        label, tone = labels.get(row.get("state"), labels["not_confirmed"])
+        rows.append(f'<tr><td>{esc(row.get("title"))}<br><code>{esc(row.get("id"))}</code></td><td><span class="pill sev-{tone}">{esc(label)}</span></td></tr>')
+    table = '<div class="comparison-table"><table class="meta-table"><tr><th>Finding</th><th>Re-check result</th></tr>' + ''.join(rows) + '</table></div>' if rows else '<p>No check-level comparison is available for this report.</p>'
+    return ('<section class="block"><h2>What changed after your fixes?</h2>'
+            f'<p>Compared with <a href="/r/{esc(record.get("verified_against"))}">your original report</a>.</p>'
+            + table + '<p class="fine">“Relevant check passed” means the mapped check ran and passed in this snapshot. It does not prove all instances are fixed. Missing findings without a passing mapped check remain unconfirmed, including older scans without check mappings.</p></section>')
+
+
 def watch_upsell_html(record: dict) -> str:
     if config.FOCUS_MODE:
         return ""
@@ -497,17 +527,13 @@ def report_page(record: dict) -> str:
             "KIT": kit_block,
             "KIT_NOTE": esc(kit_note),
             "PDF_BUTTON": pdf_block,
+            "FIX_PACK": fix_pack_html(record) if paid else "",
             "SHARE_BUTTON": share_button(record),
             "AI_PLAN": (
                 f'<section class="block ai-plan"><h2>Your action plan (AI)</h2><p>{esc(record.get("ai_plan")).replace(chr(10), "<br>")}</p><p class="fine">Generated from this report only. Not a guarantee.</p></section>'
             ) if record.get("ai_plan") else "",
             "RESCAN_LINK": (f'<a class="btn" href="/verify/{esc(record.get("id",""))}">{"View your re-check" if record.get("verification_scan_id") else "Re-check after fixes (included)"}</a>' if paid and not record.get("verified_against") else ""),
-            "VERIFY_BANNER": (
-                f'<div class="note" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46">'
-                f'Re-scan verified: <strong>{int(record.get("fixed_count", 0))}</strong> previous finding(s) no longer appear, '
-                f'<strong>{int(record.get("new_count", 0))}</strong> new. Compared with scan '
-                f'<a href="/r/{esc(record.get("verified_against"))}">{esc(record.get("verified_against"))}</a>.</div>'
-            ) if record.get("verified_against") else "",
+            "VERIFY_BANNER": verification_html(record),
             "PREPARED_FOR": (
                 f'<p class="fine" style="color:#0f766e">Prepared for <strong>{esc(record.get("prepared_for"))}</strong>'
                 + (f' — handover by {esc(record.get("agency_name"))}' if record.get("agency_name") else "")

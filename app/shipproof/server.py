@@ -17,6 +17,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 from . import agency, ai_kit, aicopilot, apikeys, config, guides, questionnaire, vs, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
 from . import storage
+from . import handover
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
@@ -313,7 +314,7 @@ class Handler(BaseHTTPRequestHandler):
     ADMIN_COOKIE = "tf_admin"
 
     def _admin_ok(self, query: dict | None = None) -> bool:
-        if not config.ADMIN_TOKEN:
+        if not (config.ADMIN_TOKEN or config.ADMIN_PASSWORD):
             return False
         supplied = (query or {}).get("token", [""])[0]
         if supplied and _safe_eq(supplied, config.ADMIN_TOKEN):
@@ -703,6 +704,16 @@ class Handler(BaseHTTPRequestHandler):
             match = re.fullmatch(r"/pdf/([a-z0-9]{6,24})", path)
             if match:
                 return self._pdf(match.group(1), query)
+            match = re.fullmatch(r"/fix-pack/([a-z0-9]{6,24})\.md", path)
+            if match:
+                record = store.load_scan(match.group(1))
+                if record is None:
+                    raise HTTPProblem(404, "Report not found")
+                if not _is_paid(record):
+                    raise HTTPProblem(402, "The AI Builder Fix Pack is part of the paid report.")
+                return self._send(200, handover.fix_pack(record).encode("utf-8"), "text/markdown; charset=utf-8",
+                                  {"Content-Disposition": f'attachment; filename="Trustfield-fix-pack-{record["id"]}.md"',
+                                   "Cache-Control": "private, no-store"})
             if path == "/admin/agency":
                 if not self._admin_ok(query):
                     raise HTTPProblem(403, "Admin token missing or wrong.")
@@ -1159,12 +1170,16 @@ class Handler(BaseHTTPRequestHandler):
         new_id = str(data.get("id") or "")
         if not new_id:
             raise HTTPProblem(503, "The re-scan did not return a report.")
-        old_ids = {str(f.get("id") or "") for f in (old.get("findings") or [])}
-        new_ids = {str(f.get("id") or "") for f in (data.get("teaser") or [])}
+        current = store.load_scan(new_id)
+        if current is None:
+            raise HTTPProblem(503, "The re-check could not be loaded. Please try again.")
+        comparison = handover.compare(old, current)
         if not store.update_scan(new_id, verified_against=scan_id, unlocked=True,
                                  email=old.get("email", ""),
                                  source=old.get("source", "direct"),
-                                 fixed_count=len(old_ids - new_ids), new_count=len(new_ids - old_ids)):
+                                 comparison=comparison,
+                                 fixed_count=sum(r["state"] == "check_passed" for r in comparison),
+                                 new_count=sum(r["state"] == "new" for r in comparison)):
             raise HTTPProblem(503, "The re-check could not be saved. Please try again.")
         store.update_scan(scan_id, verification_scan_id=new_id)
         return self._redirect("/r/" + new_id + "?verified=1")
