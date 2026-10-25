@@ -6,6 +6,7 @@ cannot leave a half-written report behind.
 from __future__ import annotations
 
 import base64
+import datetime
 import json
 import os
 import secrets as _secrets
@@ -111,7 +112,15 @@ def purge_old(days: int = 30) -> int:
     removed = 0
     for path in config.SCANS_DIR.glob("*.json"):
         try:
-            if path.stat().st_mtime < cutoff:
+            when = path.stat().st_mtime
+            try:
+                record = json.loads(path.read_text(encoding="utf-8"))
+                created = str(record.get("created_at") or record.get("expires_at") or "")[:19]
+                if created:
+                    when = datetime.datetime.fromisoformat(created).replace(tzinfo=datetime.timezone.utc).timestamp()
+            except (OSError, ValueError, TypeError):
+                pass
+            if when < cutoff:
                 path.unlink()
                 removed += 1
         except OSError:
