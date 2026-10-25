@@ -319,6 +319,17 @@ def upsell_html(record: dict) -> str:
     </div>"""
 
 
+def focus_coming_soon() -> str:
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Coming soon · {esc(config.BRAND)}</title>
+<link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/landing.css"></head>
+<body class="landing-v2 legal-page"><main class="legal-doc wrap" style="max-width:620px">
+<h1>Coming soon</h1>
+<p>We are focused on the core review right now: a free scan and a ₹{esc(config.PRICE_INR)} report with evidence, the exact fix, a copy-paste AI prompt and a PDF.</p>
+<p>Watch, agency packs and the API return after the first customers. <a href="/#scan">Run the free scan</a> or email <a href="mailto:{esc(config.CONTACT_EMAIL)}">{esc(config.CONTACT_EMAIL)}</a>.</p>
+</main></body></html>"""
+
+
 def teaser_html(findings: list) -> str:
     """Free scan: every issue is visible as a title + severity. Evidence and fix are paid."""
     items = [_as_finding(f) for f in findings]
@@ -349,6 +360,8 @@ def pdf_button(record: dict) -> str:
 
 
 def watch_upsell_html(record: dict) -> str:
+    if config.FOCUS_MODE:
+        return ""
     watch_price = esc(config.WATCH_INR)
     scan_id = esc(record.get("id", ""))
     return f"""
