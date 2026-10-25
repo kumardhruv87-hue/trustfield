@@ -4,6 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>About · {{BRAND}}</title>
+  <meta property="og:title" content="{{BRAND}} — independent security review for AI-built apps">
+  <meta property="og:description" content="Free scan for leaked keys, open database rules and broken webhooks. Evidence + fixes + PDF for ₹499.">
+  <meta property="og:image" content="{{BASE_URL}}/static/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+
   <meta name="description" content="Who runs Trustfield, why it exists, and what it refuses to claim.">
   <link rel="canonical" href="{{BASE_URL}}/about">
   <link rel="stylesheet" href="/static/style.css">
@@ -14,7 +19,7 @@
   <header class="site-head"><div class="wrap head-in"><a class="logo" href="/"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/><path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{{BRAND}}</span></a><div class="head-cta"><a class="btn small" href="/">Back to site</a></div></div></header>
   <main class="legal-doc wrap">
 <h1>About Trustfield</h1>
-<p class="updated">Last updated: {{YEAR}}</p>
+<p class="updated">Last updated: 24 Oct 2026</p>
 <p><strong>Trustfield checks AI-built and hand-written web apps for the security mistakes that ship fastest:</strong> keys left in the browser bundle, database rules that let one customer read another's data, payment webhooks nobody verified, and chatbots that can be talked into leaking their instructions.</p>
 <h2>Why it exists</h2>
 <p>AI builders made it possible to ship a full app in a weekend. They did not make security automatic. The result is predictable: apps with real users put live API keys in client-side code, leave database tables open, or accept any webhook that looks like a payment. A pentest costs more than most early apps earn in a month. Trustfield exists to make the first honest check cheap, clear and repeatable.</p>
