@@ -155,6 +155,18 @@ def _fulfill(
     return record
 
 
+def _watch_expiry_check() -> int:
+    sent = 0
+    for row in watch.expiring(3):
+        try:
+            emailer.send_watch_expiring(row)
+            watch.mark_expiry_reminded(row["id"])
+            sent += 1
+        except Exception:
+            continue
+    return sent
+
+
 def _run_due_watches(limit: int = 3) -> int:
     """Re-scan due Watch targets through our own public API and email new findings."""
     checked = 0
@@ -1026,6 +1038,10 @@ def make_server(host: str = config.HOST, port: int = config.PORT) -> ThreadingHT
             while True:
                 try:
                     _run_due_watches(2)
+                except Exception:
+                    pass
+                try:
+                    _watch_expiry_check()
                 except Exception:
                     pass
                 time.sleep(1800)
