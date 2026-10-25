@@ -229,6 +229,11 @@ def _summary(doc: Doc, record: dict, score: dict, page_no: int, total_pages: int
     checks = record.get("checks") or []
     passed = sum(1 for check in checks if check.get("ok"))
     page.text(MARGIN, y, 9, f"{len(checks)} checks run  -  {passed} passed  -  score {score.get('score')}/100 ({score.get('grade')})", color=MUTED)
+    if record.get("prepared_for"):
+        y -= 15
+        page.text(MARGIN, y, 8.5, f"Prepared for {record.get('prepared_for')}"
+                  + (f" - handover by {record.get('agency_name')}" if record.get("agency_name") else ""),
+                  color=(0.20, 0.45, 0.42))
 
     # risk boxes
     y -= 24
