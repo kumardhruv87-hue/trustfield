@@ -26,6 +26,15 @@
 .fix-pack-text { display:block; width:100%; min-height:280px; margin-top:16px; padding:16px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#172033; font:13px/1.6 ui-monospace,monospace; resize:vertical; }
 .comparison-table { overflow-x:auto; }
 .comparison-table .pill { white-space:normal; }
+.admin-panel .admin-table { overflow-x:auto; margin:18px 0; }
+.admin-panel .meta-table { min-width:680px; font-size:13px; }
+.admin-panel .meta-table td { max-width:300px; overflow-wrap:anywhere; vertical-align:top; }
+.admin-panel .admin-actions form { display:grid; gap:8px; margin:10px 0; }
+.admin-panel .admin-actions { min-width:165px; }
+.admin-panel .admin-actions label { font-size:12px; }
+.admin-panel .admin-actions summary { cursor:pointer; }
+.admin-panel .nav { flex-wrap:wrap; gap:12px; }
+.admin-panel .count-n { font-size:clamp(20px,3vw,32px); }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }

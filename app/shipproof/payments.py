@@ -10,6 +10,34 @@ import time
 MAX_SKEW_SECONDS = 300
 
 
+def mode(provider: str = "razorpay") -> str:
+    key = config.RAZORPAY_KEY_ID if provider == "razorpay" else config.STRIPE_SECRET_KEY
+    if key.startswith(("rzp_live_", "sk_live_")):
+        return "live"
+    if key.startswith(("rzp_test_", "sk_test_")):
+        return "test"
+    return "unknown"
+
+
+def lookup_receipt(provider_id: str) -> dict:
+    """Read a gateway object without capturing, charging, refunding or cancelling."""
+    import re
+    match = re.fullmatch(r"(pay|plink|order)_[A-Za-z0-9]{1,90}", provider_id)
+    if not match or not (config.RAZORPAY_KEY_ID and config.RAZORPAY_KEY_SECRET):
+        return {"verified": False, "reason": "Unsupported reference or gateway not configured"}
+    resource = {"pay": "payments", "plink": "payment_links", "order": "orders"}[match[1]]
+    try:
+        obj = _rzp("GET", f"/v1/{resource}/{provider_id}")
+    except Exception:
+        return {"verified": False, "reason": "Gateway did not confirm this reference"}
+    verified = obj.get("id") == provider_id and obj.get("status") in ("captured", "paid", "refunded")
+    return {"verified": verified, "provider_status": str(obj.get("status") or "unknown"),
+            "amount_minor": int((obj.get("amount_paid") if match[1] != "pay" else obj.get("amount")) or 0),
+            "currency": str(obj.get("currency") or "").upper(), "payment_mode": mode(),
+            "refunded_minor": int(obj.get("amount_refunded") or 0),
+            "reason": "Gateway snapshot checked" if verified else "Gateway status is not paid/captured"}
+
+
 def razorpay_verify(raw: bytes, signature: str, secret: str) -> bool:
     if not secret or not signature:
         return False

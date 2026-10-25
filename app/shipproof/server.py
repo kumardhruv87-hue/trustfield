@@ -89,21 +89,27 @@ def _is_paid(record: dict) -> bool:
 
 
 def _recent_scans(limit: int = 60) -> list[dict]:
-    files = sorted(config.SCANS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit] if config.SCANS_DIR.exists() else []
+    files = list(config.SCANS_DIR.glob("*.json")) if config.SCANS_DIR.exists() else []
     if not files:
         try:
             store.hydrate_from_cloud(limit)
         except Exception:
             pass
         if config.SCANS_DIR.exists():
-            files = sorted(config.SCANS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]
+            files = list(config.SCANS_DIR.glob("*.json"))
     out: list[dict] = []
     for path in files:
         try:
             out.append(json.loads(path.read_text(encoding="utf-8")))
         except (OSError, json.JSONDecodeError):
             continue
-    return out
+    def created(record: dict) -> float:
+        try:
+            stamp = datetime.fromisoformat(str(record.get("created_at")))
+            return stamp.replace(tzinfo=stamp.tzinfo or timezone.utc).timestamp()
+        except (TypeError, ValueError):
+            return 0
+    return sorted(out, key=created, reverse=True)[:limit]
 
 
 def _fulfill(
@@ -115,6 +121,7 @@ def _fulfill(
     amount_minor: int = 0,
     currency: str = "INR",
     product: str = "report",
+    verification: str = "",
 ) -> dict | None:
     """Mark a report paid, record the order, email the buyer. Idempotent per scan."""
     record = store.load_scan(scan_id)
@@ -139,6 +146,8 @@ def _fulfill(
                 "scan_id": scan_id,
                 "email": email or record.get("email", ""),
                 "paid_at": config.now_iso(),
+                "verification": verification,
+                "payment_mode": payments.mode(provider),
             }
         )
     if provider == "manual":
@@ -848,6 +857,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._admin_login()
             if not _rate_ok("post_min", self._client_ip()):
                 raise HTTPProblem(429, "Too many requests — slow down a little.")
+            if path == "/admin/actions":
+                return self._admin_operation()
             if path == "/api/scan":
                 return self._create_scan()
             if path == "/api/events":
@@ -1003,7 +1014,8 @@ class Handler(BaseHTTPRequestHandler):
             payment = payments.find_paid_link(current["id"])
             if payment:
                 return _fulfill(current["id"], provider="razorpay", provider_id=payment["id"],
-                                email=payment.get("email", ""), amount_minor=int(float(config.PRICE_INR) * 100)) or current
+                                email=payment.get("email", ""), amount_minor=int(float(config.PRICE_INR) * 100),
+                                verification="gateway_lookup") or current
             return current
 
     def _trust(self, scan_id: str) -> None:
@@ -1345,8 +1357,53 @@ class Handler(BaseHTTPRequestHandler):
             report.admin_page(
                 _recent_scans(60), orders.summary(), indexstore.aggregate(), "",
                 watch.load(), apikeys.public_list(), notify.configured(), agency.list_rows(),
+                notice=(query.get("notice") or [""])[0],
             ),
         )
+
+    def _admin_operation(self) -> None:
+        if not self._admin_ok():
+            raise HTTPProblem(403, "Admin login required.")
+        form = self._read_form()
+        if sign.verify(str((form.get("csrf") or [""])[0]), "admin_action") != "admin":
+            raise HTTPProblem(403, "This form expired. Reload the admin page.")
+        action = str((form.get("action") or [""])[0])
+        if action == "reconcile":
+            checked = 0
+            for order in orders.summary()["records"]:
+                if checked >= 10:
+                    break
+                if order.get("provider") != "razorpay" or order["classification"] != "Needs review":
+                    continue
+                try:
+                    last_check = datetime.fromisoformat(str(order.get("receipt", {}).get("checked_at")))
+                    if config.now() - last_check < timedelta(minutes=5):
+                        continue
+                except (TypeError, ValueError):
+                    pass
+                orders.record_check(str(order.get("provider_id") or ""), payments.lookup_receipt(str(order.get("provider_id") or "")))
+                checked += 1
+            return self._redirect("/admin?notice=reconciled")
+        scan_id = str((form.get("scan_id") or [""])[0])
+        record = store.load_scan(scan_id)
+        if record is None:
+            raise HTTPProblem(404, "Report not found.")
+        if action == "grant":
+            if (form.get("confirmed") or [""])[0] != "1":
+                raise HTTPProblem(400, "Confirm the access grant first.")
+            if not record.get("unlocked"):
+                store.unlock(scan_id)
+                orders.append({"provider": "manual", "provider_id": "", "status": "access_granted",
+                               "scan_id": scan_id, "amount_minor": 0, "currency": "INR", "paid_at": config.now_iso()})
+            return self._redirect("/admin?notice=granted")
+        if action == "email":
+            if not record.get("unlocked") or not record.get("email"):
+                raise HTTPProblem(400, "Grant report access and add a recipient before sending.")
+            result = emailer.send_report(record)
+            store.update_scan(scan_id, emailed_at=config.now_iso(), email_result={k: v for k, v in result.items() if k != "path"})
+            success = result.get("ok") and result.get("mode") == "resend"
+            return self._redirect("/admin?notice=" + ("email-accepted" if success else "email-failed"))
+        raise HTTPProblem(400, "Unknown admin action.")
 
     def _admin_action(self, action: str, scan_id: str, query: dict) -> None:
         if not self._admin_ok(query):
@@ -1455,7 +1512,8 @@ class Handler(BaseHTTPRequestHandler):
             expected = {"INR": int(float(config.AGENCY_INR if product == "agency" else config.WATCH_INR) * 100)}
         if int(event.get("amount_minor") or 0) != expected.get(event.get("currency")):
             return self._json(200, {"ok": True, "ignored": "amount or currency mismatch"})
-        order = {**event, "status": "paid", "paid_at": config.now_iso()}
+        order = {**event, "status": "paid", "paid_at": config.now_iso(),
+                 "verification": "signed_webhook", "payment_mode": payments.mode(event.get("provider", "razorpay"))}
         if product == "agency":
             if "@" not in str(event.get("email") or ""):
                 raise HTTPProblem(503, "Buyer email missing; payment needs operator review.")
@@ -1485,6 +1543,7 @@ class Handler(BaseHTTPRequestHandler):
             amount_minor=event.get("amount_minor", 0),
             currency=event.get("currency", "INR"),
             product=event.get("product", "report"),
+            verification="signed_webhook",
         )
         if record is None:
             return self._json(200, {"ok": True, "ignored": "unknown report"})

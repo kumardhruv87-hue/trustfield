@@ -1,106 +1,40 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin · {{BRAND}}</title>
-  <meta name="robots" content="noindex">
-  <link rel="stylesheet" href="/static/style.css">
-</head>
-<body class="report-body">
-  <header class="nav">
-    <a class="brand" href="/"><span>{{BRAND}}</span> <span class="pill sev-low">admin</span></a>
-    <nav class="nav-links"><a href="/">Site</a><a href="/index">Public index</a><a href="/status">Status</a></nav>
-  </header>
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex"><title>Admin · {{BRAND}}</title>
+<link rel="stylesheet" href="/static/style.css"></head>
+<body class="report-body admin-panel">
+<header class="nav"><a class="brand" href="/">{{BRAND}} · Admin</a><nav><a href="/">Public site</a> · <a href="/admin">Refresh dashboard</a> · <a href="/admin/logout">Log out</a></nav></header>
+<main class="wrap report">
+<h1>Business &amp; delivery</h1><p class="fine">Report access, recorded orders and confirmed sales are separate. Event counters use UTC; record timestamps below use IST.</p>
+{{NOTICE}}
+<div class="counts">
+<div class="count"><span class="count-n">{{CONFIRMED_ORDERS}}</span><span class="count-l">Provider-confirmed live INR payments</span></div>
+<div class="count"><span class="count-n">₹{{CONFIRMED_INR}}</span><span class="count-l">Confirmed INR gross · before fees/refunds</span></div>
+<div class="count"><span class="count-n">{{REVIEW_COUNT}}</span><span class="count-l">Payment records needing review</span></div>
+<div class="count"><span class="count-n">{{SCAN_COUNT}}</span><span class="count-l">Recent reports loaded · up to 60</span></div>
+</div>
+<section class="block"><h2>Needs attention</h2><ul>{{ALERTS}}</ul></section>
 
-  <main class="wrap report">
-    <h1>Operations</h1>
-    <div class="counts">
-      <div class="count"><span class="count-n">{{SCAN_COUNT}}</span><span class="count-l">Scans (loaded)</span></div>
-      <div class="count"><span class="count-n">{{PAID_COUNT}}</span><span class="count-l">Paid orders</span></div>
-      <div class="count"><span class="count-n">₹{{REVENUE}}</span><span class="count-l">Revenue</span></div>
-      <div class="count"><span class="count-n">{{INDEX_SCANS}}</span><span class="count-l">Indexed</span></div>
-    </div>
+<section class="block"><h2>Payment records</h2>
+<p class="fine">Recorded INR gross, including unconfirmed records: ₹{{RECORDED_INR}}. {{TEST_COUNT}} test records and {{MANUAL_COUNT}} manual grants are excluded from sales. Legacy records without provider evidence remain unconfirmed. Different currencies are never added to INR. Summaries use the available ledger (up to 5,000 records), with the latest 100 shown below.</p>
+{{RECONCILE_FORM}}
+<p class="fine">Read-only gateway checks, up to 10 references per click. No charges, refunds or cancellations. Results are saved separately from the original ledger. Unknown mode, missing references and failed lookups stay under review. Confirm settlements, refunds and actual fees in Razorpay/Stripe; this page does not show profit or bank payout.</p>
+<div class="admin-table"><table class="meta-table"><thead><tr><th>Reference / product</th><th>Recorded amount</th><th>Evidence / classification</th><th>Report reference</th><th>Recorded time</th></tr></thead><tbody>{{PAYMENT_ROWS}}</tbody></table></div></section>
 
-    <section class="block">
-      <h2>Acquisition funnel — this month</h2>
-      <p class="fine">Use links such as <code>/?utm_source=google</code> or <code>/?utm_source=linkedin</code>. Aggregate event counts, not unique people. Checkout counts new payment links; purchases count fulfilled reports. No email or target is collected by these counters.</p>
-      <table class="meta-table"><tr><th>Source</th><th>Visits</th><th>Scans completed</th><th>Checkouts</th><th>Purchases</th></tr>{{FUNNEL_ROWS}}</table>
-      <p class="fine">Before increasing ads: compare spend with real paid orders and refunds. A high scan count alone does not establish demand.</p>
-    </section>
-    <section class="block">
-      <h2>Costs &amp; quotas</h2>
-      <div class="counts">
-        <div class="count"><span class="count-n">{{EMAIL_TODAY}}</span><span class="count-l">Emails today · {{EMAIL_LEFT_DAY}} left</span></div>
-        <div class="count"><span class="count-n">{{EMAIL_MONTH}}</span><span class="count-l">Emails this month · {{EMAIL_LEFT_MONTH}} left</span></div>
-        <div class="count"><span class="count-n">{{AI_TODAY}}</span><span class="count-l">AI answers today</span></div>
-        <div class="count"><span class="count-n">₹{{AI_COST}}</span><span class="count-l">Est. AI spend (month)</span></div>
-      </div>
-      <div class="counts">
-        <div class="count"><span class="count-n">{{SCANS_MONTH}}</span><span class="count-l">Scans this month</span></div>
-        <div class="count"><span class="count-n">{{WATCH_COUNT}}</span><span class="count-l">Watch subscriptions</span></div>
-        <div class="count"><span class="count-n">₹{{FEE}}</span><span class="count-l">Est. Razorpay fees</span></div>
-        <div class="count"><span class="count-n">₹{{PAYOUT}}</span><span class="count-l">Est. net payout</span></div>
-      </div>
-      <h3>Alerts</h3>
-      <ul>{{ALERTS}}</ul>
-      <p class="fine">Payment numbers exclude simulated/manual test orders ({{TEST_ORDERS}} ignored). AI guard: 300 answers/day. Email free tier: 100/day, 3,000/month (Resend). Fees ≈ 2.36% (Razorpay 2% + GST). Counters reset on redeploy if storage is unavailable.</p>
-    </section>
+<section class="block"><h2>Recent reports &amp; email delivery</h2>
+<p class="fine">Newest scan time first. “Access granted” includes manual grants and included re-checks; it does not prove a purchase. “Accepted by email provider” is not inbox delivery confirmation. Local outbox files are not sent emails.</p>
+<div class="admin-table"><table class="meta-table"><thead><tr><th>Report / target</th><th>Score</th><th>Access</th><th>Email status / recipient</th><th>Created</th><th>Actions</th></tr></thead><tbody>{{REPORT_ROWS}}</tbody></table></div>
+<p class="fine">Granting access does not send an email or record revenue. Email buttons send a real customer email; use them only for intended delivery or a requested resend.</p></section>
 
-    <section class="block">
-      <h2>Agency packs</h2>
-      <table class="meta-table">
-        <tr><th>Agency</th><th>Code</th><th>Credits</th><th>Used</th></tr>
-        {{AGENCY_ROWS}}
-      </table>
-      <p class="fine">Create manually: <code>/admin/agency?email=you@agency.com&amp;name=Agency&amp;token={{TOKEN}}</code></p>
-    </section>
+<section class="block"><h2>Acquisition funnel — current UTC month</h2>
+<p class="fine">Tracking starts from the focused-launch release; older historical activity is not backfilled. Events, not unique people. Checkout = new payment link; purchase event = report fulfillment, not independently verified revenue. Use <code>/?utm_source=google</code> or <code>/?utm_source=linkedin</code>.</p>
+<div class="admin-table"><table class="meta-table"><tr><th>Source</th><th>Visit events</th><th>Completed scans</th><th>New checkouts</th><th>Fulfillment events</th></tr>{{FUNNEL_ROWS}}</table></div></section>
 
-    <section class="block">
-      <h2>Integrations</h2>
-      <p class="fine">API keys are stored hashed; copy the key when it is shown once. Alerts: <strong>{{ALERTS_STATUS}}</strong></p>
-      <table class="meta-table">
-        <tr><th>Name</th><th>Prefix</th><th>Calls</th><th>Last used</th></tr>
-        {{KEY_ROWS}}
-      </table>
-      <p class="fine">
-        <a class="btn small" href="/admin/key?name=default&amp;token={{TOKEN}}" target="_blank" rel="noopener">Create API key (JSON)</a>
-        <a class="btn small" href="/admin/keys?token={{TOKEN}}" target="_blank" rel="noopener">List keys (JSON)</a>
-        <a class="btn small" href="/admin/test-alert?token={{TOKEN}}" target="_blank" rel="noopener">Test alert</a>
-      </p>
-      <p class="fine">Slack/Discord enable karne ke liye Render env me <code>SLACK_WEBHOOK_URL</code> ya <code>DISCORD_WEBHOOK_URL</code> daalo, phir "Test alert" dabao.</p>
-    </section>
+<section class="block"><h2>Service health &amp; usage</h2>
+<div class="counts"><div class="count"><span class="count-n">{{SCANS_MONTH}}</span><span class="count-l">Scan events this UTC month</span></div><div class="count"><span class="count-n">{{EMAIL_TODAY}} / {{EMAIL_MONTH}}</span><span class="count-l">Email requests accepted · UTC day / month</span></div><div class="count"><span class="count-n">{{AI_ATTEMPTS}} / {{AI_LIMIT}}</span><span class="count-l">Reserved AI calls today / configured guard</span></div><div class="count"><span class="count-n">{{AI_ANSWERS}}</span><span class="count-l">Successful AI answers today</span></div></div>
+<ul><li>Cloud storage: {{STORAGE_STATE}}</li><li>Transactional email: {{EMAIL_STATE}}</li><li>Operator alerts: {{ALERT_STATE}}</li></ul>
+<p class="fine">Provider invoices, balances and plan limits are not queried here. No fixed per-answer AI cost, gateway fee or net-payout estimate is presented. Counters can be incomplete after outages or unavailable persistence.</p></section>
 
-    <section class="block">
-      <h2>Watch subscriptions</h2>
-      <table class="meta-table">
-        <tr><th>Target</th><th>Email</th><th>Status</th><th>Next check</th><th>Manage</th></tr>
-        {{WATCH_ROWS}}
-      </table>
-    </section>
-
-    <section class="block">
-      <h2>Recent scans</h2>
-      <table class="meta-table">
-        <tr><th>ID</th><th>Target</th><th>Score</th><th>Crit</th><th>Status</th><th>Time</th><th>Actions</th></tr>
-        {{ROWS}}
-      </table>
-      <p class="fine">Actions: PDF generates a signed download link. Email sends the paid report (needs buyer email). Unlock marks the report paid — use this after a manual/UPI payment.</p>
-    </section>
-
-    <section class="block">
-      <h2>Quick links</h2>
-      <ul>
-        <li><a href="/index">Public vulnerability index</a></li>
-        <li><a href="/status">Public status page</a></li>
-        <li><a href="/changelog">Changelog</a></li>
-        <li><a href="/healthz">Health check</a></li>
-        <li><a href="/integrations">Integrations docs</a></li>
-      </ul>
-      <p class="fine">Your session is a secure HttpOnly cookie — bookmark /admin. <a href="/admin/logout">Log out</a></p>
-    </section>
-  </main>
-
-  <footer class="footer wrap"><p class="fine">© {{YEAR}} {{BRAND}}</p></footer>
-</body>
-</html>
+<details class="block"><summary>Legacy services — existing obligations</summary>{{LEGACY}}<p class="fine">Paused records are not counted as active subscriptions. Creation tools are omitted from the core dashboard.</p></details>
+<p class="fine">© {{YEAR}} {{BRAND}} · <a href="/healthz">Service health</a> · <a href="/changelog">Changelog</a> · <a href="/admin/logout">Log out</a></p>
+</main></body></html>

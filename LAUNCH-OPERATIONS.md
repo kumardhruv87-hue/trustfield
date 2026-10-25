@@ -10,6 +10,8 @@ The Fix Pack includes acceptance checklists and owner actions, generated determi
 
 Admin login: https://trustfield.dev/admin/login (also in the homepage footer). Existing credentials are unchanged.
 
+Admin totals distinguish recorded orders, test/manual grants and provider-confirmed live INR payments. Legacy records need gateway review; use “Check recorded Razorpay payments” for a read-only check of up to ten references at a time. Original ledger entries remain intact; lookup evidence is stored separately. Failed lookups remain unconfirmed and can be retried after five minutes. Confirm bank settlements, actual fees and refunds in the payment provider dashboard. Report “access granted” and provider email acceptance do not prove a sale or inbox delivery respectively.
+
 New Watch, Agency and API sales remain paused in focus mode. Existing subscriber management and cancellation routes stay available. Keep the old features for existing obligations; do not advertise them during this experiment.
 
 ## First customer acceptance

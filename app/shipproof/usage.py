@@ -22,7 +22,7 @@ def _path():
 
 
 def _today() -> str:
-    return dt.date.today().isoformat()
+    return dt.datetime.now(dt.timezone.utc).date().isoformat()
 
 
 def _month() -> str:

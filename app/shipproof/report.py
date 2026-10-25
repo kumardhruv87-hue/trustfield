@@ -763,92 +763,10 @@ def headers_tool_page(url_value: str, result_html: str) -> str:
 </html>"""
 
 
-def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, watches: list | None = None, keys: list | None = None, alerts_on: bool = False, agencies: list | None = None) -> str:
-    from . import usage
-
-    emails_today = usage.today("emails")
-    emails_month = usage.month("emails")
-    ai_today = usage.today("ai")
-    ai_month = usage.month("ai")
-    scans_month = usage.month("scans")
-    ai_cost = round(ai_month * 0.12, 2)
-    gross = float(revenue.get("revenue_inr", 0) or 0)
-    fee = round(gross * 0.0236, 2)
-    payout = round(gross - fee, 2)
-    alerts = []
-    if emails_today >= 80:
-        alerts.append("Email: 80/day free-tier limit is close. Resend paid plan or slow down.")
-    if emails_month >= 2400:
-        alerts.append("Email: 2,400 of 3,000 monthly free emails used.")
-    if ai_today >= 240:
-        alerts.append("AI: 240 of 300 daily answers used. Watch the balance.")
-    if ai_cost > 0 and ai_cost >= 200:
-        alerts.append("AI: estimated spend crossed Rs 200 this month. Top up / raise guard?")
-    if gross <= 0:
-        alerts.append("Revenue: Rs 0 so far - distribution is the bottleneck, not the product.")
-    alert_html = "".join(f'<li>{esc(a)}</li>' for a in alerts) or "<li>All clear.</li>"
-    email_left_day = max(0, 100 - emails_today)
-    email_left_month = max(0, 3000 - emails_month)
-    rows = ""
-    for scan in scans:
-        score = (scan.get("score") or {}).get("score", 0)
-        counts = (scan.get("score") or {}).get("counts") or {}
-        status = "PAID" if scan.get("unlocked") else "free"
-        rows += (
-            f"<tr><td><a href='/r/{esc(scan.get('id',''))}'>{esc(scan.get('id',''))}</a></td>"
-            f"<td>{esc(str(scan.get('target',''))[:48])}</td>"
-            f"<td class='num-cell'>{score}</td>"
-            f"<td class='num-cell'>{int(counts.get('critical', 0))}</td>"
-            f"<td>{status}</td>"
-            f"<td>{esc(str(scan.get('created_at',''))[:16])}</td>"
-            f"<td><a href='/admin/pdf/{esc(scan.get('id',''))}?token={esc(token)}'>PDF</a> · "
-            f"<a href='/admin/email/{esc(scan.get('id',''))}?token={esc(token)}'>Email</a> · "
-            f"<a href='/admin/unlock?id={esc(scan.get('id',''))}&token={esc(token)}'>Unlock</a></td></tr>"
-        )
-    return _fill(
-        _template("admin.html"),
-        {
-            "BRAND": esc(config.BRAND),
-            "TOKEN": esc(token),
-            "SCAN_COUNT": len(scans),
-            "PAID_COUNT": int(revenue.get("orders", 0)),
-            "REVENUE": esc(f"{revenue.get('revenue_inr', 0):,.0f}"),
-            "FUNNEL_ROWS": "".join(f'<tr><td>{esc(row["source"])}</td><td>{row["visit"]}</td><td>{row["scan_complete"]}</td><td>{row["checkout"]}</td><td>{row["purchase"]}</td></tr>' for row in usage.funnel_summary()),
-            "TEST_ORDERS": int(revenue.get("test_orders", 0)),
-            "INDEX_SCANS": int(index_data.get("scans", 0)),
-            "ROWS": rows or '<tr><td colspan="7" class="muted">No scans yet.</td></tr>',
-            "SCANS_MONTH": scans_month,
-            "EMAIL_TODAY": emails_today,
-            "EMAIL_MONTH": emails_month,
-            "EMAIL_LEFT_DAY": email_left_day,
-            "EMAIL_LEFT_MONTH": email_left_month,
-            "AI_TODAY": ai_today,
-            "AI_MONTH": ai_month,
-            "AI_COST": f"{ai_cost:,.2f}",
-            "FEE": f"{fee:,.2f}",
-            "PAYOUT": f"{payout:,.2f}",
-            "WATCH_COUNT": len(watches or []),
-            "ALERTS_STATUS": "Slack/Discord configured" if alerts_on else "email fallback active (add SLACK_WEBHOOK_URL for channel alerts)",
-            "AGENCY_ROWS": "".join(
-                f"<tr><td>{esc(str(a.get('name','') or a.get('email','')))}</td><td><code>{esc(str(a.get('code','')))}</code></td>"
-                f"<td>{int(a.get('credits',0))}</td><td>{int(a.get('used',0))}</td></tr>"
-                for a in (agencies or [])[-10:]
-            ) or '<tr><td colspan="4" class="muted">No agency packs yet.</td></tr>',
-            "KEY_ROWS": "".join(
-                f"<tr><td>{esc(str(k.get('name','')))}</td><td><code>{esc(str(k.get('prefix','')))}…</code></td>"
-                f"<td>{int(k.get('calls',0))}</td><td>{esc(str(k.get('last_used',''))[:16] or 'never')}</td></tr>"
-                for k in (keys or [])[-10:]
-            ) or '<tr><td colspan="4" class="muted">No API keys yet.</td></tr>',
-            "WATCH_ROWS": "".join(
-                f"<tr><td>{esc(str(w.get('target',''))[:44])}</td><td>{esc(w.get('email',''))}</td>"
-                f"<td>{'active' if w.get('active') else 'paused'}</td><td>{esc(str(w.get('next_check_at',''))[:16])}</td>"
-                f"<td><a href='/watch/manage?token={esc(w.get('cancel_token',''))}'>manage</a></td></tr>"
-                for w in (watches or [])[-20:]
-            ) or '<tr><td colspan="5" class="muted">No Watch subscriptions yet.</td></tr>',
-            "ALERTS": alert_html,
-            "YEAR": config.now().year,
-        },
-    )
+def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, watches: list | None = None, keys: list | None = None, alerts_on: bool = False, agencies: list | None = None, notice: str = "") -> str:
+    from . import admin_panel
+    return _fill(_template("admin.html"), admin_panel.context(scans, revenue, index_data,
+                 watches or [], keys or [], alerts_on, agencies or [], notice))
 
 
 def admin_login_page(error: str = "") -> str:
