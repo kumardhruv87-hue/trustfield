@@ -72,12 +72,15 @@ def get_json(key: str):
         return None
 
 
-def list_prefix(prefix: str, limit: int = 1000) -> list:
+def list_prefix(prefix: str, limit: int = 1000, newest: bool = False) -> list:
     """List object names under a prefix (Supabase Storage list API)."""
     if not enabled():
         return []
     try:
-        body = json.dumps({"prefix": prefix, "limit": limit}).encode()
+        payload = {"prefix": prefix, "limit": limit}
+        if newest:
+            payload["sortBy"] = {"column": "updated_at", "order": "desc"}
+        body = json.dumps(payload).encode()
         _, raw = _request("POST", f"/storage/v1/object/list/{config.SUPABASE_BUCKET}", body,
                           {"Content-Type": "application/json"})
         return json.loads(raw) or []
