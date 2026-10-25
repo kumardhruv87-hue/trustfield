@@ -63,6 +63,15 @@ jobs:
   "report_url": "/r/a1b2c3d4e5"
 }</code></pre>
 
+    <h2>Completion webhook</h2>
+    <p>Create the API key with a <code>webhook</code> parameter (admin dashboard → Create API key) and Trustfield POSTs the finished scan to your HTTPS endpoint:</p>
+    <pre><code>POST https://your-service.com/hooks/trustfield
+X-Trustfield-Event: scan.completed
+X-Trustfield-Signature: hmac_sha256(hex) over the raw body, key = your API key hash
+
+{"event":"scan.completed","sent_at":"...","data":{"id":"...","score":72,"counts":{...},"teaser":[...]}}</code></pre>
+    <p class="fine">Only HTTPS endpoints on public hosts are accepted. Delivery status is shown on the key in the admin dashboard.</p>
+
     <h2>Slack / Discord alerts</h2>
     <p>Get a message when a new paid report arrives or Watch finds something new. Paste a Slack incoming-webhook URL (or Discord webhook URL) into the Render env as <code>SLACK_WEBHOOK_URL</code> or <code>DISCORD_WEBHOOK_URL</code>; then use the “Test alert” button in the admin dashboard.</p>
 
