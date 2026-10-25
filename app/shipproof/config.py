@@ -137,3 +137,6 @@ def ensure_dirs() -> None:
 
 # ------------------------------------------------------------- analytics ----
 AHREFS_KEY = os.environ.get("AHREFS_KEY", "gLBPCAyOg9uZUDtLmDAQ3Q")
+
+# Watch billing mode: "1" = Razorpay recurring subscription, "0" = one-time 30-day link.
+WATCH_SUBSCRIPTIONS = os.environ.get("SHIPPROOF_WATCH_SUBSCRIPTIONS", "1") == "1"
