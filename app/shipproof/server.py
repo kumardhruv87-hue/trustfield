@@ -543,6 +543,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self._html(200, report.legal_page("status"))
             if path == "/methodology":
                 return self._html(200, report.legal_page("methodology"))
+            if path == "/tools/speed":
+                from . import speedtool
+                target = (query.get("url") or [""])[0].strip()[:300]
+                if target and not target.startswith(("http://", "https://")):
+                    target = "https://" + target
+                data = speedtool.fetch(target) if target else None
+                return self._html(200, speedtool.page_html(data, target))
             if path == "/tools/rls":
                 return self._html(200, report.rls_tool_page("", ""))
             if path == "/tools/headers":
@@ -789,11 +796,6 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, body.encode(), "text/plain; charset=utf-8")
             return self._error_page(404, "Page not found", "That URL does not exist.")
 
-        if config.FOCUS_MODE and (
-            path.startswith("/watch/") or path in ("/agency", "/agency/start")
-            or path == "/unlock-code" or path.startswith("/api/v1/")
-        ):
-            return self._html(410, report.focus_coming_soon())
         if method == "POST":
             if path in ("/webhooks/razorpay", "/webhooks/stripe"):
                 return self._webhook(path)
