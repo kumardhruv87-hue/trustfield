@@ -117,6 +117,14 @@ def due(limit: int = 3) -> list[dict]:
     for row in load():
         if not row.get("active"):
             continue
+        paid_until = str(row.get("paid_until") or "")
+        if paid_until:
+            try:
+                until = dt.datetime.fromisoformat(paid_until[:19]).replace(tzinfo=dt.timezone.utc)
+                if until < now:
+                    continue
+            except ValueError:
+                pass
         try:
             next_at = dt.datetime.fromisoformat(str(row.get("next_check_at")))
         except ValueError:
