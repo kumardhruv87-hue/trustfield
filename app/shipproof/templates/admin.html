@@ -10,13 +10,13 @@
 <body class="report-body">
   <header class="nav">
     <a class="brand" href="/"><span>{{BRAND}}</span> <span class="pill sev-low">admin</span></a>
-    <nav class="nav-links"><a href="/">Site</a><a href="/index">Public index</a></nav>
+    <nav class="nav-links"><a href="/">Site</a><a href="/index">Public index</a><a href="/status">Status</a></nav>
   </header>
 
   <main class="wrap report">
     <h1>Operations</h1>
     <div class="counts">
-      <div class="count"><span class="count-n">{{SCAN_COUNT}}</span><span class="count-l">Scans</span></div>
+      <div class="count"><span class="count-n">{{SCAN_COUNT}}</span><span class="count-l">Scans (loaded)</span></div>
       <div class="count"><span class="count-n">{{PAID_COUNT}}</span><span class="count-l">Paid orders</span></div>
       <div class="count"><span class="count-n">₹{{REVENUE}}</span><span class="count-l">Revenue</span></div>
       <div class="count"><span class="count-n">{{INDEX_SCANS}}</span><span class="count-l">Indexed</span></div>
@@ -42,6 +42,29 @@
     </section>
 
     <section class="block">
+      <h2>Integrations</h2>
+      <p class="fine">API keys are stored hashed; copy the key when it is shown once. Alerts: <strong>{{ALERTS_STATUS}}</strong></p>
+      <table class="meta-table">
+        <tr><th>Name</th><th>Prefix</th><th>Calls</th><th>Last used</th></tr>
+        {{KEY_ROWS}}
+      </table>
+      <p class="fine">
+        <a class="btn small" href="/admin/key?name=default&amp;token={{TOKEN}}" target="_blank" rel="noopener">Create API key (JSON)</a>
+        <a class="btn small" href="/admin/keys?token={{TOKEN}}" target="_blank" rel="noopener">List keys (JSON)</a>
+        <a class="btn small" href="/admin/test-alert?token={{TOKEN}}" target="_blank" rel="noopener">Test alert</a>
+      </p>
+      <p class="fine">Slack/Discord enable karne ke liye Render env me <code>SLACK_WEBHOOK_URL</code> ya <code>DISCORD_WEBHOOK_URL</code> daalo, phir "Test alert" dabao.</p>
+    </section>
+
+    <section class="block">
+      <h2>Watch subscriptions</h2>
+      <table class="meta-table">
+        <tr><th>Target</th><th>Email</th><th>Status</th><th>Next check</th><th>Manage</th></tr>
+        {{WATCH_ROWS}}
+      </table>
+    </section>
+
+    <section class="block">
       <h2>Recent scans</h2>
       <table class="meta-table">
         <tr><th>ID</th><th>Target</th><th>Score</th><th>Crit</th><th>Status</th><th>Time</th><th>Actions</th></tr>
@@ -54,9 +77,10 @@
       <h2>Quick links</h2>
       <ul>
         <li><a href="/index">Public vulnerability index</a></li>
-        <li><a href="/healthz">Health check</a></li>
         <li><a href="/status">Public status page</a></li>
         <li><a href="/changelog">Changelog</a></li>
+        <li><a href="/healthz">Health check</a></li>
+        <li><a href="/integrations">Integrations docs</a></li>
       </ul>
       <p class="fine">Bookmark this page with the token: /admin?token={{TOKEN}}</p>
     </section>
