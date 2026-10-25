@@ -491,6 +491,11 @@ class Handler(BaseHTTPRequestHandler):
         path = unquote(split.path or "/")
         query = parse_qs(split.query)
         path = path.rstrip("/") or "/"
+        if config.FOCUS_MODE and (
+            path.startswith("/watch/") or path in ("/agency", "/agency/start")
+            or path == "/unlock-code" or path.startswith("/api/v1/")
+        ):
+            return self._html(410, report.focus_coming_soon())
 
         if method == "GET":
             if not _rate_ok("get_min", self._client_ip()):
