@@ -47,12 +47,29 @@ def exists(provider_id: str) -> bool:
     return any(order.get("provider_id") == provider_id for order in all_orders())
 
 
+TEST_MARKERS = ("test", "audit", "fake", "demo")
+
+
+def _is_test_order(order: dict) -> bool:
+    provider_id = str(order.get("provider_id") or "").lower()
+    email = str(order.get("email") or "").lower()
+    if any(marker in provider_id for marker in TEST_MARKERS):
+        return True
+    if provider_id.startswith(("manual", "link:")):
+        return True
+    if email.endswith(("example.com", "example.org", "test.com", "test.local")):
+        return True
+    return False
+
+
 def summary() -> dict:
     orders = all_orders()
     paid = [order for order in orders if order.get("status") == "paid"]
-    revenue = sum(int(order.get("amount_minor") or 0) for order in paid)
+    sales = [order for order in paid if not _is_test_order(order)]
+    revenue = sum(int(order.get("amount_minor") or 0) for order in sales)
     return {
-        "orders": len(paid),
+        "orders": len(sales),
         "revenue_inr": round(revenue / 100, 2),
-        "recent": paid[-10:],
+        "test_orders": len(paid) - len(sales),
+        "recent": sales[-10:] or paid[-10:],
     }
