@@ -15,7 +15,7 @@ from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from . import agency, ai_kit, aicopilot, apikeys, config, questionnaire, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
+from . import agency, ai_kit, aicopilot, apikeys, config, guides, questionnaire, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
@@ -482,6 +482,14 @@ class Handler(BaseHTTPRequestHandler):
             match = re.fullmatch(r"/verify/([a-z0-9]{6,24})", path)
             if match:
                 return self._verify_rescan(match.group(1))
+            if path == "/guides":
+                return self._html(200, guides.index_page())
+            match = re.fullmatch(r"/guides/([a-z0-9-]{3,60})", path)
+            if match:
+                page = guides.guide_page(match.group(1))
+                if page is None:
+                    raise HTTPProblem(404, "Guide not found.")
+                return self._html(200, page)
             if path == "/trust":
                 return self._html(200, report.legal_page("trust_center"))
             if path == "/trust/questionnaire":
@@ -534,6 +542,10 @@ class Handler(BaseHTTPRequestHandler):
                     f"<url><loc>{config.BASE_URL}/compare</loc></url>"
                     f"<url><loc>{config.BASE_URL}/trust</loc></url>"
                     f"<url><loc>{config.BASE_URL}/trust/questionnaire</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/guides</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/guides/lovable-app-security</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/guides/supabase-rls-checklist</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/guides/499-report-vs-pentest</loc></url>"
                     f"<url><loc>{config.BASE_URL}/tools/headers</loc></url>"
                     f"<url><loc>{config.BASE_URL}/tools/rls</loc></url>"
                     f"<url><loc>{config.BASE_URL}/static/sample-report.html</loc></url>"
