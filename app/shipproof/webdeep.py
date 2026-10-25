@@ -137,7 +137,7 @@ def check_dns(host: str, budget: net.Budget, c: "Collector", info: dict) -> None
         return
 
     mx_data = _doh(host, "MX", budget)
-    if mx_data is None:
+    if mx_data is None or int(mx_data.get("Status", 0) or 0) != 0:
         info["dns_mx"] = -1
         c.check("dns.email", "Email authentication (SPF/DMARC)", True, "DNS-over-HTTPS unavailable, not asserted")
         return info
