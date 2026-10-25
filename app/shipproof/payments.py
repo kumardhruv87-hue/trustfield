@@ -189,11 +189,11 @@ def create_or_get_plan() -> str:
     return plan_id
 
 
-def create_subscription(scan_id: str, watch_id: str) -> str:
+def create_subscription(scan_id: str, watch_id: str) -> dict:
     """Recurring subscription checkout URL for Watch (auto-renews monthly)."""
     plan_id = create_or_get_plan()
     if not plan_id:
-        return ""
+        return {}
     payload = {
         "plan_id": plan_id,
         "total_count": 120,
@@ -204,8 +204,8 @@ def create_subscription(scan_id: str, watch_id: str) -> str:
     try:
         sub = _rzp("POST", "/v1/subscriptions", payload)
     except Exception:
-        return ""
-    return str(sub.get("short_url") or "")
+        return {}
+    return {"url": str(sub.get("short_url") or ""), "id": str(sub.get("id") or "")}
 
 
 def cancel_subscription(subscription_id: str) -> bool:
