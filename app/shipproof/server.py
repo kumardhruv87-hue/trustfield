@@ -847,15 +847,32 @@ class Handler(BaseHTTPRequestHandler):
                     pass
                 return self._json(200, {"ok": True, "left": agency.credits_left(row)})
             if path == "/watch/cancel":
-                body = self._read_json()
+                length = int(self.headers.get("Content-Length") or 0)
+                raw = self.rfile.read(length) if 0 < length <= 20_000 else b""
+                ctype = (self.headers.get("Content-Type") or "").lower()
+                is_form = "application/x-www-form-urlencoded" in ctype or "multipart/form-data" in ctype
+                if is_form:
+                    form = parse_qs(raw.decode("utf-8", "replace"))
+                    body = {key: values[0] for key, values in form.items() if values}
+                else:
+                    try:
+                        body = json.loads(raw or b"{}")
+                    except (UnicodeDecodeError, json.JSONDecodeError):
+                        body = {}
                 row = watch.by_cancel_token(str(body.get("token") or ""))
                 if row is None:
                     raise HTTPProblem(404, "That Watch link is not valid.")
-                if row.get("subscription_id") and row["subscription_id"] not in ("", "pending"):
-                    payments.cancel_subscription(row["subscription_id"])
+                subscription_id = str(row.get("subscription_id") or "")
+                if subscription_id and subscription_id not in ("", "pending"):
+                    if not payments.cancel_subscription(subscription_id):
+                        raise HTTPProblem(502, "Razorpay did not confirm the cancellation. Nothing changed - try again or email support.")
                     watch.disable_auto_renew(row["id"])
+                    if is_form:
+                        return self._redirect("/watch/manage?token=" + str(row.get("cancel_token", "")) + "&cancelled=1")
                     return self._json(200, {"ok": True, "note": "Auto-renew stopped. Access continues until the paid-through date."})
                 watch.cancel(row["id"])
+                if is_form:
+                    return self._redirect("/watch/manage?token=" + str(row.get("cancel_token", "")) + "&cancelled=1")
                 return self._json(200, {"ok": True})
             if path == "/tools/rls":
                 length = int(self.headers.get("Content-Length") or 0)
@@ -1303,12 +1320,15 @@ class Handler(BaseHTTPRequestHandler):
             event = payments.stripe_event(payload)
         if event is None:
             return self._json(200, {"ok": True, "ignored": True})
-        if not event.get("report_id"):
-            return self._json(200, {"ok": True, "ignored": "no report_id"})
         product = event.get("product") or "report"
         if product not in ("report", "watch", "agency"):
             return self._json(200, {"ok": True, "ignored": "unknown product"})
+        if product != "agency" and not event.get("report_id"):
+            return self._json(200, {"ok": True, "ignored": "no report_id"})
         if product == "agency":
+            expected_agency = int(float(config.AGENCY_INR) * 100)
+            if event.get("amount_minor") and event["amount_minor"] != expected_agency:
+                return self._json(200, {"ok": True, "ignored": "amount mismatch"})
             row = agency.create(event.get("email", ""), event.get("agency_name", ""), 10)
             try:
                 emailer.send_agency_welcome(row)
