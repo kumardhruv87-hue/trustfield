@@ -85,9 +85,14 @@ def _is_paid(record: dict) -> bool:
 
 
 def _recent_scans(limit: int = 60) -> list[dict]:
-    if not config.SCANS_DIR.exists():
-        return []
-    files = sorted(config.SCANS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]
+    files = sorted(config.SCANS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit] if config.SCANS_DIR.exists() else []
+    if not files:
+        try:
+            store.hydrate_from_cloud(limit)
+        except Exception:
+            pass
+        if config.SCANS_DIR.exists():
+            files = sorted(config.SCANS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]
     out: list[dict] = []
     for path in files:
         try:
@@ -1328,6 +1333,11 @@ def make_server(host: str = config.HOST, port: int = config.PORT) -> ThreadingHT
         storage.ensure_bucket()
         indexstore.hydrate()
         usage.hydrate()
+        try:
+            import threading as _threading
+            _threading.Thread(target=store.hydrate_from_cloud, kwargs={"limit": 60}, daemon=True).start()
+        except Exception:
+            pass
     except Exception:
         pass
     if os.environ.get("SHIPPROOF_RETENTION_RUNNER", "1") != "0":
