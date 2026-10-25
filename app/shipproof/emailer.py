@@ -284,3 +284,12 @@ def send_agency_welcome(agency_row: dict) -> dict:
         "10 reports per pack. Reports are informational, not a penetration test.",
     )
     return send(email, f"{config.BRAND} agency pack - your code", html)
+
+
+def send_alert(title: str, message: str, link: str = "") -> dict:
+    """Operator alert fallback (no Slack configured). Sent to the contact inbox."""
+    import html as _html
+    body = _html.escape(message or "")
+    html = _shell(title, body, f'<p style="font-size:13px"><a href="{_html.escape(link)}">{_html.escape(link)}</a></p>' if link else "",
+                  "Open admin", f"{config.BASE_URL}/admin", "Automated alert from Trustfield.")
+    return send(config.CONTACT_EMAIL, f"[Trustfield alert] {title}", html)
