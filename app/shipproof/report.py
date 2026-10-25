@@ -583,6 +583,7 @@ def public_index_page(data: dict) -> str:
         _template("public_index.html"),
         {
             "BRAND": esc(config.BRAND),
+            "BASE_URL": config.BASE_URL,
             "SCANS": int(data.get("scans", 0)),
             "BETA_NOTE": "The index is live; it gets more useful with every scan." if int(data.get("scans", 0)) >= 25 else "The index stays in beta until 25 scans.",
             "UPDATED": esc(str(data.get("updated", ""))[:10] or "just now"),
