@@ -179,6 +179,8 @@ def _iter_text_files(zip_bytes: bytes) -> tuple[dict[str, str], dict]:
                 stats["skipped_demo"] = stats.get("skipped_demo", 0) + 1
                 continue
             if not rel or any(p in SKIP_DIRS for p in parts[:-1]):
+                if any(part in ("tests", "test", "__tests__", "spec", "specs") for part in parts[:-1]):
+                    stats["has_tests"] = True
                 continue
             if info.file_size > config.MAX_FILE_BYTES:
                 stats["skipped_large"] += 1
@@ -833,14 +835,15 @@ def _check_python_dependencies(files: dict[str, str], c: Collector) -> None:
         _add_cve_findings(deps, c)
 
 
-def _check_tests(files: dict[str, str], c: Collector, package_info: dict) -> None:
+def _check_tests(files: dict[str, str], c: Collector, package_info: dict, hint: bool = False) -> None:
     test_files = [
         rel
         for rel in files
         if re.search(r"(?:\.(?:test|spec)\.(?:[jt]sx?|py|rb|php|go)$)|(?:^|/)(?:tests?|__tests__)/", rel)
     ]
-    if package_info.get("has_test_script") or test_files:
-        c.check("repo.tests", "Test files present", True, f"{len(test_files)} test file(s)")
+    if package_info.get("has_test_script") or test_files or hint:
+        c.check("repo.tests", "Test files present", True,
+                f"{len(test_files)} test file(s)" if test_files else "test directory present")
     else:
         c.fail(
             "repo.tests",
@@ -949,7 +952,7 @@ def scan_repo(
     _check_cors(files, collector)
     _check_patterns(files, collector)
     package_info = _check_package(files, collector)
-    _check_tests(files, collector, package_info)
+    _check_tests(files, collector, package_info, bool(stats.get("has_tests")))
     extra_info: dict = {}
     repoextra.check_all(files, collector, extra_info)
 
