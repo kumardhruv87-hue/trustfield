@@ -179,9 +179,11 @@ def _iter_text_files(zip_bytes: bytes) -> tuple[dict[str, str], dict]:
             if any(part in ("fixtures", "fixture", "__fixtures__", "examples", "example", "demos", "demo") for part in parts[:-1]):
                 stats["skipped_demo"] = stats.get("skipped_demo", 0) + 1
                 continue
-            # Test code intentionally contains vulnerable fixtures (fake keys, eval,
-            # disabled TLS). It is not shipped, so scanning it creates false criticals.
-            if any(part in ("tests", "test", "__tests__", "spec", "specs") for part in parts[:-1]):
+            # Plain test code contains vulnerable fixtures by design: skip it, but keep
+            # tests/fixtures/... (the scanner's own fixture apps live there).
+            is_test = any(part in ("tests", "test", "__tests__", "spec", "specs") for part in parts[:-1])
+            is_fixture = any(part in ("fixtures", "fixture", "__fixtures__", "examples", "example") for part in parts[:-1])
+            if is_test and not is_fixture:
                 stats["has_tests"] = True
                 continue
             if not rel or any(p in SKIP_DIRS for p in parts[:-1]):
