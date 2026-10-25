@@ -4,6 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Status · {{BRAND}}</title>
+  <meta property="og:title" content="{{BRAND}} — independent security review for AI-built apps">
+  <meta property="og:description" content="Free scan for leaked keys, open database rules and broken webhooks. Evidence + fixes + PDF for ₹499.">
+  <meta property="og:image" content="{{BASE_URL}}/static/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+
   <meta name="description" content="Current status and known incidents for Trustfield.">
   <link rel="canonical" href="{{BASE_URL}}/status">
   <link rel="stylesheet" href="/static/style.css">
@@ -30,6 +35,6 @@
 <h2>Uptime expectations</h2>
 <p>Trustfield runs on a small stack and does not promise a 24/7 hotline or an SLA. Scans are queued and rate-limited; if the site sleeps, the first request may take up to a minute. If something is broken, email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> and we will say what happened.</p>
   </main>
-  <footer class="site-foot"><div class="wrap"><div class="foot-legal"><span>© {{{{YEAR}}}} {{{{BRAND}}}} · Independent security review for AI-built apps</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:{{{{CONTACT_EMAIL}}}}">{{{{CONTACT_EMAIL}}}}</a></span></div></div></footer>
+  <footer class="site-foot"><div class="wrap"><div class="foot-legal"><span>© {{YEAR}} {{BRAND}} · Independent security review for AI-built apps</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a></span></div></div></footer>
 </body>
 </html>
