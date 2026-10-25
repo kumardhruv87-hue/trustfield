@@ -794,7 +794,7 @@ def admin_login_page(error: str = "") -> str:
 <main class="wrap narrow" style="max-width:420px;margin:12vh auto">
   <a class="brand" href="/" style="text-decoration:none"><span>{esc(config.BRAND)}</span></a>
   <h1 style="margin-top:18px">Admin login</h1>
-  <p class="muted">Operator access only. Password is set in Render as <code>SHIPPROOF_ADMIN_PASSWORD</code> (falls back to the admin token).</p>
+  <p class="muted">Operator access only.</p>
   {note}
   <form method="post" action="/admin/login" style="display:grid;gap:12px;margin-top:18px">
     <input name="password" type="password" autocomplete="current-password" placeholder="Admin password" required
