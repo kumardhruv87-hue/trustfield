@@ -781,3 +781,25 @@ def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, w
             "YEAR": config.now().year,
         },
     )
+
+
+def admin_login_page(error: str = "") -> str:
+    note = f'<p class="note" style="background:#fef2f2;border-color:#fecaca;color:#991b1b">{esc(error)}</p>' if error else ""
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin login · {esc(config.BRAND)}</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/static/style.css">
+</head><body class="report-body">
+<main class="wrap narrow" style="max-width:420px;margin:12vh auto">
+  <a class="brand" href="/" style="text-decoration:none"><span>{esc(config.BRAND)}</span></a>
+  <h1 style="margin-top:18px">Admin login</h1>
+  <p class="muted">Operator access only. Password is set in Render as <code>SHIPPROOF_ADMIN_PASSWORD</code> (falls back to the admin token).</p>
+  {note}
+  <form method="post" action="/admin/login" style="display:grid;gap:12px;margin-top:18px">
+    <input name="password" type="password" autocomplete="current-password" placeholder="Admin password" required
+           style="height:52px;border:1px solid #d7dce3;border-radius:12px;padding:0 14px;font:inherit">
+    <button class="btn primary" type="submit" style="height:48px">Log in</button>
+  </form>
+  <p class="fine" style="margin-top:18px"><a href="/">← Back to site</a></p>
+</main></body></html>"""
