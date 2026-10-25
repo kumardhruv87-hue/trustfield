@@ -38,6 +38,7 @@
         <p class="verdict">{{VERDICT}}</p>
         <p class="fine">{{CHECKS_RUN}} checks run · {{CHECKS_PASSED}} passed</p>
         <p class="mode-note">{{MODE_NOTE}}</p>
+        {{VERIFY_BANNER}}
       </div>
     </div>
 
@@ -89,6 +90,7 @@
 
     <div class="report-actions">
       {{PDF_BUTTON}}
+      {{RESCAN_LINK}}
       <button class="btn print-btn" type="button">Print / Save as PDF</button>
       <a class="btn ghost" href="/#scan">Scan another app</a>
       <a class="btn ghost" href="/t/{{SCAN_ID}}">Proof page</a>
