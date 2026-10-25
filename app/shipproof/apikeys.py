@@ -35,7 +35,7 @@ def _hash(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
-def create(name: str) -> str:
+def create(name: str, webhook_url: str = "") -> str:
     raw = "tf_" + secrets.token_urlsafe(24)
     rows = load()
     rows.append({
@@ -46,6 +46,9 @@ def create(name: str) -> str:
         "calls": 0,
         "last_used": "",
         "revoked": False,
+        "webhook_url": (webhook_url or "")[:400],
+        "webhook_status": "",
+        "webhook_last_at": "",
     })
     save(rows)
     return raw
@@ -80,5 +83,16 @@ def revoke(prefix: str) -> bool:
 
 def public_list() -> list[dict]:
     return [{"name": r.get("name"), "prefix": r.get("prefix"), "calls": r.get("calls", 0),
+             "webhook_url": r.get("webhook_url", ""), "webhook_status": r.get("webhook_status", ""),
              "created_at": r.get("created_at"), "last_used": r.get("last_used"), "revoked": r.get("revoked", False)}
             for r in load()]
+
+
+def set_webhook_result(prefix: str, status: str) -> None:
+    rows = load()
+    for row in rows:
+        if row.get("prefix") == prefix:
+            row["webhook_status"] = (status or "")[:120]
+            row["webhook_last_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+            save(rows)
+            return
