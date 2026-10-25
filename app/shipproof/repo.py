@@ -13,7 +13,7 @@ import zipfile
 from dataclasses import dataclass, field
 from typing import Iterable
 
-from . import config, net, repoextra, secrets
+from . import config, osv, net, repoextra, secrets
 from .findings import Finding, dedupe
 
 # --------------------------------------------------------------------------
@@ -771,9 +771,56 @@ def _check_package(files: dict[str, str], c: Collector) -> dict:
     else:
         c.check("repo.dependencies", "Dependencies pinned and current", True)
 
+    runtime = data.get("dependencies") or {}
+    dep_inputs = []
+    for name, version in list(runtime.items())[:40]:
+        cleaned = re.sub(r"^[^0-9]*", "", str(version)).split(" ")[0]
+        if cleaned[:1].isdigit():
+            dep_inputs.append({"name": name, "version": cleaned, "ecosystem": "npm"})
+    _add_cve_findings(dep_inputs, c)
     scripts = data.get("scripts") or {}
     info["has_test_script"] = bool(scripts.get("test"))
     return info
+
+
+def _add_cve_findings(dep_inputs: list[dict], c: Collector) -> None:
+    if not dep_inputs:
+        return
+    vulns = osv.collect(osv.query(dep_inputs), dep_inputs)
+    if not vulns:
+        c.check("repo.cve_dependencies", "No known CVEs in dependencies", True, f"{len(dep_inputs)} checked")
+        return
+    worst = max(vulns, key=lambda v: {"critical": 4, "high": 3, "medium": 2, "low": 1}.get(v["severity"], 2))
+    evidence = "; ".join(
+        f"{v['package']}@{v['version']} {v['id']}" + (f" (fix {v['fixed']})" if v["fixed"] else "")
+        for v in vulns[:5]
+    )
+    c.add(
+        Finding(
+            id="repo.cve_dependencies",
+            title=f"Known vulnerabilities in {len({v['package'] for v in vulns})} dependency package(s)",
+            severity=worst["severity"] if worst["severity"] in ("critical", "high", "medium") else "medium",
+            category="Dependencies",
+            why="These package versions have public CVEs. AI builders often pin whatever version was in their training data, and scanners that only check your own code miss this.",
+            fix="Upgrade the listed packages to the fixed version (or latest), run your build and tests, then re-scan. Use `npm audit` / `pip-audit` for the full list.",
+            evidence=evidence,
+            effort="1 h",
+            confidence="high",
+            ref=f"https://osv.dev/vulnerability/{vulns[0]['id']}" if vulns[0]["id"] else "",
+        )
+    )
+
+
+
+def _check_python_dependencies(files: dict[str, str], c: Collector) -> None:
+    raw = files.get("requirements.txt") or next(
+        (text for rel, text in files.items() if rel.endswith("requirements.txt") and rel.count("/") <= 1), ""
+    )
+    if not raw:
+        return
+    deps = osv.parse_requirements(raw)
+    if deps:
+        _add_cve_findings(deps, c)
 
 
 def _check_tests(files: dict[str, str], c: Collector, package_info: dict) -> None:
