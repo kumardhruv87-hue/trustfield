@@ -16,6 +16,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from . import agency, ai_kit, aicopilot, apikeys, config, guides, questionnaire, vs, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
+from . import storage
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
@@ -1401,4 +1402,3 @@ def main() -> None:
         print("\n  bye")
     finally:
         server.server_close()
-
