@@ -461,6 +461,13 @@ def report_page(record: dict) -> str:
             "KIT": kit_block,
             "KIT_NOTE": esc(kit_note),
             "PDF_BUTTON": pdf_block,
+            "RESCAN_LINK": (f'<a class="btn" href="/verify/{esc(record.get("id",""))}">Re-scan and verify fixes</a>' if paid else ""),
+            "VERIFY_BANNER": (
+                f'<div class="note" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46">'
+                f'Re-scan verified: <strong>{int(record.get("fixed_count", 0))}</strong> previous finding(s) no longer appear, '
+                f'<strong>{int(record.get("new_count", 0))}</strong> new. Compared with scan '
+                f'<a href="/r/{esc(record.get("verified_against"))}">{esc(record.get("verified_against"))}</a>.</div>'
+            ) if record.get("verified_against") else "",
             "PREPARED_FOR": (
                 f'<p class="fine" style="color:#0f766e">Prepared for <strong>{esc(record.get("prepared_for"))}</strong>'
                 + (f' — handover by {esc(record.get("agency_name"))}' if record.get("agency_name") else "")
@@ -558,6 +565,7 @@ def public_index_page(data: dict) -> str:
         {
             "BRAND": esc(config.BRAND),
             "SCANS": int(data.get("scans", 0)),
+            "BETA_NOTE": "The index is live; it gets more useful with every scan." if int(data.get("scans", 0)) >= 25 else "The index stays in beta until 25 scans.",
             "UPDATED": esc(str(data.get("updated", ""))[:10] or "just now"),
             "ROWS": rows or '<tr><td colspan="3" class="muted">Not enough scans yet. Be the first.</td></tr>',
             "PLATFORMS": platforms or '<li class="muted">No platform data yet.</li>',
