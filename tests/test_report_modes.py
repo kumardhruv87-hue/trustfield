@@ -44,6 +44,7 @@ def make_record(count: int = 6) -> dict:
 
 
 class FreeReportTests(unittest.TestCase):
+    @mock.patch.object(config, "FOCUS_MODE", False)
     def test_free_mode_shows_everything(self):
         record = make_record()
         with mock.patch.object(config, "FREE_REPORTS", True):
