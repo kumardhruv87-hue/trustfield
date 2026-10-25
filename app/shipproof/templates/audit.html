@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit your AI-built app in 60 seconds · {{BRAND}}</title>
+<meta name="description" content="Free 60-second scan for leaked OpenAI/Stripe keys, open Supabase RLS tables and leaky CORS. Evidence + exact fix + PDF for ₹{{PRICE_INR}}.">
+<link rel="canonical" href="{{BASE_URL}}/audit">
+<meta property="og:title" content="Find critical security leaks in your AI-built app in 60 seconds">
+<meta property="og:description" content="Free passive scan. Evidence, paste-back fixes and PDF for ₹{{PRICE_INR}}.">
+<meta property="og:image" content="{{BASE_URL}}/static/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/static/audit.css">
+</head><body>
+<div class="bg"></div>
+<header class="nav"><a class="logo" href="/">{{BRAND}}</a><a class="nav-cta" href="#scan">Run free scan</a></header>
+<main>
+  <section class="hero">
+    <span class="eyebrow">● Passive scan · no login · 60 seconds</span>
+    <h1>Find &amp; patch critical security leaks in your <span>AI-built app</span> in 60 seconds</h1>
+    <p class="sub">Scans exposed OpenAI/Stripe tokens, open Supabase RLS policies and leaky CORS — before your launch goes public. Built for Cursor, Bolt, Lovable and v0 builders.</p>
+    <form id="scan-form" class="scanbar" action="#" method="post">
+      <input id="scan-target" name="target" placeholder="App URL or GitHub repo" autocomplete="off" required>
+      <button type="submit" id="scan-btn">Run Instant Safety Scan (Free)</button>
+    </form>
+    <p id="scan-status" class="status" hidden></p>
+    <ul class="badges"><li>Zero setup required</li><li>Non-intrusive passive scan</li><li>Scanned in 60s</li></ul>
+    <p class="micro">No card for the scan. The full report is ₹{{PRICE_INR}} one-time — refund if a finding is wrong.</p>
+  </section>
+
+  <section class="pain">
+    <div class="pain-card"><strong>₹1.7 lakh+</strong><span>A leaked OpenAI key can burn your card overnight.</span></div>
+    <div class="pain-card"><strong>#1 mistake</strong><span>Supabase tables readable with the public anon key.</span></div>
+    <div class="pain-card"><strong>Client handover</strong><span>Dated report with evidence before you share a demo link.</span></div>
+  </section>
+
+  <section class="pricing" id="pricing">
+    <h2>Full remediation report</h2>
+    <p class="price">₹{{PRICE_INR}} <span>one-time</span></p>
+    <ul class="deliverables">
+      <li>✓ Full vulnerability breakdown (PDF)</li>
+      <li>✓ Exact evidence for every finding</li>
+      <li>✓ Copy-paste Supabase RLS fix script</li>
+      <li>✓ Paste-back AI builder prompt + action plan</li>
+    </ul>
+    <p class="micro">UPI (GPay · PhonePe · Paytm) · Cards · Netbanking via Razorpay</p>
+    <a class="cta" href="#scan">Scan first — free</a>
+  </section>
+
+  <section class="faq">
+    <h2>Quick answers</h2>
+    <details><summary>Is this a penetration test?</summary><p>No. It is a passive external review: public pages, headers, JS bundles and (optionally) a public repo. Honest limits, no exploitation.</p></details>
+    <details><summary>What is free?</summary><p>Your score and every issue title. The paid report adds evidence, the exact fix, a copy-paste prompt and a PDF.</p></details>
+    <details><summary>What if a finding is wrong?</summary><p>We refund that report. See the refund policy.</p></details>
+  </section>
+</main>
+<footer><p>© {{YEAR}} {{BRAND}} · Independent security review for AI-built apps. Not a penetration test or a certification.</p></footer>
+<script src="/static/audit.js"></script>
+</body></html>
