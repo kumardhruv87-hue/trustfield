@@ -82,9 +82,11 @@ def _bump_usage() -> None:
 def ask(record: dict, question: str) -> dict:
     if not config.DEEPSEEK_API_KEY:
         return {"ok": False, "error": "The AI copilot is not configured yet."}
-    if _used_today() >= config.AI_DAILY_LIMIT:
-        return {"ok": False, "error": "The copilot reached today's limit. Try again tomorrow or email support."}
-    _bump_usage()
+    try:
+        if not usage.reserve("ai_attempts", config.AI_DAILY_LIMIT):
+            return {"ok": False, "error": "The copilot reached today's limit. Try again tomorrow or email support."}
+    except OSError:
+        return {"ok": False, "error": "The copilot is temporarily unavailable. Your report and fix prompts still work."}
     question = _clip(question, 600)
     body = {
         "model": config.DEEPSEEK_MODEL,

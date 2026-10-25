@@ -7,7 +7,7 @@ import html
 import re
 from pathlib import Path
 
-from . import config, sign
+from . import config, sign, usage
 from .findings import SEVERITY_COLOR, SEVERITY_LABEL, Finding, sort_findings
 
 BACKTICK_RE = re.compile(r"`([^`]{1,120})`")
@@ -330,6 +330,24 @@ def focus_coming_soon() -> str:
 </main></body></html>"""
 
 
+def checkout_page(record: dict, error: str = "") -> str:
+    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Your Fix &amp; Handover Report · {esc(config.BRAND)}</title>
+<link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/landing.css"></head>
+<body class="landing-v2 legal-page"><main class="legal-doc wrap" style="max-width:600px">
+<a class="logo" href="/">{esc(config.BRAND)}</a><h1>Get your fix report.</h1>
+<p>₹{esc(config.PRICE_INR)} once · no subscription</p><p class="fine">For {esc(record.get("target"))}</p>
+<ul><li>Evidence and prioritized fix instructions</li><li>Copy-paste prompts for your AI builder</li><li>Downloadable PDF and one re-check within 30 days</li></ul>
+<p>Where should we send your report link?</p><p role="alert">{esc(error)}</p>
+<form method="post" action="/checkout/{esc(record.get('id'))}">
+<label class="field"><span>Email for your report</span><input type="email" name="email" required maxlength="200" autocomplete="email" placeholder="you@example.com"></label>
+<button class="btn primary big" type="submit">Continue to Razorpay — ₹{esc(config.PRICE_INR)}</button></form>
+<p class="fine">UPI or card. Payment details stay with Razorpay. We send service emails, not marketing subscriptions.</p>
+<p class="fine"><a href="/refund">7-day refund policy</a> · <a href="/privacy">Privacy</a> · <a href="mailto:{esc(config.CONTACT_EMAIL)}">Need help?</a></p>
+<p><a href="/r/{esc(record.get('id'))}">Back to my free results</a></p></main></body></html>'''
+
+
 def teaser_html(findings: list) -> str:
     """Free scan: every issue is visible as a title + severity. Evidence and fix are paid."""
     items = [_as_finding(f) for f in findings]
@@ -424,12 +442,12 @@ def report_page(record: dict) -> str:
         lock_block = f"""
         <div class="locked">
           <div class="lock-icon">🔒</div>
-          <h3>You can see every issue. Unlock the fixes.</h3>
+          <h3>Unlock the fixes. Know what to give your AI builder.</h3>
           <p>The free scan gives you the score and all {len(findings)} issue titles.
              The paid report adds the evidence for each one, the plain-English fix,
-             the copy-paste fix prompt and the PDF report.</p>
-          <a class="btn primary" href="{esc(pay_url)}" target="_blank" rel="noopener">
-            Get the full report - ₹{esc(config.PRICE_INR)} / ${esc(config.PRICE_USD)}
+             the copy-paste fix prompt, a PDF and one verification re-check.</p>
+          <a class="btn primary" href="{esc(pay_url)}">
+            Get my Fix &amp; Handover Report — ₹{esc(config.PRICE_INR)}
           </a>
           <p class="fine">One-time payment. No subscription. Report link stays live for 30 days.</p>
           <div class="agency-unlock">
@@ -440,6 +458,10 @@ def report_page(record: dict) -> str:
             <p class="fine hidden" id="agency-note"></p>
           </div>
         </div>"""
+        if config.FOCUS_MODE:
+            lock_block = re.sub(r'<div class="agency-unlock">.*?</div>', '', lock_block, flags=re.S)
+        if not findings:
+            lock_block = '<div class="note"><h3>No fixes to buy from this scan.</h3><p>No issues were found in the checks we ran. Keep your free result and check again after changes. Logged-in flows and hidden server logic still need a separate review.</p></div>'
         kit_block = kit_html(record, unlocked=True)
         kit_note = "Free for everyone: paste each prompt into your own app's chat, then paste the reply back to grade it."
         pdf_block = ""
@@ -471,6 +493,7 @@ def report_page(record: dict) -> str:
             + risk_card(score.get("breach_risk") or {}, "Data risk"),
             "FINDINGS": findings_block,
             "LOCK": lock_block,
+            "KIT_SECTION": ('<section class="block"><h2>Guided chatbot checks</h2><p class="muted">You run these prompts against your own chatbot. They are not automatic tests.</p>' + kit_block + '</section>') if record.get("has_ai") else "",
             "KIT": kit_block,
             "KIT_NOTE": esc(kit_note),
             "PDF_BUTTON": pdf_block,
@@ -478,7 +501,7 @@ def report_page(record: dict) -> str:
             "AI_PLAN": (
                 f'<section class="block ai-plan"><h2>Your action plan (AI)</h2><p>{esc(record.get("ai_plan")).replace(chr(10), "<br>")}</p><p class="fine">Generated from this report only. Not a guarantee.</p></section>'
             ) if record.get("ai_plan") else "",
-            "RESCAN_LINK": (f'<a class="btn" href="/verify/{esc(record.get("id",""))}">Re-scan and verify fixes</a>' if paid else ""),
+            "RESCAN_LINK": (f'<a class="btn" href="/verify/{esc(record.get("id",""))}">{"View your re-check" if record.get("verification_scan_id") else "Re-check after fixes (included)"}</a>' if paid and not record.get("verified_against") else ""),
             "VERIFY_BANNER": (
                 f'<div class="note" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46">'
                 f'Re-scan verified: <strong>{int(record.get("fixed_count", 0))}</strong> previous finding(s) no longer appear, '
@@ -764,6 +787,8 @@ def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, w
             "SCAN_COUNT": len(scans),
             "PAID_COUNT": int(revenue.get("orders", 0)),
             "REVENUE": esc(f"{revenue.get('revenue_inr', 0):,.0f}"),
+            "FUNNEL_ROWS": "".join(f'<tr><td>{esc(row["source"])}</td><td>{row["visit"]}</td><td>{row["scan_complete"]}</td><td>{row["checkout"]}</td><td>{row["purchase"]}</td></tr>' for row in usage.funnel_summary()),
+            "TEST_ORDERS": int(revenue.get("test_orders", 0)),
             "INDEX_SCANS": int(index_data.get("scans", 0)),
             "ROWS": rows or '<tr><td colspan="7" class="muted">No scans yet.</td></tr>',
             "SCANS_MONTH": scans_month,

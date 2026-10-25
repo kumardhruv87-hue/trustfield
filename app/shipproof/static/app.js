@@ -58,6 +58,18 @@
   /* â”€â”€ landing page scanner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   var form = $("#scan-form");
   if (form) {
+    var acquisitionSource = "direct";
+    try {
+      var campaign = new URLSearchParams(window.location.search).get("utm_source");
+      acquisitionSource = campaign || sessionStorage.getItem("tf_source") || "direct";
+      acquisitionSource = acquisitionSource.toLowerCase();
+      if (["direct", "google", "linkedin", "youtube", "x", "community"].indexOf(acquisitionSource) < 0) acquisitionSource = "other";
+      sessionStorage.setItem("tf_source", acquisitionSource);
+    } catch (e) {}
+    function track(event) {
+      postJSON("/api/events", { event: event, source: acquisitionSource }).catch(function () {});
+    }
+    track("visit");
     var kind = "url";
     var statusBox = $("#scan-status");
     var resultBox = $("#scan-result");
@@ -103,7 +115,7 @@
       "Reading your public pages…",
       "Scanning your JavaScript bundle for keys…",
       "Probing for exposed .env / .git files…",
-      "Checking database rules and rate limits…",
+      "Checking public exposure signals…",
       "Scoring what we found…"
     ];
     var timer = null;
@@ -126,6 +138,7 @@
     }
 
     function showError(message) {
+      track("scan_error");
       stopProgress();
       statusBox.className = "scan-status error";
       statusBox.textContent = message;
@@ -134,10 +147,6 @@
 
     function payLinkFor(id) {
       return "/pay/" + encodeURIComponent(id);
-      var base = meta("sp-pay");
-      if (!base) return "";
-      var sep = base.indexOf("?") === -1 ? "?" : "&";
-      return base + sep + "ref=" + encodeURIComponent(id || "");
     }
 
     function renderResult(data) {
@@ -174,15 +183,15 @@
         (actions ? '<h4>Fix these first</h4><ol class="actions">' + actions + "</ol>" : "") +
         (preview ? '<div class="mini-finding-grid">' + preview + "</div>" : "") +
         '<div class="result-cta">' +
-          '<a class="btn primary" href="' + esc(data.report_url || "#") + '">Open full report</a>' +
-          (locked
-            ? '<a class="btn ghost unlock-btn" href="' + esc(unlockHref) + '" target="_blank" rel="noopener">Unlock everything — ₹' +
-              esc(priceINR) + " / $" + esc(priceUSD) + "</a>"
+          '<a class="btn primary" href="' + esc(data.report_url || "#") + '">View my results</a>' +
+          (locked && Number(data.total) > 0
+            ? '<a class="btn ghost unlock-btn" href="' + esc(unlockHref) + '">Get fixes + PDF + re-check — ₹' +
+              esc(priceINR) + "</a>"
             : "") +
         "</div>" +
         '<p class="fine">' +
           (locked
-            ? "Free scan: score + every issue title. The full report adds the evidence, the exact fix, the fix prompt and the PDF report."
+            ? (Number(data.total) > 0 ? "Your results are free. Optional ₹" + esc(priceINR) + " report: evidence, fix prompts, PDF and one re-check. No subscription." : "No issues found in these checks. No fixes to buy. View your free results and the limits of this scan.")
             : "Full report unlocked.") +
         "</p>");
 
@@ -213,6 +222,12 @@
         consentInput.focus();
         return;
       }
+      if (emailInput && emailInput.value && !emailInput.validity.valid) {
+        showError("Enter a valid email address, or leave email blank.");
+        emailInput.focus();
+        return;
+      }
+      track("scan_start");
       submitBtn.disabled = true;
       submitBtn.textContent = "Scanning…";
       resultBox.classList.add("hidden");
@@ -220,6 +235,7 @@
 
       postJSON("/api/scan", {
         kind: kind,
+        source: acquisitionSource,
         target: target,
         has_ai: !!(aiInput && aiInput.checked),
         email: (emailInput && emailInput.value || "").trim(),
@@ -348,14 +364,24 @@
   try {
     var q = new URLSearchParams(window.location.search);
     if (q.get("paid") !== "1") return;
-    var scan = meta("sp-scan");
-    if (!scan || meta("sp-unlocked")) return;
+    var scanTag = document.querySelector('meta[name="sp-scan"]');
+    var paidTag = document.querySelector('meta[name="sp-unlocked"]');
+    var scan = scanTag && scanTag.content;
+    if (!scan || (paidTag && paidTag.content)) return;
+    var notice = document.createElement("p");
+    notice.className = "note";
+    notice.textContent = "Confirming your payment. This page will update when your report is ready…";
+    var report = document.querySelector("main");
+    if (report) report.insertBefore(notice, report.firstChild);
     var tries = 0;
     var timer = setInterval(function () {
       tries += 1;
       fetch("/api/scan/" + encodeURIComponent(scan)).then(function (r) { return r.json(); }).then(function (d) {
         if (d && d.locked === false) { clearInterval(timer); window.location.reload(); }
-        else if (tries >= 24) { clearInterval(timer); }
+        else if (tries >= 24) {
+          clearInterval(timer);
+          notice.textContent = "Payment confirmation is taking longer than usual. Keep your payment ID and email support using the contact in the report. You do not need to pay again.";
+        }
       }).catch(function () {});
     }, 2500);
   } catch (e) {}

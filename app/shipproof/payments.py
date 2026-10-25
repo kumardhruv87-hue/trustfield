@@ -55,12 +55,12 @@ def razorpay_event(payload: dict) -> dict | None:
         return {
             "provider": "razorpay",
             "event": event,
-            "provider_id": str(entity.get("id") or ""),
+            "provider_id": str((((wrapper.get("payment") or {}).get("entity")) or {}).get("id") or entity.get("id") or ""),
             "email": str(notes.get("email") or (entity.get("customer") or {}).get("email") or "").strip().lower()[:200],
-            "amount_minor": int(entity.get("amount_paid") or entity.get("amount") or 0),
+            "amount_minor": int(entity.get("amount_paid") or 0),
             "currency": str(entity.get("currency") or "INR").upper(),
             "product": str(notes.get("product") or "report").lower(),
-            "report_id": _safe_report_id(str(notes.get("report_id") or "")),
+            "report_id": _safe_report_id(str(notes.get("report_id") or entity.get("reference_id") or "")),
             "watch_id": str(notes.get("watch_id") or "")[:40],
             "agency_name": str(notes.get("agency_name") or "")[:80],
         }
@@ -118,6 +118,11 @@ def create_payment_link(scan_id: str, amount_inr: int) -> str:
         "callback_url": f"{config.BASE_URL}/r/{scan_id}?paid=1",
         "callback_method": "get",
     }
+    from . import store
+    record = store.load_scan(scan_id) or {}
+    if record.get("email"):
+        payload["customer"] = {"email": record["email"]}
+        payload["notes"]["email"] = record["email"]
     request = _url.Request(
         "https://api.razorpay.com/v1/payment_links",
         data=_json.dumps(payload).encode(),
@@ -304,8 +309,10 @@ def find_paid_link(scan_id: str) -> dict | None:
     except Exception:
         return None
     for item in data.get("items") or []:
-        if str(item.get("status")) == "paid":
-            notes = item.get("notes") or {}
+        notes = item.get("notes") or {}
+        matches = str(item.get("reference_id") or notes.get("report_id") or "") == scan_id
+        correct_amount = int(item.get("amount_paid") or 0) == int(float(config.PRICE_INR) * 100)
+        if str(item.get("status")) == "paid" and matches and correct_amount and item.get("currency") == "INR":
             customer = item.get("customer") or {}
             return {"id": str(item.get("id") or ""), "email": str(notes.get("email") or customer.get("email") or "").strip().lower()}
     return None

@@ -35,7 +35,7 @@ def save_scan(record: dict) -> str:
     config.ensure_dirs()
     scan_id = record["id"]
     target = _path(scan_id)
-    tmp = target.with_suffix(f".{os.getpid()}.tmp")
+    tmp = target.with_suffix(f".{_secrets.token_hex(8)}.tmp")
     payload = json.dumps(record, ensure_ascii=False, indent=None)
     tmp.write_text(payload, encoding="utf-8")
     os.replace(tmp, target)
@@ -115,9 +115,12 @@ def purge_old(days: int = 30) -> int:
             when = path.stat().st_mtime
             try:
                 record = json.loads(path.read_text(encoding="utf-8"))
-                created = str(record.get("created_at") or record.get("expires_at") or "")[:19]
+                created = str(record.get("created_at") or "")
                 if created:
-                    when = datetime.datetime.fromisoformat(created).replace(tzinfo=datetime.timezone.utc).timestamp()
+                    stamp = datetime.datetime.fromisoformat(created)
+                    if stamp.tzinfo is None:
+                        stamp = stamp.replace(tzinfo=datetime.timezone.utc)
+                    when = stamp.timestamp()
             except (OSError, ValueError, TypeError):
                 pass
             if when < cutoff:
@@ -128,13 +131,19 @@ def purge_old(days: int = 30) -> int:
     if storage.enabled():
         cutoff_iso = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(cutoff))
         stale = []
-        for item in storage.list_prefix("scans/"):
-            created = str(item.get("created_at") or "")
-            if created and created[:19] < cutoff_iso:
-                stale.append("scans/" + str(item.get("name") or ""))
+        offset = 0
+        while True:
+            batch = storage.list_prefix("scans/", limit=1000, offset=offset)
+            for item in batch:
+                created = str(item.get("created_at") or "")
+                if created and created[:19] < cutoff_iso:
+                    stale.append("scans/" + str(item.get("name") or ""))
+            if len(batch) < 1000:
+                break
+            offset += len(batch)
         if stale:
-            storage.delete_many(stale)
-            removed += len(stale)
+            if storage.delete_many(stale):
+                removed += len(stale)
     return removed
 
 

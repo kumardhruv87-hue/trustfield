@@ -3,431 +3,108 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Free security scan for AI-built apps · {{BRAND}}</title>
-  <meta name="description" content="Free security scan for AI-built web apps: leaked keys, open database rules, broken payment webhooks and AI prompt injection. Fix-ready report ₹{{PRICE_INR}}.">
-  <meta name="theme-color" content="#ffffff">
+  <title>Know what to fix before you launch your AI-built app · {{BRAND}}</title>
+  <meta name="description" content="Built with Lovable, Bolt or Cursor? Check your public app for exposed keys and common security mistakes. Free results. Evidence, fix prompts, PDF and one re-check for ₹{{PRICE_INR}}.">
+  <meta name="theme-color" content="#0f766e">
   <link rel="canonical" href="{{BASE_URL}}/">
-
-  <meta property="og:title" content="{{BRAND}} — free security scan for AI-built apps">
-  <meta property="og:description" content="Leaked keys, open database rules, broken payment webhooks, AI prompt injection. Free scan shows your score and every issue; the full report adds evidence, fixes and a PDF for ₹{{PRICE_INR}}.">
+  <meta property="og:title" content="Built with AI? Check it before your first customer.">
+  <meta property="og:description" content="Find common security mistakes. Get a fix list you can give back to your AI builder. Free check · ₹{{PRICE_INR}} Fix & Handover Report.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{BASE_URL}}/">
-  <meta property="og:site_name" content="{{BRAND}}">
   <meta property="og:image" content="{{BASE_URL}}/static/og.png">
-  <meta property="og:image:alt" content="{{BRAND}} — Trust, verified. Security review for AI-built and hand-written apps.">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{{BRAND}} — free security scan for AI-built apps">
-  <meta name="twitter:description" content="Free scan for leaked keys, open database rules, broken webhooks and prompt injection. Evidence + fixes + PDF report for ₹{{PRICE_INR}}.">
-  <meta name="twitter:image" content="{{BASE_URL}}/static/og.png">
-
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "{{BRAND}}",
-    "applicationCategory": "SecurityApplication",
-    "operatingSystem": "Web",
-    "url": "{{BASE_URL}}/",
-    "description": "Independent security and AI-safety review for apps built with AI builders (Lovable, Bolt, v0, Cursor, Replit, ChatGPT) or written by hand. Finds exposed keys, open database rules, broken payment webhooks and prompt-injection risks, in plain English.",
-    "offers": [
-      {"@type": "Offer", "name": "Free scan", "price": "0", "priceCurrency": "INR"},
-      {"@type": "Offer", "name": "Full report with evidence, fixes and PDF", "price": "{{PRICE_INR}}", "priceCurrency": "INR"}
-    ],
-    "publisher": {"@type": "Organization", "name": "{{BRAND}}", "url": "{{BASE_URL}}/", "founder": {"@type": "Person", "name": "Dhruv Kumar"}},
-    "datePublished": "2026-10-23",
-    "dateModified": "2026-10-24"
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "name": "{{BRAND}} — free security scan for AI-built apps",
-    "url": "{{BASE_URL}}/",
-    "datePublished": "2026-10-23",
-    "dateModified": "2026-10-24",
-    "isPartOf": {"@type": "WebSite", "name": "{{BRAND}}", "url": "{{BASE_URL}}/"}
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {"@type": "Question", "name": "Do I need to connect GitHub?", "acceptedAnswer": {"@type": "Answer", "text": "No. The URL scan works on its own. A public repo is optional and adds migration, route-handler and dependency checks."}},
-      {"@type": "Question", "name": "What is free and what costs ₹{{PRICE_INR}}?", "acceptedAnswer": {"@type": "Answer", "text": "Free: your score and every issue title. Paid one-time report: evidence for each finding, the exact fix, a copy-paste fix prompt and the PDF report."}},
-      {"@type": "Question", "name": "What if a finding is wrong?", "acceptedAnswer": {"@type": "Answer", "text": "If we report a finding that is factually wrong and you show us why, we refund that report. If the report link does not open, we re-run it or refund the full amount within 7 days."}},
-      {"@type": "Question", "name": "Is this a penetration test?", "acceptedAnswer": {"@type": "Answer", "text": "No. We passively check what your app serves to the public internet, plus a guided prompt-injection test you run yourself. A full pentest is a different, much more expensive engagement."}},
-      {"@type": "Question", "name": "What do you store?", "acceptedAnswer": {"@type": "Answer", "text": "The report: findings, evidence snippets and the target URL. We do not keep your source code, and we do not run or store your database. Reports are deleted from our servers 30 days after the scan."}}
-    ]
-  }
-  </script>
-
-  <meta name="sp-pay" content="">
   <meta name="sp-price-inr" content="{{PRICE_INR}}">
   <meta name="sp-price-usd" content="{{PRICE_USD}}">
   <meta name="sp-contact" content="{{CONTACT_EMAIL}}">
-
   <link rel="preload" href="/static/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/style.css">
   <link rel="stylesheet" href="/static/landing.css">
+  <link rel="icon" href="/static/logo-mark.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z' fill='%230f766e'/%3E%3Cpath d='M11 16l4 4 7-8' stroke='%23ffffff' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"{{BRAND}}","applicationCategory":"SecurityApplication","operatingSystem":"Web","url":"{{BASE_URL}}/","description":"Automated public app security check with evidence, AI-builder fix prompts and one verification re-check. A point-in-time check, not a security certification.","offers":[{"@type":"Offer","name":"Free check","price":"0","priceCurrency":"INR"},{"@type":"Offer","name":"Fix & Handover Report","price":"{{PRICE_INR}}","priceCurrency":"INR"}]}</script>
   <script src="https://analytics.ahrefs.com/analytics.js" data-key="gLBPCAyOg9uZUDtLmDAQ3Q" async></script>
 </head>
-<body class="landing-v2">
+<body class="landing-v2 focused-launch">
   <a class="skip" href="#main">Skip to content</a>
-
-  <header class="site-head">
-    <div class="wrap head-in">
-      <a class="logo" href="/" aria-label="{{BRAND}} home">
-        <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
-          <path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/>
-          <path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>{{BRAND}}</span>
-      </a>
-      <nav class="nav-links" aria-label="Main">
-        <a href="#how">How it works</a>
-        <a href="#checks">What we check</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#faq">FAQ</a>
-      </nav>
-      <div class="head-cta">
-        <a class="btn small" href="#scan">Run free scan</a>
-        <details class="menu">
-          <summary aria-label="Open menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
-          <div class="menu-panel">
-            <a href="#how">How it works</a>
-            <a href="#checks">What we check</a>
-            <a href="#pricing">Pricing</a>
-          <a href="/integrations">Integrations</a>
-          <a href="/compare">Compare options</a>
-          <a href="/guides">Guides</a>
-          <a href="/customers">Customers</a>
-          <a href="/index">Vulnerability index</a>
-          <a href="/tools/headers">Headers checker</a>
-          <a href="/tools/rls">RLS checker</a>
-            <a href="#faq">FAQ</a>
-            <a href="/static/sample-report.html">Sample report</a>
-            <a href="#scan">Run free scan</a>
-          </div>
-        </details>
-      </div>
-    </div>
-  </header>
-
+  <header class="site-head"><div class="wrap head-in">
+    <a class="logo" href="/" aria-label="{{BRAND}} home"><img src="/static/logo-mark.svg" width="28" height="28" alt=""><span>{{BRAND}}</span></a>
+    <nav class="nav-links" aria-label="Main"><a href="#how">How it works</a><a href="/static/sample-report.html">Sample report</a><a href="#pricing">₹{{PRICE_INR}} report</a></nav>
+    <a class="btn primary small" href="#scan">Check my app</a>
+  </div></header>
   <main id="main">
-    <section class="hero wrap">
-      <span class="label">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-        Free scan · no signup · no card
-      </span>
-      <h1>Is your AI-built app leaking keys or customer data?</h1>
-      <p class="sub">Paste your app URL. In about a minute, {{BRAND}} shows what a stranger could get away with — and the exact fix, in plain English.</p>
-      <div class="hero-meta">
-        <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6z"/></svg>Score + every issue free</span>
-        <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Evidence + fixes + PDF: ₹{{PRICE_INR}} once</span>
-        <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>Wrong finding = refund</span>
+    <section class="wrap launch-hero">
+      <div class="launch-message">
+        <p class="label">For solo founders &amp; small app agencies</p>
+        <h1>Built with AI?<br>Know what to fix <span>before you launch.</span></h1>
+        <p class="launch-sub">Your app works. But did your AI builder leave a key exposed or a database open? Start with a public security check, then get clear fix prompts you can hand back to it.</p>
+        <p class="builder-line">Made for apps built with Lovable, Bolt, v0, Cursor &amp; Replit.</p>
+        <div class="launch-actions"><a class="btn primary big" href="#scan">Check my app — free</a><a class="sample-link" href="/static/sample-report.html">See a sample report <span aria-hidden="true">↗</span></a></div>
+        <p class="fine">No signup. No card. Usually about a minute.</p>
+        <p class="hindi-note" lang="hi-Latn">AI se app ban gaya? Launch se pehle pata karo kya fix karna hai.</p>
+        <div class="launch-trust"><span>Read-only checks</span><span>Keys redacted in evidence</span><span>₹{{PRICE_INR}} once, if you need fixes</span></div>
       </div>
-      <p class="hero-cta"><a class="btn primary big" href="#scan">Run my free scan</a></p>
+      <aside class="launch-preview" aria-label="Illustrative report preview">
+        <div class="preview-top"><span class="preview-dot"></span>{{BRAND}} / launch check <span class="preview-demo">Example</span></div>
+        <div class="preview-body">
+          <p class="preview-eyebrow">BEFORE YOU SHARE YOUR APP</p>
+          <h2>Turn “is it safe?”<br>into a fix list.</h2>
+          <div class="preview-issue"><span class="pill sev-critical">Critical</span><strong>Secret key in browser code</strong><p>Anyone loading your app could copy it.</p></div>
+          <ol class="preview-flow"><li><span>01</span><div><b>See the evidence</b><p>Where we found it and why it matters.</p></div></li><li><span>02</span><div><b>Give your AI builder the fix</b><p>Copy the prompt. Review its changes.</p></div></li><li><span>03</span><div><b>Re-check after the fix</b><p>See which findings no longer appear.</p></div></li></ol>
+          <p class="fine">Illustration only. Your results depend on what your app exposes.</p>
+        </div>
+      </aside>
     </section>
 
-    <section class="wrap" id="scan" aria-label="Scan your app">
+    <section class="wrap launch-scan" id="scan" aria-label="Check your app">
+      <div class="scan-context"><p class="preview-eyebrow">START HERE · FREE</p><h2>What does your app expose?</h2><p>Enter the public URL your users open. See the score and every issue title before deciding whether to buy the fixes.</p><p class="fine">URL checks can find public exposures. API authorization, payment verification and database policy checks need relevant public source code. Login-only behavior needs a separate review.</p><a class="sample-link" href="#checks">See exactly what is covered ↓</a></div>
       <div class="scan-card">
-        <div class="tabs" role="tablist" aria-label="Scan type">
-          <button class="tab active" type="button" data-kind="url" role="tab" aria-selected="true">App URL</button>
-          <button class="tab" type="button" data-kind="repo" role="tab" aria-selected="false">GitHub repo (optional)</button>
-        </div>
-
+        <div class="tabs" role="tablist" aria-label="Scan type"><button class="tab active" type="button" data-kind="url" role="tab" aria-selected="true">App URL</button><button class="tab" type="button" data-kind="repo" role="tab" aria-selected="false">Public code repo</button></div>
         <form id="scan-form" novalidate>
-          <label class="field">
-            <span id="target-label">Your app URL</span>
-            <input id="target" name="target" type="text" inputmode="url" autocomplete="url"
-                   placeholder="https://myapp.vercel.app" maxlength="300" required>
-          </label>
-          <p class="hint" id="target-hint">Public URL of the page your users open. We only read public pages.</p>
-
-          <details class="hint-details">
-            <summary>Scan a GitHub repo too? (optional)</summary>
-            <p>A GitHub repo is the folder where your code lives (github.com/you/your-app). If it is public, we read migrations, API routes, database rules and dependency versions too — 60+ checks instead of 25–45. Private repos are not supported yet.</p>
+          <label class="field"><span id="target-label">Your app URL</span><input id="target" name="target" type="text" inputmode="url" autocomplete="url" placeholder="https://your-app.lovable.app" maxlength="300" required aria-describedby="target-hint"></label>
+          <p class="hint" id="target-hint">Your app must be public. We do not log in or change your app.</p>
+          <label class="checkline"><input type="checkbox" id="consent" required><span>I own this app or have permission to check it.</span></label>
+          <details class="scan-options"><summary>Optional: email &amp; chatbot checks</summary>
+            <label class="field"><span>Email <em>— send me the report link</em></span><input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" maxlength="200"></label>
+            <label class="checkline"><input type="checkbox" id="has-ai"><span>My app has a chatbot — include the guided tests I run myself.</span></label>
           </details>
-
-          <label class="checkline">
-            <input type="checkbox" id="has-ai">
-            <span>My app has an AI chat or agent <em>— adds the 12-attack prompt-injection test</em></span>
-          </label>
-          <label class="checkline">
-            <input type="checkbox" id="consent" required>
-            <span>I own this app or have permission to test it.</span>
-          </label>
-
-          <label class="field">
-            <span>Email <em>(optional — we send the report link; after payment, your PDF report)</em></span>
-            <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" maxlength="200">
-          </label>
-
-          <button class="btn primary big" type="submit" id="scan-btn">Run my free scan</button>
-          <p class="scan-note">No signup · no card · we never touch your database or model keys.</p>
+          <button class="btn primary big" type="submit" id="scan-btn">Check my app — free</button>
+          <p class="scan-note">Free results first. No payment details required.</p>
         </form>
-
         <div id="scan-status" class="scan-status hidden" aria-live="polite"></div>
         <div id="scan-result" class="scan-result hidden" aria-live="polite"></div>
       </div>
-      <noscript><p class="fine center">JavaScript is needed for the live scan. Email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> and we will run it for you.</p></noscript>
+      <noscript><p>Enable JavaScript to run a check, or email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>.</p></noscript>
     </section>
 
-    <section class="proof wrap" aria-label="What you can check before paying">
-      <div class="proof-grid">
-        <div class="proof-item">
-          <b>See a real report first</b>
-          <span><a href="/static/sample-report.html">Open a sample ₹{{PRICE_INR}} report</a> — every section, no signup.</span>
-        </div>
-        <div class="proof-item">
-          <b>Evidence first</b>
-          <span>Every finding ships with the file, header or URL we saw it in.</span>
-        </div>
-        <div class="proof-item">
-          <b>Answered by the founder</b>
-          <span>Usually within 1 business day — escalation reaches the person who built it.</span>
-        </div>
-        <div class="proof-item">
-          <b>We run what we check</b>
-          <span>HSTS, CSP, frame protection and security.txt on this site too. <a href="/security">See /security</a>.</span>
-        </div>
-      </div>
-    </section>
+    <section class="band soft" id="how"><div class="wrap">
+      <p class="preview-eyebrow">ONE JOB. THREE STEPS.</p><h2>Find it. Fix it. Re-check it.</h2>
+      <div class="steps"><article class="step"><div class="step-n">1</div><h3>Check before you share</h3><p>Run the free check. Read every issue title and its severity. No signup needed.</p></article><article class="step"><div class="step-n">2</div><h3>Get the fix instructions</h3><p>If you need help, pay ₹{{PRICE_INR}} once for the evidence, prioritized fixes and prompts for your AI builder.</p></article><article class="step"><div class="step-n">3</div><h3>Verify &amp; hand over</h3><p>Apply and test the changes. Use your included re-check, then share the dated PDF with your client or team.</p></article></div>
+      <p class="fine">You or your developer apply the fixes. Trustfield does not edit or repair your app automatically.</p>
+    </div></section>
 
-    <section class="band soft" id="how">
-      <div class="wrap">
-        <h2>How it works</h2>
-        <p class="section-sub">No install, no OAuth, no access to your database. If your app has a public URL, we can look at it.</p>
-        <div class="steps">
-          <div class="step">
-            <div class="step-n">1</div>
-            <h3>Paste your URL</h3>
-            <p>Ten seconds. No GitHub needed, no signup, no card.</p>
-          </div>
-          <div class="step">
-            <div class="step-n">2</div>
-            <h3>We read what is public</h3>
-            <p>HTTPS, headers, exposed files, keys in your JavaScript, database rules, payment webhooks — and the AI attack test if you have a chatbot.</p>
-          </div>
-          <div class="step">
-            <div class="step-n">3</div>
-            <h3>You get a fix list</h3>
-            <p>Every finding: why it matters and a copy-paste prompt for your AI builder. Fix, re-scan, done.</p>
-          </div>
-        </div>
-      </div>
-    </section>
+    <section class="band" id="checks"><div class="wrap">
+      <p class="preview-eyebrow">A CLEAR SCOPE</p><h2>Common mistakes that matter at launch.</h2>
+      <div class="launch-checks"><article><span class="scope-tag">PUBLIC URL</span><h3>Keys &amp; exposed files</h3><p>Secrets in public JavaScript, exposed configuration files, backups and source maps.</p></article><article><span class="scope-tag">PUBLIC URL</span><h3>Basic protections</h3><p>HTTPS, security headers, cookie flags, CORS and public database exposure signals where detectable.</p></article><article><span class="scope-tag">PUBLIC REPO</span><h3>Deeper code signals</h3><p>Database policies, API auth patterns, payment signature checks and dependency risks. Static findings need context.</p></article></div>
+      <div class="scope-note"><b>A useful first check, with clear limits.</b> We cannot prove tenant isolation, test logged-in flows, or guarantee that your app is secure. A URL scan cannot verify server-side payment logic. <a href="/methodology">Read the methodology</a>.</div>
+    </div></section>
 
-    <section class="band" id="report">
-      <div class="wrap mock">
-        <div>
-          <h2>What the report actually looks like</h2>
-          <p class="section-sub">Not a wall of alerts. A score, the issues worst-first, and the exact change to make for each one.</p>
-          <div class="mock-list">
-            <div class="mock-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Evidence for every finding — the file, header or URL where we saw it.</span></div>
-            <div class="mock-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Plain-English fix plus a prompt you can paste into Lovable, Bolt, v0, Cursor or ChatGPT.</span></div>
-            <div class="mock-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>A PDF you can keep, and a public proof page with a dated badge.</span></div>
-            <div class="mock-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>What we could <em>not</em> check — so you know the limits of a point-in-time scan.</span></div>
-          </div>
-          <p><a class="btn" href="/static/sample-report.html">Open the sample report</a></p>
-        </div>
-        <div class="mock-window" aria-hidden="true">
-          <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-url">{{BRAND}} / report</span></div>
-          <div class="mock-body">
-            <div class="mock-head">
-              <div class="mock-score"><span>62</span></div>
-              <div><h3>3 critical issues to fix before launch</h3><p>No database rules found · 11 findings total</p></div>
-            </div>
-            <div class="mock-row"><span>OpenAI key in browser bundle</span><span>Critical · 1 fix</span></div>
-            <div class="mock-row"><span>Supabase table readable by anyone</span><span>Critical · 1 fix</span></div>
-            <div class="mock-row"><span>Payment webhook not verified</span><span>High · 1 fix</span></div>
-            <div class="mock-row"><span>No rate limit on paid endpoint</span><span>High · 1 fix</span></div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <section class="band soft" id="pricing"><div class="wrap launch-pricing">
+      <div><p class="preview-eyebrow">NO SUBSCRIPTION. ONE DECISION.</p><h2>See the issues free.<br>Pay for a way forward.</h2><p>For the founder about to launch, or the builder about to hand an app to a client.</p><p class="fine">If this check finds no issues, we will tell you. You do not need to buy fixes for an empty report.</p><a class="sample-link" href="/static/sample-report.html">Read a sample before paying ↗</a></div>
+      <article class="price featured"><span class="price-badge">One app · one-time</span><h3>Fix &amp; Handover Report</h3><div class="price-tag">₹{{PRICE_INR}}</div><p class="price-sub">Clear instructions for your next conversation with your AI builder.</p><ul><li>All findings, prioritized by severity</li><li>Evidence and a plain-English explanation</li><li>Copy-paste AI fix prompts</li><li>Downloadable, dated PDF report</li><li>One verification re-check of the same target within 30 days</li></ul><a class="btn primary big" href="#scan">Check free, then decide</a><p class="fine">UPI or card via Razorpay. No recurring charge. Checkout shows the payable amount.</p><p class="fine">Report not delivered or a finding factually wrong? <a href="/refund">See our 7-day refund policy</a>.</p></article>
+    </div></section>
 
-    <section class="band soft" id="checks">
-      <div class="wrap">
-        <h2>What we check</h2>
-        <p class="section-sub">25–45 checks on a URL scan, 60+ when you attach a public repo. We also tell you what we did not look at.</p>
-        <div class="checks">
-          <div class="check-card">
-            <h3>Secrets &amp; keys</h3>
-            <ul>
-              <li>OpenAI, Anthropic or Groq keys in shipped JavaScript</li>
-              <li>Supabase service_role in the browser</li>
-              <li>Stripe live keys, .env committed to git</li>
-              <li>NEXT_PUBLIC_ / VITE_ hiding a secret</li>
-            </ul>
-          </div>
-          <div class="check-card">
-            <h3>Database &amp; payments</h3>
-            <ul>
-              <li>Row Level Security missing or misconfigured</li>
-              <li>Firestore / Realtime DB left in test mode</li>
-              <li>Paid route with no auth check or rate limit</li>
-              <li>Unverified payment webhooks</li>
-            </ul>
-          </div>
-          <div class="check-card">
-            <h3>AI safety</h3>
-            <ul>
-              <li>12 attack prompts: system prompt, other users’ data, tool abuse</li>
-              <li>Hidden markdown exfiltration</li>
-              <li>Indirect injection via documents</li>
-              <li>Hindi / base64 bypass attempts</li>
-            </ul>
-          </div>
-        </div>
-        <details class="check-more">
-          <summary>See the full list (transport, exposed files, compliance, code patterns)</summary>
-          <div class="grid">
-            <span>HTTPS, certificate, HSTS, CSP, frame protection</span>
-            <span>Cookie flags and CORS wildcards</span>
-            <span>Mixed content</span>
-            <span>.env, .git/config, .vscode/sftp.json exposed</span>
-            <span>Source maps that rebuild your code</span>
-            <span>backup.sql, db.sqlite, config files with keys</span>
-            <span>Privacy policy and terms pages exist</span>
-            <span>Data-deletion path and security.txt</span>
-            <span>eval, unsafe YAML / pickle</span>
-            <span>SQL built by string concatenation</span>
-            <span>Tokens printed to console</span>
-            <span>Known-outdated dependencies</span>
-          </div>
-        </details>
-        <p class="fine">Not checked: git history, live exploitation, your database contents, mobile apps, browser extensions and Shopify apps. A check is a point in time, not a promise about the future.</p>
-      </div>
-    </section>
-
-    <section class="band" id="pricing">
-      <div class="wrap">
-        <h2>Free to find out. Pay only to fix.</h2>
-        <p class="section-sub">The scan and every issue title are free. You pay once when you want the evidence, the fixes and the PDF.</p>
-        <div class="pricing">
-          <div class="price">
-            <h3>Free scan</h3>
-            <div class="price-tag">₹0</div>
-            <p class="price-sub">Score + every issue title</p>
-            <ul>
-              <li>25–45 checks, no card, no signup</li>
-              <li>Score, grade, money-risk and data-risk</li>
-              <li>All issue titles with severity</li>
-              <li>Report link live for 30 days</li>
-            </ul>
-            <a class="btn" href="#scan">Run my free scan</a>
-          </div>
-          <div class="price featured">
-            <span class="price-badge">One-time</span>
-            <h3>Full report</h3>
-            <div class="price-tag">₹{{PRICE_INR}} <span>/ ${{PRICE_USD}}</span></div>
-            <p class="price-sub">Evidence, fixes and PDF — no subscription</p>
-            <ul>
-              <li>Evidence for every finding</li>
-              <li>Plain-English fix + copy-paste prompt for your AI builder</li>
-              <li>PDF report + public proof page with scan date, score and check results ("Verified" badge only when the published criteria are met)</li>
-              <li>Wrong finding = refund (<a href="/refund">criteria</a>)</li>
-            </ul>
-            <a class="btn primary" href="#scan">Scan first, then unlock</a>
-          </div>
-        </div>
-        <p class="fine center">₹{{PRICE_INR}} — taxes as applicable, shown at checkout. UPI or card via Razorpay. USD {{PRICE_USD}} is indicative for international cards; your bank's rate applies.</p>
-      </div>
-    </section>
-
-    <section class="band soft" id="faq">
-      <div class="wrap">
-        <h2>Questions people actually ask</h2>
-        <div class="faq">
-          <details>
-            <summary>Do I need to connect GitHub?</summary>
-            <p>No. The URL scan works on its own. A public repo adds migration, route-handler and dependency checks — but it is optional, and we never ask for write access.</p>
-          </details>
-          <details>
-            <summary>What exactly is free and what costs ₹{{PRICE_INR}}?</summary>
-            <p>Free: your score and every issue title. Paid, once: evidence for each finding, the exact fix, a copy-paste prompt for your AI builder and the PDF report.</p>
-          </details>
-          <details>
-            <summary>What if a finding is wrong, or the report never arrives?</summary>
-            <p>If we report something factually wrong and you show us why, we refund that report. If the payment succeeds but the report link does not open, we re-run it or refund the full amount within 7 days.</p>
-          </details>
-          <details>
-            <summary>Is this a penetration test?</summary>
-            <p>No, and we will not pretend it is. We passively check what your app serves to the public internet, plus a guided prompt-injection test you run yourself. A full pentest is a different, much more expensive engagement.</p>
-          </details>
-          <details>
-            <summary>Will you scan apps that are not mine?</summary>
-            <p>No. You confirm that you own the app or have permission. We rate-limit scans and we never run exploitation attempts.</p>
-          </details>
-          <details>
-            <summary>What do you store?</summary>
-            <p>The report: findings, evidence snippets and the target URL. We do not keep your source code, and we do not run or store your database. Reports are deleted from our servers 30 days after the scan.</p>
-          </details>
-          <details>
-            <summary>I am not technical. Will I understand it?</summary>
-            <p>That is the design goal. Every finding says what it is, why it matters and what to change — plus a prompt you can paste into the AI that built your app.</p>
-          </details>
-        </div>
-      </div>
-    </section>
-
-    <section class="band cta-final wrap">
-      <h2>Better you find it than someone else.</h2>
-      <p>Free scan takes about a minute. No card, no signup.</p>
-      <a class="btn primary big" href="#scan">Run my free scan</a>
-    </section>
+    <section class="band" id="faq"><div class="wrap narrow"><h2>Before you check.</h2><div class="faq">
+      <details><summary>Can I use this without a technical team?</summary><p>Yes. Each paid finding explains the issue and provides a prompt for the AI tool that built your app. You still need to review and test the changes; the report does not include someone fixing your code.</p></details>
+      <details><summary>What is free, and when do I pay?</summary><p>The check, score and every issue title are free. Pay ₹{{PRICE_INR}} only when you choose the Fix &amp; Handover Report with evidence, fixes, prompts, PDF and one re-check. No signup or card is needed to scan.</p></details>
+      <details><summary>What if no issues are found?</summary><p>There may be nothing to fix in the checks we ran. Keep the free result and check again after changes. A clean scan does not cover hidden server logic or logged-in behavior.</p></details>
+      <details><summary>Is this a certificate or a penetration test?</summary><p>No. This is an automated check of publicly reachable content or a public repository. It is a practical first pass before launch, with evidence and clear limits. A dated PDF documents results; it does not certify security or compliance.</p></details>
+      <details><summary>Do you need my source code or passwords?</summary><p>No passwords or private repository access. Start with a public URL, or choose a public GitHub repository for code checks. Source is processed in memory and discarded. Findings and evidence are retained for 30 days. <a href="/privacy">Privacy details</a>.</p></details>
+      <details><summary>How does the included re-check work?</summary><p>After you fix the issues, open your paid report and select Re-check after fixes. One re-check of that same URL or repository is included during the report's 30-day lifetime. The new report shows which findings disappeared and which appeared.</p></details>
+      <details><summary>Who can help if something goes wrong?</summary><p>Email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> with your report link or payment ID. Dhruv Kumar, the founder, answers the inbox. Refund terms are published before you pay.</p></details>
+    </div></div></section>
+    <section class="wrap launch-final"><h2>Your next step does not need to be a guess.</h2><p>Check your app. See the issues. Decide what to fix.</p><a class="btn primary big" href="#scan">Check my app — free</a></section>
   </main>
-
-  <footer class="site-foot">
-    <div class="wrap">
-      <div class="foot-grid">
-        <div>
-          <div class="logo" style="margin-bottom:10px">
-            <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">
-              <path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/>
-              <path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>{{BRAND}}</span>
-          </div>
-          <p class="fine">Independent security review for AI-built and hand-written web apps. Not a penetration test, not a certification, not affiliated with any AI builder.</p>
-        </div>
-        <div>
-          <h3 class="foot-h">Product</h3>
-          <a href="#how">How it works</a>
-          <a href="#checks">What we check</a>
-          <a href="/static/sample-report.html">Sample report</a>
-          <a href="#pricing">Pricing</a>
-        </div>
-        <div>
-          <h3 class="foot-h">Company</h3>
-          <a href="/about">About</a>
-          <a href="/trust">Trust center</a>
-          <a href="/security">Security</a>
-          <a href="/subprocessors">Subprocessors</a>
-          <a href="/changelog">Changelog</a>
-          <a href="/status">Status</a>
-          <a href="/methodology">Methodology</a>
-        </div>
-        <div>
-          <h3 class="foot-h">Legal</h3>
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms</a>
-          <a href="/refund">Refund policy</a>
-          <a href="/delete-account">Delete my data</a>
-        </div>
-      </div>
-      <div class="foot-legal">
-        <span>© {{YEAR}} {{BRAND}} · Independent security review for AI-built apps</span>
-        <span>Contact: <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> · <a class="admin-link" href="/admin/login">Admin</a></span>
-      </div>
-    </div>
-  </footer>
-
+  <footer class="site-foot"><div class="wrap"><div class="launch-footer"><div><a class="logo" href="/">{{BRAND}}</a><p class="fine">Launch checks for AI-built apps.<br>Built and operated by Dhruv Kumar, India.</p></div><nav aria-label="Footer"><a href="/static/sample-report.html">Sample report</a><a href="/methodology">Methodology</a><a href="/about">About</a><a href="/security">Security</a><a href="mailto:{{CONTACT_EMAIL}}">Contact</a></nav></div><div class="foot-legal"><span>© {{YEAR}} {{BRAND}} · Automated checks, with evidence and limits.</span><span><a href="/privacy">Privacy</a> · <a href="/subprocessors">Subprocessors</a> · <a href="/terms">Terms</a> · <a href="/refund">Refunds</a></span></div></div></footer>
   <script src="/static/app.js" defer></script>
 </body>
 </html>

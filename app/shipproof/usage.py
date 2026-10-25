@@ -3,8 +3,18 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import os
+import threading
 
 from . import config, storage
+
+_lock = threading.RLock()
+SOURCES = {"direct", "google", "linkedin", "youtube", "x", "community", "other"}
+
+
+def source(value: str) -> str:
+    value = str(value or "direct").strip().lower()
+    return value if value in SOURCES else "other"
 
 
 def _path():
@@ -26,13 +36,18 @@ def _load() -> dict:
         return {}
 
 
-def _save(data: dict) -> None:
+def _save(data: dict, required: bool = False) -> None:
     config.ensure_dirs()
+    temporary = _path().with_suffix(".tmp")
     try:
-        _path().write_text(json.dumps(data), encoding="utf-8")
+        temporary.write_text(json.dumps(data), encoding="utf-8")
+        os.replace(temporary, _path())
     except OSError:
-        pass
-    storage.put_json("usage.json", data)
+        if required:
+            raise
+    saved = storage.put_json("usage.json", data)
+    if required and storage.enabled() and not saved:
+        raise OSError("Could not persist AI allowance")
 
 
 def hydrate() -> int:
@@ -51,10 +66,41 @@ def hydrate() -> int:
 
 
 def bump(kind: str, amount: int = 1) -> None:
-    data = _load()
-    bucket = data.setdefault(kind, {})
-    bucket[_today()] = int(bucket.get(_today(), 0)) + int(amount)
-    _save(data)
+    with _lock:
+        data = _load()
+        bucket = data.setdefault(kind, {})
+        bucket[_today()] = int(bucket.get(_today(), 0)) + int(amount)
+        _save(data)
+
+
+def reserve(kind: str, limit: int) -> bool:
+    """Reserve before a paid call; serialized on the single application instance."""
+    with _lock:
+        if not _path().exists() and storage.enabled():
+            restored = storage.get_json("usage.json")
+            if restored is None:
+                raise OSError("AI quota storage is unavailable")
+            _save(restored, required=True)
+        data = _load()
+        bucket = data.setdefault(kind, {})
+        used = int(bucket.get(_today(), 0))
+        if used >= limit:
+            return False
+        bucket[_today()] = used + 1
+        _save(data, required=True)
+        return True
+
+
+def funnel(event: str, channel: str = "direct") -> None:
+    if event not in {"visit", "scan_start", "scan_error", "scan_complete", "checkout", "purchase"}:
+        return
+    bump("funnel_" + event + "_" + source(channel))
+
+
+def funnel_summary() -> list[dict]:
+    return [{"source": channel, **{event: month("funnel_" + event + "_" + channel)
+            for event in ("visit", "scan_complete", "checkout", "purchase")}}
+            for channel in sorted(SOURCES)]
 
 
 def today(kind: str) -> int:

@@ -72,12 +72,13 @@ def get_json(key: str):
         return None
 
 
-def list_prefix(prefix: str, limit: int = 1000, newest: bool = False) -> list:
+def list_prefix(prefix: str, limit: int = 1000, newest: bool = False, offset: int = 0) -> list:
     """List object names under a prefix (Supabase Storage list API)."""
     if not enabled():
         return []
     try:
-        payload = {"prefix": prefix, "limit": limit}
+        payload = {"prefix": prefix, "limit": limit, "offset": offset,
+                   "sortBy": {"column": "name", "order": "asc"}}
         if newest:
             payload["sortBy"] = {"column": "updated_at", "order": "desc"}
         body = json.dumps(payload).encode()
@@ -89,13 +90,15 @@ def list_prefix(prefix: str, limit: int = 1000, newest: bool = False) -> list:
 
 
 def delete_many(keys: list) -> bool:
-    """Delete up to 100 objects per call."""
+    """Delete all keys in provider-sized batches; report any failed batch."""
     if not enabled() or not keys:
         return False
-    try:
-        body = json.dumps({"prefixes": keys[:100]}).encode()
-        _request("DELETE", f"/storage/v1/object/{config.SUPABASE_BUCKET}", body,
-                 {"Content-Type": "application/json"})
-        return True
-    except Exception:
-        return False
+    ok = True
+    for start in range(0, len(keys), 100):
+        try:
+            body = json.dumps({"prefixes": keys[start:start + 100]}).encode()
+            _request("DELETE", f"/storage/v1/object/{config.SUPABASE_BUCKET}", body,
+                     {"Content-Type": "application/json"})
+        except Exception:
+            ok = False
+    return ok

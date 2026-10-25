@@ -1,4 +1,79 @@
-/* Trustfield landing v2 — calm, light, Google-clean. Scoped to body.landing-v2. */
+/* Focused launch: one buyer, one offer, one primary action. */
+body.focused-launch .launch-hero { display:grid; grid-template-columns:1.2fr 1fr; gap:64px; align-items:center; padding:76px 0 56px; }
+body.focused-launch .launch-message h1 { font-size:clamp(2.25rem,4.2vw,3.75rem); line-height:1.08; max-width:18ch; margin-bottom:24px; letter-spacing:-.045em; }
+body.focused-launch .launch-message h1 span { color:#0f766e; }
+body.focused-launch .launch-sub { font-size:18px; line-height:1.7; max-width:53ch; color:#4b5563; }
+body.focused-launch .builder-line { font-size:13px; color:#5b6675; margin:20px 0; }
+body.focused-launch .launch-actions { display:flex; flex-wrap:wrap; gap:18px; align-items:center; margin:24px 0 12px; }
+body.focused-launch .sample-link { font-size:14px; font-weight:600; text-decoration:underline; text-underline-offset:4px; }
+body.focused-launch .hindi-note { font-size:14px; color:#4b5563; margin:20px 0; }
+body.focused-launch .launch-trust { display:flex; gap:12px 18px; flex-wrap:wrap; font-size:12px; color:#52635f; border-top:1px solid #e5e7eb; padding-top:18px; }
+body.focused-launch .launch-trust span::before { content:'✓'; color:#0f766e; padding-right:5px; }
+body.focused-launch .launch-preview { border:1px solid #d5e3df; border-radius:18px; background:#fff; box-shadow:0 18px 60px #0f766e12; transform:rotate(1deg); }
+body.focused-launch .preview-top { display:flex; align-items:center; gap:8px; padding:14px 20px; border-bottom:1px solid #dfe9e5; font-size:12px; color:#52635f; background:#f3f8f6; border-radius:18px 18px 0 0; }
+body.focused-launch .preview-dot { width:7px; height:7px; border-radius:50%; background:#0f766e; }
+body.focused-launch .preview-demo { margin-left:auto; font-size:10px; text-transform:uppercase; letter-spacing:.1em; }
+body.focused-launch .preview-body { padding:28px; }
+body.focused-launch .preview-eyebrow { font-size:11px; letter-spacing:.12em; font-weight:700; color:#0f766e; margin-bottom:14px; }
+body.focused-launch .preview-body h2 { font-size:27px; margin-bottom:24px; }
+body.focused-launch .preview-issue { border:1px solid #f1d1cf; border-left:3px solid #bc4237; border-radius:8px; padding:14px; background:#fffafa; }
+body.focused-launch .preview-issue .pill { font-size:10px; padding:2px 7px; }
+body.focused-launch .preview-issue strong { display:block; margin:10px 0 3px; font-size:15px; }
+body.focused-launch .preview-issue p { font-size:12px; margin:0; color:#5b6675; }
+body.focused-launch .preview-flow { list-style:none; padding:0; margin:24px 0; }
+body.focused-launch .preview-flow li { display:flex; align-items:flex-start; gap:14px; padding:10px 0; }
+body.focused-launch .preview-flow li>span { display:grid; place-items:center; background:#e6f4f1; width:29px; height:29px; border-radius:8px; color:#0f766e; font-size:11px; font-weight:700; flex-shrink:0; }
+body.focused-launch .preview-flow b { font-size:14px; }
+body.focused-launch .preview-flow p { font-size:12px; color:#5b6675; margin:2px 0 0; }
+body.focused-launch .preview-body>.fine { font-size:11px; margin-bottom:0; }
+body.focused-launch .launch-scan { display:grid; grid-template-columns:.85fr 1.15fr; gap:64px; align-items:start; padding:48px 0 80px; scroll-margin-top:85px; }
+body.focused-launch .scan-context { padding-top:24px; }
+body.focused-launch .scan-context h2 { max-width:15ch; }
+body.focused-launch .scan-context>p { color:#5b6675; }
+body.focused-launch .scan-card { width:100%; padding:28px; }
+body.focused-launch #scan-btn { width:100%; }
+body.focused-launch .scan-options { margin:16px 0 20px; font-size:13px; }
+body.focused-launch .scan-options summary { color:#5b6675; cursor:pointer; padding:8px 0; }
+body.focused-launch .scan-options[open] summary { margin-bottom:12px; }
+body.focused-launch .launch-checks { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin:30px 0; }
+body.focused-launch .launch-checks article { padding:24px; border:1px solid #e5e7eb; border-radius:12px; }
+body.focused-launch .launch-checks h3 { margin:16px 0 12px; }
+body.focused-launch .launch-checks p { font-size:14px; color:#5b6675; }
+body.focused-launch .scope-tag { font-size:10px; color:#0f766e; letter-spacing:.08em; font-weight:700; }
+body.focused-launch .scope-note { background:#f6f8fa; border-radius:12px; padding:20px 24px; font-size:14px; color:#5b6675; }
+body.focused-launch .scope-note b { display:block; color:#0b1220; margin-bottom:6px; }
+body.focused-launch .launch-pricing { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; }
+body.focused-launch .launch-pricing>.price { background:white; }
+body.focused-launch .launch-pricing>.price .btn { width:100%; }
+body.focused-launch .launch-pricing>.price li { font-size:15px; }
+body.focused-launch .launch-pricing>div>p { color:#5b6675; max-width:44ch; }
+body.focused-launch .launch-final { text-align:center; padding:20px 0 80px; }
+body.focused-launch .launch-final p { color:#5b6675; margin:18px 0 24px; }
+body.focused-launch .launch-footer { display:flex; justify-content:space-between; gap:32px; padding-bottom:24px; }
+body.focused-launch .launch-footer nav { display:flex; flex-wrap:wrap; gap:14px 24px; align-items:start; font-size:13px; }
+body.focused-launch .launch-footer p { margin-top:12px; }
+body.focused-launch #how,body.focused-launch #checks,body.focused-launch #pricing,body.focused-launch #faq { scroll-margin-top:64px; }
+@media(max-width:800px) {
+ body.focused-launch .launch-hero { grid-template-columns:1fr; gap:32px; padding:40px 0 24px; }
+ body.focused-launch .launch-message h1 { max-width:19ch; }
+ body.focused-launch .launch-preview { display:none; }
+ body.focused-launch .launch-scan { grid-template-columns:1fr; gap:20px; padding:32px 0 56px; }
+ body.focused-launch .scan-context { padding-top:0; order:2; }
+ body.focused-launch .launch-scan>.scan-card { order:1; }
+ body.focused-launch .scan-context h2 { max-width:none; }
+ body.focused-launch .launch-checks { grid-template-columns:1fr; gap:12px; }
+ body.focused-launch .launch-pricing { grid-template-columns:1fr; gap:28px; }
+ body.focused-launch .launch-footer { flex-direction:column; }
+ body.focused-launch .launch-sub { font-size:16px; }
+}
+@media(max-width:420px) {
+ body.focused-launch .scan-card,body.focused-launch .preview-body { padding:20px; }
+ body.focused-launch .tabs { display:flex; width:100%; }
+ body.focused-launch .tab { flex:1; padding:8px; font-size:12px; }
+ body.focused-launch .launch-actions { gap:16px; }
+ body.focused-launch .launch-actions .btn { width:100%; }
+}
+/* Shared light landing styles. */
 @font-face {
   font-family: "Inter";
   font-style: normal;

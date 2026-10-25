@@ -75,7 +75,7 @@ class HttpAppTests(unittest.TestCase):
         status, body, ctype = get(self.base, "/")
         self.assertEqual(status, 200)
         self.assertIn("text/html", ctype)
-        self.assertIn(b"Run my free scan", body)
+        self.assertIn(b"Check my app", body)
         self.assertIn(b"Sample report", body)
 
     def test_healthz(self):
@@ -267,7 +267,7 @@ class HttpAppTests(unittest.TestCase):
             f"/admin/unlock?id={self.scan['id']}&token=test-token",
         )
         self.assertEqual(status, 200)
-        self.assertIn(b"Prompt-injection kit", body)
+        self.assertIn(b"Guided chatbot checks", body)
 
         status, body, _ = get(self.base, f"/api/scan/{self.scan['id']}")
         data = json.loads(body)

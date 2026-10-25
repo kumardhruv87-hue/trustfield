@@ -11,7 +11,7 @@ import threading
 import time
 import urllib.request
 import traceback
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
@@ -37,6 +37,8 @@ _RATE_DISABLED = os.environ.get("SHIPPROOF_RATE_LIMIT", "").lower() in ("0", "of
 _hits: dict[str, list[float]] = {}
 _hits_lock = threading.Lock()
 _scan_slots = threading.BoundedSemaphore(config.MAX_CONCURRENT_SCANS)
+_payment_lock = threading.RLock()
+_verification_lock = threading.Lock()
 
 
 class HTTPProblem(Exception):
@@ -117,9 +119,13 @@ def _fulfill(
     record = store.load_scan(scan_id)
     if record is None:
         return None
+    if record.get("unlocked") and provider != "manual":
+        return record
     if email and not record.get("email"):
         record = store.update_scan(scan_id, email=email) or record
     record = store.unlock(scan_id) or record
+    if provider != "manual":
+        usage.funnel("purchase", record.get("source", "direct"))
     if provider_id:
         orders.append(
             {
@@ -492,8 +498,8 @@ class Handler(BaseHTTPRequestHandler):
         query = parse_qs(split.query)
         path = path.rstrip("/") or "/"
         if config.FOCUS_MODE and (
-            path.startswith("/watch/") or path in ("/agency", "/agency/start")
-            or path == "/unlock-code" or path.startswith("/api/v1/")
+            path.startswith("/watch/start/") or path == "/agency/start"
+            or (path == "/agency" and not query.get("code"))
         ):
             return self._html(410, report.focus_coming_soon())
 
@@ -507,12 +513,17 @@ class Handler(BaseHTTPRequestHandler):
                 record = store.load_scan(scan_id)
                 if not record:
                     raise HTTPProblem(404, "That report does not exist.")
+                if _is_paid(record):
+                    return self._redirect("/r/" + scan_id)
+                if not record.get("email"):
+                    return self._html(200, report.checkout_page(record))
                 link = record.get("payment_link") or ""
                 if not link:
                     link = payments.create_payment_link(scan_id, config.PRICE_INR)
                     if link:
                         record["payment_link"] = link
                         store.save_scan(record)
+                        usage.funnel("checkout", record.get("source", "direct"))
                 if not link:
                     raise HTTPProblem(503, "Payment link could not be created. Email " + config.CONTACT_EMAIL)
                 self.send_response(302)
@@ -762,6 +773,18 @@ class Handler(BaseHTTPRequestHandler):
             if match:
                 return self._admin_action(match.group(1), match.group(2), query)
             if path == "/llms.txt":
+                if config.FOCUS_MODE:
+                    body = (f"# {config.BRAND}\n\nLaunch checks for AI-built apps.\n\n"
+                            f"- [Free check]({config.BASE_URL}/#scan): score and every issue title, no signup.\n"
+                            f"- [Fix & Handover Report]({config.BASE_URL}/#pricing): Rs {config.PRICE_INR} once; evidence, prioritized fixes, AI-builder prompts, PDF and one same-target re-check within 30 days.\n"
+                            f"- [Sample report]({config.BASE_URL}/static/sample-report.html)\n"
+                            f"- [Methodology]({config.BASE_URL}/methodology)\n"
+                            f"- [Refund policy]({config.BASE_URL}/refund)\n"
+                            f"- [Privacy]({config.BASE_URL}/privacy)\n"
+                            f"- [Contact](mailto:{config.CONTACT_EMAIL})\n\n"
+                            "Public URL checks cannot verify hidden server logic or logged-in flows. Public repositories add static code checks. Not a penetration test or certification.\n"
+                            "Watch, agency packs and API sales are not offered during the focused launch. Existing subscribers can manage/cancel their service.\n")
+                    return self._send(200, body.encode(), "text/plain; charset=utf-8")
                 body = (
                     f"# {config.BRAND}\n\n"
                     f"> Independent, read-only security review for AI-built and hand-written web apps. "
@@ -816,6 +839,24 @@ class Handler(BaseHTTPRequestHandler):
                 raise HTTPProblem(429, "Too many requests — slow down a little.")
             if path == "/api/scan":
                 return self._create_scan()
+            if path == "/api/events":
+                body = self._read_json()
+                event = str(body.get("event") or "")
+                if event not in ("visit", "scan_start", "scan_error"):
+                    raise HTTPProblem(400, "Unknown event")
+                usage.funnel(event, body.get("source", "direct"))
+                return self._json(200, {"ok": True})
+            match = re.fullmatch(r"/checkout/([a-z0-9]{6,24})", path)
+            if match:
+                record = store.load_scan(match.group(1))
+                if record is None:
+                    raise HTTPProblem(404, "That report does not exist.")
+                form = self._read_form()
+                email = str((form.get("email") or [""])[0]).strip().lower()[:200]
+                if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
+                    return self._html(400, report.checkout_page(record, "Enter a valid email for your report and receipt."))
+                store.update_scan(record["id"], email=email)
+                return self._redirect("/pay/" + record["id"])
             if path == "/api/v1/scan":
                 raw_key = self.headers.get("X-API-Key", "").strip()
                 key_row = apikeys.find(raw_key)
@@ -932,11 +973,27 @@ class Handler(BaseHTTPRequestHandler):
         record = store.load_scan(scan_id)
         if record is None:
             return self._error_page(404, "Report not found", "This report does not exist or has expired.")
+        if (query.get("paid") or [""])[0] == "1":
+            record = self._reconcile_payment(record)
         if config.UNLOCK_ALL and not record.get("unlocked"):
             record = store.unlock(scan_id) or record
         if not record.get("unlocked") and query.get("unlocked", ["0"])[0] == "1" and config.UNLOCK_ALL:
             record = store.unlock(scan_id) or record
         self._html(200, report.report_page(record))
+
+    def _reconcile_payment(self, record: dict) -> dict:
+        if _is_paid(record) or not record.get("payment_link"):
+            return record
+        with _payment_lock:
+            current = store.load_scan(record["id"]) or record
+            if _is_paid(current) or time.time() - float(current.get("payment_checked_at") or 0) < 30:
+                return current
+            current = store.update_scan(current["id"], payment_checked_at=time.time()) or current
+            payment = payments.find_paid_link(current["id"])
+            if payment:
+                return _fulfill(current["id"], provider="razorpay", provider_id=payment["id"],
+                                email=payment.get("email", ""), amount_minor=int(float(config.PRICE_INR) * 100)) or current
+            return current
 
     def _trust(self, scan_id: str) -> None:
         record = store.load_scan(scan_id)
@@ -955,6 +1012,7 @@ class Handler(BaseHTTPRequestHandler):
         record = store.load_scan(scan_id)
         if record is None:
             raise HTTPProblem(404, "Report not found")
+        record = self._reconcile_payment(record)
         payload = _record_preview(record)
         if not payload["locked"]:
             payload["findings"] = record.get("findings") or []
@@ -1021,6 +1079,7 @@ class Handler(BaseHTTPRequestHandler):
             "created_at": config.now_iso(),
             "unlocked": config.UNLOCK_ALL,
             "email": email,
+            "source": usage.source(body.get("source", "direct")),
             "has_ai": has_ai,
             "status": "ok",
             "error": "",
@@ -1034,6 +1093,7 @@ class Handler(BaseHTTPRequestHandler):
         }
         store.save_scan(record)
         usage.bump("scans")
+        usage.funnel("scan_complete", record.get("source", "direct"))
         indexstore.record(record)
         if email and emailer.configured():
             try:
@@ -1059,12 +1119,34 @@ class Handler(BaseHTTPRequestHandler):
         return self._json(200, payload)
 
     def _verify_rescan(self, scan_id: str) -> None:
+        if not _verification_lock.acquire(blocking=False):
+            raise HTTPProblem(429, "A verification is running. Try again shortly.")
+        try:
+            return self._verify_once(scan_id)
+        finally:
+            _verification_lock.release()
+
+    def _verify_once(self, scan_id: str) -> None:
         old = store.load_scan(scan_id)
         if old is None:
             raise HTTPProblem(404, "That report does not exist.")
         if not _is_paid(old):
             raise HTTPProblem(402, "Re-scan verification is part of the paid report.")
-        payload = json.dumps({"kind": "url", "target": old.get("target"), "consent": True}).encode()
+        try:
+            created = datetime.fromisoformat(str(old.get("created_at")))
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
+            if config.now() - created > timedelta(days=30):
+                raise HTTPProblem(410, "This report's 30-day re-check period has ended.")
+        except (TypeError, ValueError):
+            raise HTTPProblem(410, "This report has no valid re-check date.")
+        if old.get("verified_against"):
+            return self._redirect("/r/" + scan_id)
+        previous = old.get("verification_scan_id")
+        if previous and store.load_scan(previous):
+            return self._redirect("/r/" + previous)
+        payload = json.dumps({"kind": old.get("kind", "url"), "target": old.get("target"),
+                              "has_ai": bool(old.get("has_ai")), "consent": True}).encode()
         request = urllib.request.Request(
             config.BASE_URL.rstrip("/") + "/api/scan", data=payload, method="POST",
             headers={"Content-Type": "application/json", "User-Agent": "Trustfield-Verify/1.0"},
@@ -1079,12 +1161,13 @@ class Handler(BaseHTTPRequestHandler):
             raise HTTPProblem(503, "The re-scan did not return a report.")
         old_ids = {str(f.get("id") or "") for f in (old.get("findings") or [])}
         new_ids = {str(f.get("id") or "") for f in (data.get("teaser") or [])}
-        store.update_scan(new_id, verified_against=scan_id,
-                          fixed_count=len(old_ids - new_ids), new_count=len(new_ids - old_ids))
-        self.send_response(302)
-        self.send_header("Location", "/r/" + new_id + "?verified=1")
-        self.send_header("Content-Length", "0")
-        self.end_headers()
+        if not store.update_scan(new_id, verified_against=scan_id, unlocked=True,
+                                 email=old.get("email", ""),
+                                 source=old.get("source", "direct"),
+                                 fixed_count=len(old_ids - new_ids), new_count=len(new_ids - old_ids)):
+            raise HTTPProblem(503, "The re-check could not be saved. Please try again.")
+        store.update_scan(scan_id, verification_scan_id=new_id)
+        return self._redirect("/r/" + new_id + "?verified=1")
 
     def _watch_start(self, scan_id: str) -> None:
         record = store.load_scan(scan_id)
@@ -1338,16 +1421,31 @@ class Handler(BaseHTTPRequestHandler):
             event = payments.stripe_event(payload)
         if event is None:
             return self._json(200, {"ok": True, "ignored": True})
+        with _payment_lock:
+            return self._apply_payment(event)
+
+    def _apply_payment(self, event: dict) -> None:
+        payment_id = str(event.get("provider_id") or "")
+        if not payment_id:
+            return self._json(200, {"ok": True, "ignored": "no payment id"})
+        if orders.exists(payment_id):
+            return self._json(200, {"ok": True, "duplicate": True})
         product = event.get("product") or "report"
         if product not in ("report", "watch", "agency"):
             return self._json(200, {"ok": True, "ignored": "unknown product"})
         if product != "agency" and not event.get("report_id"):
             return self._json(200, {"ok": True, "ignored": "no report_id"})
+        expected = {"INR": int(float(config.PRICE_INR) * 100), "USD": int(float(config.PRICE_USD) * 100)}
+        if product in ("agency", "watch"):
+            expected = {"INR": int(float(config.AGENCY_INR if product == "agency" else config.WATCH_INR) * 100)}
+        if int(event.get("amount_minor") or 0) != expected.get(event.get("currency")):
+            return self._json(200, {"ok": True, "ignored": "amount or currency mismatch"})
+        order = {**event, "status": "paid", "paid_at": config.now_iso()}
         if product == "agency":
-            expected_agency = int(float(config.AGENCY_INR) * 100)
-            if event.get("amount_minor") and event["amount_minor"] != expected_agency:
-                return self._json(200, {"ok": True, "ignored": "amount mismatch"})
+            if "@" not in str(event.get("email") or ""):
+                raise HTTPProblem(503, "Buyer email missing; payment needs operator review.")
             row = agency.create(event.get("email", ""), event.get("agency_name", ""), 10)
+            orders.append({**order, "agency_id": row["id"]})
             try:
                 emailer.send_agency_welcome(row)
             except Exception:
@@ -1357,20 +1455,13 @@ class Handler(BaseHTTPRequestHandler):
             row = watch.by_id(event.get("watch_id") or "")
             if row is None:
                 return self._json(200, {"ok": True, "ignored": "unknown watch"})
-            expected_watch = int(float(config.WATCH_INR) * 100)
-            if event.get("amount_minor") and event["amount_minor"] != expected_watch:
-                return self._json(200, {"ok": True, "ignored": "amount mismatch"})
             row = watch.activate(row["id"], 30) or row
+            orders.append(order)
             try:
                 emailer.send_watch_active(row)
             except Exception:
                 pass
             return self._json(200, {"ok": True, "watch": row["id"]})
-        expected = {"INR": int(float(config.PRICE_INR) * 100), "USD": int(float(config.PRICE_USD) * 100)}
-        if event.get("amount_minor") and event["amount_minor"] != expected.get(event.get("currency", "INR")):
-            return self._json(200, {"ok": True, "ignored": "amount mismatch"})
-        if event.get("provider_id") and orders.exists(event["provider_id"]):
-            return self._json(200, {"ok": True, "duplicate": True})
         record = _fulfill(
             event["report_id"],
             provider=event["provider"],
