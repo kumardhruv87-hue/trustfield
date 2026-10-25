@@ -127,3 +127,32 @@ def purge_old(days: int = 30) -> int:
             storage.delete_many(stale)
             removed += len(stale)
     return removed
+
+
+def hydrate_from_cloud(limit: int = 60) -> int:
+    """Pull recent scans from Supabase Storage into the local cache (admin + report reads)."""
+    from . import storage
+    if not storage.enabled():
+        return 0
+    try:
+        objects = storage.list_prefix("scans/", limit=limit, newest=True)
+    except Exception:
+        return 0
+    config.ensure_dirs()
+    written = 0
+    for obj in objects[:limit]:
+        name = str((obj or {}).get("name") or "")
+        if not name.endswith(".json"):
+            continue
+        target = config.SCANS_DIR / name.rsplit("/", 1)[-1]
+        if target.exists():
+            continue
+        data = storage.get_json("scans/" + name.rsplit("/", 1)[-1])
+        if not isinstance(data, dict) or not data.get("id"):
+            continue
+        try:
+            target.write_text(json.dumps(data), encoding="utf-8")
+            written += 1
+        except OSError:
+            continue
+    return written
