@@ -760,7 +760,7 @@ def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, w
             "FEE": f"{fee:,.2f}",
             "PAYOUT": f"{payout:,.2f}",
             "WATCH_COUNT": len(watches or []),
-            "ALERTS_STATUS": "configured" if alerts_on else "not configured (add SLACK_WEBHOOK_URL or DISCORD_WEBHOOK_URL)",
+            "ALERTS_STATUS": "Slack/Discord configured" if alerts_on else "email fallback active (add SLACK_WEBHOOK_URL for channel alerts)",
             "AGENCY_ROWS": "".join(
                 f"<tr><td>{esc(str(a.get('name','') or a.get('email','')))}</td><td><code>{esc(str(a.get('code','')))}</code></td>"
                 f"<td>{int(a.get('credits',0))}</td><td>{int(a.get('used',0))}</td></tr>"
