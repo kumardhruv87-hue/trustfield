@@ -74,7 +74,7 @@ def public(code: str) -> dict | None:
     row = find(code)
     if row is None:
         return None
-    return {"name": row.get("name", ""), "email": row.get("email", ""),
+    return {"name": row.get("name", ""), "email": row.get("email", ""), "code": row.get("code", ""),
             "credits": int(row.get("credits", 0)), "used": int(row.get("used", 0)),
             "left": credits_left(row)}
 
