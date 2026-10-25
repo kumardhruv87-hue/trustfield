@@ -13,7 +13,7 @@ from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from . import agency, ai_kit, aicopilot, apikeys, config, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
+from . import agency, ai_kit, aicopilot, apikeys, config, questionnaire, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
@@ -448,6 +448,15 @@ class Handler(BaseHTTPRequestHandler):
                 code = (query.get("code") or [""])[0]
                 paid = (query.get("paid") or [""])[0] == "1"
                 return self._html(200, report.agency_page(agency.public(code), paid))
+            if path == "/trust":
+                return self._html(200, report.legal_page("trust_center"))
+            if path == "/trust/questionnaire":
+                return self._html(200, questionnaire.html_page())
+            if path == "/trust/questionnaire.pdf":
+                pdf_bytes = questionnaire.build_pdf()
+                return self._send(200, pdf_bytes, "application/pdf", {
+                    "Content-Disposition": 'attachment; filename="Trustfield-security-overview.pdf"',
+                })
             if path == "/compare":
                 return self._html(200, report.legal_page("compare"))
             if path == "/integrations":
@@ -489,6 +498,8 @@ class Handler(BaseHTTPRequestHandler):
                     f"<url><loc>{config.BASE_URL}/methodology</loc></url>"
                     f"<url><loc>{config.BASE_URL}/integrations</loc></url>"
                     f"<url><loc>{config.BASE_URL}/compare</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/trust</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/trust/questionnaire</loc></url>"
                     f"<url><loc>{config.BASE_URL}/tools/headers</loc></url>"
                     f"<url><loc>{config.BASE_URL}/tools/rls</loc></url>"
                     f"<url><loc>{config.BASE_URL}/static/sample-report.html</loc></url>"
