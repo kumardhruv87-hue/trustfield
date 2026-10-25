@@ -513,6 +513,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, pdf_bytes, "application/pdf", {
                     "Content-Disposition": 'attachment; filename="Trustfield-security-overview.pdf"',
                 })
+            if path == "/customers":
+                return self._html(200, report.legal_page("customers"))
             if path == "/compare":
                 return self._html(200, report.legal_page("compare"))
             if path == "/integrations":
@@ -554,6 +556,7 @@ class Handler(BaseHTTPRequestHandler):
                     f"<url><loc>{config.BASE_URL}/methodology</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/integrations</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/compare</loc><lastmod>2026-10-25</lastmod></url>"
+                    f"<url><loc>{config.BASE_URL}/customers</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/vs</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/vs/scantient</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/vs/vibesafe</loc><lastmod>2026-10-25</lastmod></url>"
