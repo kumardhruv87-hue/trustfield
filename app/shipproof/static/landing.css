@@ -322,3 +322,5 @@ body.landing-v2 .fine { color: #374151; }
 @media (prefers-reduced-motion: reduce) {
   .scan-beacon i, .scan-beacon b { animation:none; opacity:1; box-shadow:none; }
 }
+
+.admin-link { font-size:11px; opacity:.55; text-decoration:underline; }
