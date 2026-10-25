@@ -567,6 +567,12 @@ class Handler(BaseHTTPRequestHandler):
                 code = (query.get("code") or [""])[0]
                 paid = (query.get("paid") or [""])[0] == "1"
                 return self._html(200, report.agency_page(agency.public(code), paid))
+            match = re.fullmatch(r"/s/([a-z0-9]{6,24})", path)
+            if match:
+                record = store.load_scan(match.group(1))
+                if record is None:
+                    raise HTTPProblem(404, "That scorecard does not exist.")
+                return self._html(200, report.share_card(record))
             match = re.fullmatch(r"/verify/([a-z0-9]{6,24})", path)
             if match:
                 return self._verify_rescan(match.group(1))
