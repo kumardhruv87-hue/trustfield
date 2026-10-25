@@ -13,7 +13,7 @@ from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from . import ai_kit, aicopilot, apikeys, config, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
+from . import agency, ai_kit, aicopilot, apikeys, config, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
@@ -444,6 +444,10 @@ class Handler(BaseHTTPRequestHandler):
                 if url_value:
                     result_html = web_tools.result_html(web_tools.headers_report(url_value))
                 return self._html(200, report.headers_tool_page(url_value, result_html))
+            if path == "/agency":
+                code = (query.get("code") or [""])[0]
+                paid = (query.get("paid") or [""])[0] == "1"
+                return self._html(200, report.agency_page(agency.public(code), paid))
             if path == "/compare":
                 return self._html(200, report.legal_page("compare"))
             if path == "/integrations":
@@ -523,6 +527,16 @@ class Handler(BaseHTTPRequestHandler):
             match = re.fullmatch(r"/pdf/([a-z0-9]{6,24})", path)
             if match:
                 return self._pdf(match.group(1), query)
+            if path == "/admin/agency":
+                token = (query.get("token") or [""])[0]
+                if not _safe_eq(token, config.ADMIN_TOKEN):
+                    raise HTTPProblem(403, "Admin token missing or wrong.")
+                email = (query.get("email") or [""])[0][:200]
+                name = (query.get("name") or [""])[0][:80]
+                if "@" not in email:
+                    raise HTTPProblem(400, "Add ?email=someone@example.com")
+                row = agency.create(email, name, 10)
+                return self._json(200, {"ok": True, "code": row.get("code"), "credits": row.get("credits")})
             if path == "/admin/key":
                 token = (query.get("token") or [""])[0]
                 if not _safe_eq(token, config.ADMIN_TOKEN):
@@ -612,6 +626,44 @@ class Handler(BaseHTTPRequestHandler):
                     raise HTTPProblem(429, "This API key reached its monthly limit.")
                 apikeys.record_use(key_row)
                 return self._create_scan()
+            if path == "/agency/start":
+                length = int(self.headers.get("Content-Length") or 0)
+                if length < 0 or length > 20_000:
+                    raise HTTPProblem(413, "That form is too large.")
+                raw = self.rfile.read(length) if length else b""
+                form = parse_qs(raw.decode("utf-8", "replace"))
+                email = (form.get("email") or [""])[0].strip()[:200]
+                name = (form.get("name") or [""])[0].strip()[:80]
+                if "@" not in email:
+                    return self._html(400, report.agency_page(None, False, "Enter a valid email."))
+                url = payments.create_agency_link(email, name)
+                if not url:
+                    return self._html(503, report.agency_page(None, False, "Checkout is unavailable right now."))
+                self.send_response(302)
+                self.send_header("Location", url)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+            if path == "/unlock-code":
+                body = self._read_json()
+                code = str(body.get("code") or "").strip()
+                scan_id = str(body.get("scan_id") or "").strip()
+                client = str(body.get("client") or "").strip()[:80]
+                record = store.load_scan(scan_id)
+                if record is None:
+                    raise HTTPProblem(404, "That report does not exist.")
+                if _is_paid(record):
+                    return self._json(200, {"ok": True, "already": True})
+                row = agency.consume(code)
+                if row is None:
+                    raise HTTPProblem(402, "That agency code has no credits left.")
+                store.unlock(scan_id)
+                store.update_scan(scan_id, prepared_for=client, agency_name=row.get("name", ""), agency_code=row.get("code", ""))
+                try:
+                    emailer.send_report(store.load_scan(scan_id) or record)
+                except Exception:
+                    pass
+                return self._json(200, {"ok": True, "left": agency.credits_left(row)})
             if path == "/watch/cancel":
                 body = self._read_json()
                 row = watch.by_cancel_token(str(body.get("token") or ""))
@@ -1031,8 +1083,15 @@ class Handler(BaseHTTPRequestHandler):
         if not event.get("report_id"):
             return self._json(200, {"ok": True, "ignored": "no report_id"})
         product = event.get("product") or "report"
-        if product not in ("report", "watch"):
+        if product not in ("report", "watch", "agency"):
             return self._json(200, {"ok": True, "ignored": "unknown product"})
+        if product == "agency":
+            row = agency.create(event.get("email", ""), event.get("agency_name", ""), 10)
+            try:
+                emailer.send_agency_welcome(row)
+            except Exception:
+                pass
+            return self._json(200, {"ok": True, "agency": row.get("code")})
         if product == "watch":
             row = watch.by_id(event.get("watch_id") or "")
             if row is None:
