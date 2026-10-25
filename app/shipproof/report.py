@@ -419,6 +419,13 @@ def report_page(record: dict) -> str:
             Get the full report - ₹{esc(config.PRICE_INR)} / ${esc(config.PRICE_USD)}
           </a>
           <p class="fine">One-time payment. No subscription. Report link stays live for 30 days.</p>
+          <div class="agency-unlock">
+            <p class="fine">Agency handover? Unlock with your agency code:</p>
+            <input id="agency-code" placeholder="TF-AG-XXXXXX" maxlength="20" autocomplete="off">
+            <input id="agency-client" placeholder="Client name (optional)" maxlength="80" autocomplete="off">
+            <button class="btn ghost small" type="button" id="agency-unlock">Unlock with code</button>
+            <p class="fine hidden" id="agency-note"></p>
+          </div>
         </div>"""
         kit_block = kit_html(record, unlocked=True)
         kit_note = "Free for everyone: paste each prompt into your own app's chat, then paste the reply back to grade it."
@@ -488,6 +495,11 @@ def trust_page(record: dict) -> str:
         {
             "BRAND": esc(config.BRAND),
             "TARGET": esc(record.get("target", "")),
+            "PREPARED_FOR": (
+                f'<p class="fine" style="color:#0f766e">Prepared for <strong>{esc(record.get("prepared_for"))}</strong>'
+                + (f' · handover by {esc(record.get("agency_name"))}' if record.get("agency_name") else "")
+                + "</p>"
+            ) if record.get("prepared_for") else "",
             "SCORE": esc(score.get("score", 0)),
             "GRADE": esc(score.get("grade", "?")),
             "SCANNED_AT": esc(record.get("created_at", "")),
@@ -543,6 +555,50 @@ def public_index_page(data: dict) -> str:
             "YEAR": config.now().year,
         },
     )
+
+
+def agency_page(row: dict | None, paid: bool = False, error: str = "") -> str:
+    note = ""
+    if paid:
+        note = '<div class="note" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46">Payment received. Your agency code is on its way by email (usually within a minute).</div>'
+    if error:
+        note = f'<div class="note" style="background:#fef2f2;border-color:#fecaca;color:#991b1b">{esc(error)}</div>'
+    status = ""
+    if row:
+        status = (f'<div class="note" style="margin-top:18px"><strong>{esc(row.get("name") or row.get("email"))}</strong><br>'
+                  f'Code <strong>{esc(row.get("code") or "")}</strong> · {row.get("left", 0)} of {row.get("credits", 0)} reports left</div>')
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agency pack · {esc(config.BRAND)}</title>
+<meta name="description" content="Ten client-ready security reports for agencies that ship AI-built apps. Rs 3999.">
+<link rel="canonical" href="{esc(config.BASE_URL)}/agency">
+<link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/landing.css">
+</head><body class="landing-v2 legal-page">
+<header class="site-head"><div class="wrap head-in"><a class="logo" href="/"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/><path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{esc(config.BRAND)}</span></a><a class="btn small" href="/">Back to site</a></div></header>
+<main class="legal-doc wrap">
+  <h1>Agency pack</h1>
+  <p class="updated">10 client-ready reports · ₹{esc(config.AGENCY_INR)} one-time · no subscription</p>
+  {note}
+  <p>You ship AI-built apps to clients. Scan the app, unlock the report with one code, and hand over a PDF with the client's name on it — evidence, fixes and a fix prompt, without a ₹25k pentest invoice.</p>
+  <ul>
+    <li>10 report credits, use them on any 10 scans</li>
+    <li>Each report carries the client name and your agency name ("Prepared for X · handover by Y")</li>
+    <li>Shareable report link + PDF, same checks as the ₹{esc(config.PRICE_INR)} report</li>
+    <li>Not a penetration test and not a certification — the report says so</li>
+  </ul>
+  <form method="post" action="/agency/start" style="display:grid;gap:10px;max-width:460px;margin:22px 0">
+    <input name="email" type="email" placeholder="you@agency.com" style="height:48px;border:1px solid var(--line);border-radius:10px;padding:0 14px;font:inherit">
+    <input name="name" placeholder="Agency name (shown on reports)" style="height:48px;border:1px solid var(--line);border-radius:10px;padding:0 14px;font:inherit">
+    <button class="btn primary" type="submit" style="height:48px;justify-self:start">Buy agency pack — ₹{esc(config.AGENCY_INR)}</button>
+  </form>
+  <h2>Already bought?</h2>
+  <form method="get" action="/agency" style="display:flex;gap:8px;max-width:460px">
+    <input name="code" placeholder="TF-AG-XXXXXX" style="flex:1;height:48px;border:1px solid var(--line);border-radius:10px;padding:0 14px;font:inherit">
+    <button class="btn" type="submit" style="height:48px">Check credits</button>
+  </form>
+  {status}
+  <p class="fine">Codes are single-use per report. Refunds: <a href="/refund">/refund</a> · Questions: <a href="mailto:{esc(config.CONTACT_EMAIL)}">{esc(config.CONTACT_EMAIL)}</a></p>
+</main></body></html>"""
 
 
 def rls_tool_page(url_value: str, result_html: str) -> str:
@@ -603,7 +659,7 @@ def headers_tool_page(url_value: str, result_html: str) -> str:
 </html>"""
 
 
-def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, watches: list | None = None, keys: list | None = None, alerts_on: bool = False) -> str:
+def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, watches: list | None = None, keys: list | None = None, alerts_on: bool = False, agencies: list | None = None) -> str:
     from . import usage
 
     emails_today = usage.today("emails")
@@ -667,6 +723,11 @@ def admin_page(scans: list[dict], revenue: dict, index_data: dict, token: str, w
             "PAYOUT": f"{payout:,.2f}",
             "WATCH_COUNT": len(watches or []),
             "ALERTS_STATUS": "configured" if alerts_on else "not configured (add SLACK_WEBHOOK_URL or DISCORD_WEBHOOK_URL)",
+            "AGENCY_ROWS": "".join(
+                f"<tr><td>{esc(str(a.get('name','') or a.get('email','')))}</td><td><code>{esc(str(a.get('code','')))}</code></td>"
+                f"<td>{int(a.get('credits',0))}</td><td>{int(a.get('used',0))}</td></tr>"
+                for a in (agencies or [])[-10:]
+            ) or '<tr><td colspan="4" class="muted">No agency packs yet.</td></tr>',
             "KEY_ROWS": "".join(
                 f"<tr><td>{esc(str(k.get('name','')))}</td><td><code>{esc(str(k.get('prefix','')))}…</code></td>"
                 f"<td>{int(k.get('calls',0))}</td><td>{esc(str(k.get('last_used',''))[:16] or 'never')}</td></tr>"
