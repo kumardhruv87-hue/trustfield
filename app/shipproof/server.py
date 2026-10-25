@@ -755,9 +755,10 @@ class Handler(BaseHTTPRequestHandler):
             return
         url = row.get("checkout_url") or ""
         if not url and config.WATCH_SUBSCRIPTIONS:
-            url = payments.create_subscription(scan_id, row["id"])
-            if url:
-                watch.set_subscription(row["id"], "pending")
+            sub = payments.create_subscription(scan_id, row["id"])
+            url = (sub or {}).get("url", "")
+            if url and (sub or {}).get("id"):
+                watch.set_subscription(row["id"], sub["id"])
         if not url:
             url = payments.create_watch_link(scan_id, row["id"])
         if not url:
