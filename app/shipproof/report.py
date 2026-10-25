@@ -461,6 +461,11 @@ def report_page(record: dict) -> str:
             "KIT": kit_block,
             "KIT_NOTE": esc(kit_note),
             "PDF_BUTTON": pdf_block,
+            "PREPARED_FOR": (
+                f'<p class="fine" style="color:#0f766e">Prepared for <strong>{esc(record.get("prepared_for"))}</strong>'
+                + (f' — handover by {esc(record.get("agency_name"))}' if record.get("agency_name") else "")
+                + "</p>"
+            ) if record.get("prepared_for") else "",
             "AI_PANEL": ai_panel_html(record) if paid else "",
             "MODE_NOTE": esc(mode_note),
             "CHECKS": checks_html(record.get("checks") or []),
