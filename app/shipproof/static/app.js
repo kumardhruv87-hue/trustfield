@@ -11,6 +11,13 @@
     });
   }
 
+  function setHTML(el, html) {
+    var doc = new DOMParser().parseFromString("<div>" + String(html == null ? "" : html) + "</div>", "text/html");
+    var holder = doc.body.firstChild;
+    while (el.firstChild) el.removeChild(el.firstChild);
+    if (holder) while (holder.firstChild) el.appendChild(holder.firstChild);
+  }
+
   function meta(name) {
     var tag = document.querySelector('meta[name="' + name + '"]');
     return tag ? tag.getAttribute("content") || "" : "";
@@ -104,12 +111,12 @@
     function startProgress() {
       var i = 0;
       statusBox.className = "scan-status";
-      statusBox.innerHTML = '<span class="spinner"></span>' + esc(steps[0]);
+      setHTML(statusBox, '<span class="spinner"></span>' + esc(steps[0]));
       statusBox.classList.remove("hidden");
       clearInterval(timer);
       timer = setInterval(function () {
         i = (i + 1) % steps.length;
-        statusBox.innerHTML = '<span class="spinner"></span>' + esc(steps[i]);
+        setHTML(statusBox, '<span class="spinner"></span>' + esc(steps[i]));
       }, 2600);
     }
 
@@ -155,7 +162,7 @@
           '<span class="effort">~' + esc(a.effort) + "</span></div></div></li>";
       }).join("");
 
-      resultBox.innerHTML =
+      setHTML(resultBox,
         '<div class="result-head"><div class="ring small" style="--score:' + score + '">' +
           '<div class="ring-inner"><b>' + score + "</b><span>" + esc(data.grade || "") + "</span></div></div>" +
           '<div class="result-text"><h3>' + esc(data.headline || "") + "</h3>" +
@@ -177,7 +184,7 @@
           (locked
             ? "Free scan: score + every issue title. The full report adds the evidence, the exact fix, the fix prompt and the PDF report."
             : "Full report unlocked.") +
-        "</p>";
+        "</p>");
 
       resultBox.classList.remove("hidden");
       resultBox.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -284,7 +291,7 @@
       card.appendChild(existing);
     }
     existing.className = "verdict verdict-" + verdict.toLowerCase();
-    existing.innerHTML = esc(verdict) + "<span>" + esc(evidence || advice) + "</span>";
+    setHTML(existing, esc(verdict) + "<span>" + esc(evidence || advice) + "</span>");
   }
 
   $$(".grade-btn").forEach(function (button) {
