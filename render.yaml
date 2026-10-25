@@ -22,3 +22,11 @@
         value: /tmp/data
       - key: PORT
         value: "8000"
+
+
+# Required for persistent data (ephemeral /tmp/data is wiped on deploy):
+#   SUPABASE_URL            (e.g. https://<project>.supabase.co)
+#   SUPABASE_SERVICE_KEY    (service-role key; server-side only)
+#   SHIPPROOF_ADMIN_TOKEN   (long random admin token)
+#   SECRET_KEY              (HMAC secret for signed links / admin sessions)
+# Without the first two, reports/leads/orders live only in ephemeral storage.
