@@ -406,6 +406,44 @@ class Handler(BaseHTTPRequestHandler):
         return forwarded or self.client_address[0]
 
     # --------------------------------------------------------------- verbs --
+    LOGIN_FAILS: dict[str, int] = {}
+    LOGIN_BLOCKED: dict[str, float] = {}
+
+    def _read_form(self) -> dict:
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            raise HTTPProblem(400, "Invalid Content-Length")
+        if length <= 0 or length > 10_000:
+            return {}
+        raw = self.rfile.read(length)
+        from urllib.parse import parse_qs as _parse_qs
+        return _parse_qs(raw.decode("utf-8", "replace"))
+
+    def _login_page(self, error: str = "") -> None:
+        self._send(200, report.admin_login_page(error).encode("utf-8"), "text/html; charset=utf-8", {"Cache-Control": "no-store"})
+
+    def _admin_login(self) -> None:
+        ip = self._client_ip()
+        if time.time() < self.LOGIN_BLOCKED.get(ip, 0):
+            raise HTTPProblem(429, "Too many attempts. Try again in 15 minutes.")
+        form = self._read_form()
+        password = str((form.get("password") or [""])[0])
+        expected = config.ADMIN_PASSWORD
+        if expected and _safe_eq(password, expected):
+            self.LOGIN_FAILS.pop(ip, None)
+            self.LOGIN_BLOCKED.pop(ip, None)
+            session = sign.sign("admin", "admin_session", ttl_days=7)
+            cookie = (f"{self.ADMIN_COOKIE}={session}; Path=/admin; HttpOnly; Secure; "
+                      f"SameSite=Strict; Max-Age=604800")
+            return self._redirect("/admin", cookie)
+        fails = self.LOGIN_FAILS.get(ip, 0) + 1
+        self.LOGIN_FAILS[ip] = fails
+        if fails >= 5:
+            self.LOGIN_BLOCKED[ip] = time.time() + 900
+            self.LOGIN_FAILS[ip] = 0
+        self._login_page("Wrong password. Try again.")
+
     def do_HEAD(self) -> None:  # noqa: N802
         self._head_only = True
         try:
@@ -671,6 +709,10 @@ class Handler(BaseHTTPRequestHandler):
                 except OSError:
                     text = "no error recorded"
                 return self._send(200, text.encode(), "text/plain; charset=utf-8")
+            if path == "/admin/login":
+                if self._admin_ok():
+                    return self._redirect("/admin")
+                return self._login_page()
             if path == "/admin/logout":
                 return self._redirect("/", f"{self.ADMIN_COOKIE}=; Path=/admin; HttpOnly; Secure; SameSite=Strict; Max-Age=0")
             if path == "/admin":
@@ -727,6 +769,8 @@ class Handler(BaseHTTPRequestHandler):
         if method == "POST":
             if path in ("/webhooks/razorpay", "/webhooks/stripe"):
                 return self._webhook(path)
+            if path == "/admin/login":
+                return self._admin_login()
             if not _rate_ok("post_min", self._client_ip()):
                 raise HTTPProblem(429, "Too many requests — slow down a little.")
             if path == "/api/scan":
