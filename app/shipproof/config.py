@@ -50,6 +50,7 @@ ADMIN_EMAIL = os.environ.get("SHIPPROOF_ADMIN_EMAIL", CONTACT_EMAIL)
 
 # Signed links + admin. SECRET_KEY signs PDF/download links.
 ADMIN_TOKEN = os.environ.get("SHIPPROOF_ADMIN_TOKEN", "")
+ADMIN_PASSWORD = os.environ.get("SHIPPROOF_ADMIN_PASSWORD", "") or ADMIN_TOKEN
 SECRET_KEY = os.environ.get("SHIPPROOF_SECRET_KEY", "") or ADMIN_TOKEN or "dev-secret-change-me"
 TOKEN_TTL_DAYS = int(os.environ.get("SHIPPROOF_TOKEN_TTL_DAYS", "90"))
 
