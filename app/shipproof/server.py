@@ -181,6 +181,18 @@ def _fulfill(
             emailed_at=config.now_iso(),
             email_result={k: v for k, v in result.items() if k != "path"},
         ) or record
+
+    try:
+        if record and not record.get("ai_plan"):
+            plan = aicopilot.ask(
+                record,
+                "In plain English, write a 5-line action plan: first what is most dangerous, then the next 3 fixes in order, then what to tell a client or buyer. No jargon. Under 140 words.",
+            ).get("answer") or ""
+            if plan:
+                record = store.update_scan(record["id"], ai_plan=plan) or record
+    except Exception:
+        pass
+
     return record
 
 
