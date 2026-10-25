@@ -15,7 +15,7 @@ from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from . import agency, ai_kit, aicopilot, apikeys, config, guides, questionnaire, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
+from . import agency, ai_kit, aicopilot, apikeys, config, guides, questionnaire, vs, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
@@ -488,6 +488,14 @@ class Handler(BaseHTTPRequestHandler):
             match = re.fullmatch(r"/verify/([a-z0-9]{6,24})", path)
             if match:
                 return self._verify_rescan(match.group(1))
+            if path == "/vs":
+                return self._html(200, vs.vs_page("vs"))
+            match = re.fullmatch(r"/vs/([a-z0-9-]{3,40})", path)
+            if match:
+                page = vs.vs_page(match.group(1))
+                if page is None:
+                    raise HTTPProblem(404, "Comparison not found.")
+                return self._html(200, page)
             if path == "/guides":
                 return self._html(200, guides.index_page())
             match = re.fullmatch(r"/guides/([a-z0-9-]{3,60})", path)
