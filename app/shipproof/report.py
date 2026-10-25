@@ -548,16 +548,35 @@ def badge_svg(record: dict) -> str:
 </svg>"""
 
 
+ISSUE_LABELS = {
+    "deep.dom_xss_sink": "DOM XSS sink in the browser",
+    "deep.no_meta_description": "Missing meta description",
+    "deep.no_canonical": "No canonical URL",
+    "deep.no_structured_data": "No structured data",
+    "deep.no_llms_txt": "No llms.txt for AI agents",
+    "live.no_deletion_path": "No data-deletion path",
+    "live.cors_wildcard": "CORS open to every origin",
+    "live.no_hsts": "Missing HSTS header",
+    "live.no_csp": "Missing Content-Security-Policy",
+}
+
+
+def _issue_label(raw: str) -> str:
+    if raw in ISSUE_LABELS:
+        return ISSUE_LABELS[raw]
+    return raw.replace("deep.", "").replace("live.", "").replace("_", " ").strip().title()
+
+
 def public_index_page(data: dict) -> str:
     rows = ""
     for issue in data.get("top_issues") or []:
         rows += (
-            f'<tr><td><code>{esc(issue["id"])}</code></td>'
+            f'<tr><td>{esc(_issue_label(issue["id"]))}</td>'
             f'<td class="num-cell">{issue["count"]}</td>'
             f'<td class="num-cell"><strong>{issue["rate"]}%</strong></td></tr>'
         )
     platforms = "".join(
-        f'<li><span>{esc(item["name"])}</span><strong>{item["rate"]}%</strong></li>'
+        f'<li><span>{esc("Other / unknown" if item["name"] == "Other" else item["name"])}</span><strong>{item["rate"]}%</strong></li>'
         for item in data.get("platforms") or []
     )
     return _fill(
