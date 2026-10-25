@@ -13,11 +13,21 @@ def _path():
 
 def load() -> list[dict]:
     import json
+    rows = []
     try:
         rows = json.loads(_path().read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        rows = storage.get_json("agencies.json") or []
-    return rows if isinstance(rows, list) else []
+        rows = []
+    if not isinstance(rows, list):
+        rows = []
+    remote = storage.get_json("agencies.json") or []
+    if isinstance(remote, list) and remote:
+        if not rows:
+            rows = remote
+        elif len(remote) > len(rows):
+            seen = {str(r.get("id") or "") for r in rows}
+            rows = remote + [r for r in rows if str(r.get("id") or "") not in seen]
+    return rows
 
 
 def save(rows: list[dict]) -> None:
