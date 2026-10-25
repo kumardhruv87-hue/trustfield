@@ -145,3 +145,6 @@ WATCH_SUBSCRIPTIONS = os.environ.get("SHIPPROOF_WATCH_SUBSCRIPTIONS", "1") == "1
 # Alerts (optional): paste a Slack or Discord webhook in Render env.
 SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL", "")
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
+
+# Focus mode: only the core free scan + Rs 499 report are public.
+FOCUS_MODE = os.environ.get("SHIPPROOF_FOCUS_MODE", "1") == "1"
