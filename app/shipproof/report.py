@@ -356,8 +356,8 @@ def watch_upsell_html(record: dict) -> str:
       <div class="lock-icon">🛡️</div>
       <h3>Watch this app</h3>
       <p>Daily re-checks after your next deploy. We email you only when a new finding appears, and the report page updates with the newest score.</p>
-      <p class="fine">₹{watch_price} per 30 days · beta billing: one payment, no auto-renew · cancel anytime</p>
-      <a class="btn primary" href="/watch/start/{scan_id}">Start Watch — ₹{watch_price} / 30 days</a>
+      <p class="fine">₹{watch_price} per month · auto-renews · cancel anytime</p>
+      <a class="btn primary" href="/watch/start/{scan_id}">Start Watch — ₹{watch_price} / month</a>
     </div>"""
 
 
