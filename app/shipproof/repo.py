@@ -168,6 +168,16 @@ def _iter_text_files(zip_bytes: bytes) -> tuple[dict[str, str], dict]:
             if len(parts) < 2:
                 continue
             rel = "/".join(parts[1:])
+            low_rel = rel.lower()
+            # Skip the scanner's own source, intentional vulnerability demos and
+            # fixture/example folders: they contain security keywords by design and
+            # would otherwise produce false positives on any repo that ships them.
+            if "app/shipproof/" in low_rel or low_rel.endswith("static/sample-report.html"):
+                stats["skipped_demo"] = stats.get("skipped_demo", 0) + 1
+                continue
+            if any(part in ("fixtures", "fixture", "__fixtures__", "examples", "example", "demos", "demo") for part in parts[:-1]):
+                stats["skipped_demo"] = stats.get("skipped_demo", 0) + 1
+                continue
             if not rel or any(p in SKIP_DIRS for p in parts[:-1]):
                 continue
             if info.file_size > config.MAX_FILE_BYTES:
