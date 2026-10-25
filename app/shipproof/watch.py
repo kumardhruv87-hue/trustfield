@@ -169,3 +169,15 @@ def extend(watch_id: str, until_iso: str = "", days: int = 30) -> dict | None:
             save(rows)
             return row
     return None
+
+
+def disable_auto_renew(watch_id: str) -> dict | None:
+    """Stop future renewals but keep access until paid_until."""
+    rows = load()
+    for row in rows:
+        if row.get("id") == watch_id:
+            row["auto_renew"] = False
+            row["checkout_pending"] = False
+            save(rows)
+            return row
+    return None
