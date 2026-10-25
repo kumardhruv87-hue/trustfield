@@ -542,6 +542,8 @@ class Handler(BaseHTTPRequestHandler):
                 row = watch.by_cancel_token(str(body.get("token") or ""))
                 if row is None:
                     raise HTTPProblem(404, "That Watch link is not valid.")
+                if row.get("subscription_id") and row["subscription_id"] != "pending":
+                    payments.cancel_subscription(row["subscription_id"])
                 watch.cancel(row["id"])
                 return self._json(200, {"ok": True})
             if path == "/tools/rls":
@@ -729,7 +731,13 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Content-Length", "0")
             self.end_headers()
             return
-        url = row.get("checkout_url") or payments.create_watch_link(scan_id, row["id"])
+        url = row.get("checkout_url") or ""
+        if not url and config.WATCH_SUBSCRIPTIONS:
+            url = payments.create_subscription(scan_id, row["id"])
+            if url:
+                watch.set_subscription(row["id"], "pending")
+        if not url:
+            url = payments.create_watch_link(scan_id, row["id"])
         if not url:
             raise HTTPProblem(503, "Watch checkout is unavailable right now. Email " + config.CONTACT_EMAIL)
         watch.set_checkout(row["id"], url)
@@ -904,6 +912,29 @@ class Handler(BaseHTTPRequestHandler):
                 payload = json.loads(raw.decode("utf-8"))
             except (UnicodeDecodeError, json.JSONDecodeError):
                 raise HTTPProblem(400, "Invalid JSON")
+            sub_event = payments.razorpay_subscription_event(payload)
+            if sub_event:
+                watch_id = sub_event.get("watch_id") or ""
+                row = watch.by_id(watch_id) if watch_id else None
+                if row is None:
+                    return self._json(200, {"ok": True, "ignored": "unknown watch subscription"})
+                name = sub_event.get("event", "")
+                if name in ("subscription.activated", "subscription.charged", "subscription.resumed"):
+                    if sub_event.get("subscription_id"):
+                        watch.set_subscription(watch_id, sub_event["subscription_id"])
+                    row = watch.extend(watch_id, sub_event.get("until") or "") or row
+                    try:
+                        emailer.send_watch_active(row)
+                    except Exception:
+                        pass
+                elif name in ("subscription.cancelled", "subscription.completed",
+                              "subscription.halted", "subscription.paused", "subscription.expired"):
+                    watch.cancel(watch_id)
+                    try:
+                        emailer.send_watch_cancelled(row)
+                    except Exception:
+                        pass
+                return self._json(200, {"ok": True, "watch": watch_id, "event": name})
             event = payments.razorpay_event(payload)
         else:
             signature = self.headers.get("Stripe-Signature", "")
@@ -951,7 +982,6 @@ class Handler(BaseHTTPRequestHandler):
         if record is None:
             return self._json(200, {"ok": True, "ignored": "unknown report"})
         return self._json(200, {"ok": True, "id": record.get("id")})
-
 
 def make_server(host: str = config.HOST, port: int = config.PORT) -> ThreadingHTTPServer:
     config.ensure_dirs()
