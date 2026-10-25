@@ -434,6 +434,8 @@ class Handler(BaseHTTPRequestHandler):
                 if url_value:
                     result_html = web_tools.result_html(web_tools.headers_report(url_value))
                 return self._html(200, report.headers_tool_page(url_value, result_html))
+            if path == "/compare":
+                return self._html(200, report.legal_page("compare"))
             if path == "/integrations":
                 return self._html(200, report.legal_page("integrations"))
             if path == "/api/watch/run":
@@ -472,6 +474,7 @@ class Handler(BaseHTTPRequestHandler):
                     f"<url><loc>{config.BASE_URL}/status</loc></url>"
                     f"<url><loc>{config.BASE_URL}/methodology</loc></url>"
                     f"<url><loc>{config.BASE_URL}/integrations</loc></url>"
+                    f"<url><loc>{config.BASE_URL}/compare</loc></url>"
                     f"<url><loc>{config.BASE_URL}/tools/headers</loc></url>"
                     f"<url><loc>{config.BASE_URL}/tools/rls</loc></url>"
                     f"<url><loc>{config.BASE_URL}/static/sample-report.html</loc></url>"
@@ -534,6 +537,7 @@ class Handler(BaseHTTPRequestHandler):
                     f"- [Free security scan]({config.BASE_URL}/): paste a URL, get the score and every issue title. No signup, no card.\n"
                     f"- [Full report (Rs {config.PRICE_INR}, one-time)]({config.BASE_URL}/#pricing): evidence for each finding, the exact fix, a copy-paste fix prompt and a PDF.\n"
                     f"- [Sample report]({config.BASE_URL}/static/sample-report.html): what the paid report looks like.\n"
+                    f"- [Compare options]({config.BASE_URL}/compare): Trustfield vs pentest vs free scanner.\n"
                     f"- [Integrations]({config.BASE_URL}/integrations): GitHub Action and JSON API.\n"
                     f"- [Security headers checker]({config.BASE_URL}/tools/headers): free, paste any public URL.\n\n"
                     "## Trust pages\n"
