@@ -26,7 +26,13 @@ def _post(url: str, payload: dict) -> bool:
 
 def send(title: str, message: str, link: str = "") -> bool:
     if not configured():
-        return False
+        # Zero-setup fallback: email the operator so alerts never silently die.
+        try:
+            from . import emailer
+            result = emailer.send_alert(title, message, link)
+            return bool(result and result.get("ok"))
+        except Exception:
+            return False
     text = f"*{title}*\n{message}" + (f"\n{link}" if link else "")
     ok = False
     if config.SLACK_WEBHOOK_URL:
