@@ -41,7 +41,7 @@
 <table>
   <tr><th>Header</th><th>Value</th></tr>
   <tr><td>Strict-Transport-Security</td><td>max-age=31536000; includeSubDomains</td></tr>
-  <tr><td>Content-Security-Policy</td><td>default-src 'self'; no third-party script; object-src locked down</td></tr>
+  <tr><td>Content-Security-Policy</td><td>default-src 'self'; only the cookieless Ahrefs analytics script (allow-listed in CSP); object-src locked down</td></tr>
   <tr><td>X-Frame-Options</td><td>DENY</td></tr>
   <tr><td>X-Content-Type-Options</td><td>nosniff</td></tr>
   <tr><td>Referrer-Policy</td><td>strict-origin-when-cross-origin</td></tr>
