@@ -87,6 +87,21 @@ ANALYTICS_COOKIES = ("_ga", "_gid", "_gat", "_fbp", "_fbc", "__utm", "_hj", "ph_
 
 
 def _check_headers(res: net.FetchResult, c: Collector) -> None:
+    # Edge providers vary headers by user-agent. Measure what a browser receives
+    # before declaring a header missing.
+    try:
+        if not res.header("strict-transport-security") or not res.header("content-security-policy"):
+            probe = net.safe_fetch(res.url, max_bytes=30_000, timeout=6, extra_headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml",
+            })
+            if probe.headers:
+                merged = dict(res.headers or {})
+                for key, value in probe.headers.items():
+                    merged.setdefault(key.lower(), value)
+                res.headers = merged
+    except Exception:
+        pass
     h = res.headers
 
     # HSTS ------------------------------------------------------------------
@@ -1025,6 +1040,15 @@ def scan_live(raw_url: str, has_ai: bool = False, budget_seconds: float | None =
     # http -> https redirect
     if scheme == "https" and budget.left() > 3:
         http_res = net.safe_fetch(http_url, budget=budget, max_bytes=30_000, timeout=6)
+        if http_res.status and not (http_res.url or "").startswith("https://"):
+            # Some edges answer a bot user-agent on http without redirecting but
+            # send a real browser to https. Measure what a browser gets.
+            probe = net.safe_fetch(http_url, budget=budget, max_bytes=30_000, timeout=6, extra_headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml",
+            })
+            if (probe.url or "").startswith("https://"):
+                http_res = probe
         if http_res.status and not (http_res.url or "").startswith("https://"):
             collector.fail(
                 "transport.https_redirect",
