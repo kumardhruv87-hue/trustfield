@@ -42,6 +42,15 @@
     </section>
 
     <section class="block">
+      <h2>Agency packs</h2>
+      <table class="meta-table">
+        <tr><th>Agency</th><th>Code</th><th>Credits</th><th>Used</th></tr>
+        {{AGENCY_ROWS}}
+      </table>
+      <p class="fine">Create manually: <code>/admin/agency?email=you@agency.com&amp;name=Agency&amp;token={{TOKEN}}</code></p>
+    </section>
+
+    <section class="block">
       <h2>Integrations</h2>
       <p class="fine">API keys are stored hashed; copy the key when it is shown once. Alerts: <strong>{{ALERTS_STATUS}}</strong></p>
       <table class="meta-table">
