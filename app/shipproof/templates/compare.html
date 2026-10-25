@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trustfield vs pentest vs free scanner · {{BRAND}}</title>
+  <meta name="description" content="An honest comparison: Trustfield ₹499 report vs a ₹25k+ penetration test vs a free scanner vs a Fiverr vibe-code audit. What each one actually checks.">
+  <link rel="canonical" href="{{BASE_URL}}/compare">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/landing.css">
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="gLBPCAyOg9uZUDtLmDAQ3Q" async></script>
+</head>
+<body class="landing-v2 legal-page">
+  <header class="site-head"><div class="wrap head-in"><a class="logo" href="/"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path d="M16 2 28 7v9c0 7-5 12-12 14C9 28 4 23 4 16V7z" fill="currentColor"/><path d="M11 16l4 4 7-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{{BRAND}}</span></a><a class="btn small" href="/">Back to site</a></div></header>
+  <main class="legal-doc wrap">
+    <h1>Compare: what actually checks your app?</h1>
+    <p class="updated">Honest table. We are not a penetration test and we say so.</p>
+
+    <table>
+      <tr><th>Option</th><th>Typical price</th><th>What it checks</th><th>Time</th><th>Best for</th></tr>
+      <tr>
+        <td><strong>Trustfield report</strong></td>
+        <td><strong>₹499 one-time</strong></td>
+        <td>Public JS keys, database rules (Supabase/Firebase), payment webhooks, headers, CORS, cookies, exposed files, AI prompt injection, dependency CVEs (repo scans)</td>
+        <td>~60 seconds</td>
+        <td>AI-built apps that need the obvious holes fixed before launch</td>
+      </tr>
+      <tr>
+        <td>Free scanner (ZAP, Burp CE, Sucuri)</td>
+        <td>₹0</td>
+        <td>Many technical alerts, little prioritisation; usually no plain-English fix or AI-builder prompt</td>
+        <td>30–90 min setup</td>
+        <td>Developers who can read raw tooling output</td>
+      </tr>
+      <tr>
+        <td>Fiverr "vibe-code audit"</td>
+        <td>₹2,000–12,000</td>
+        <td>Varies wildly by seller; often a manual read of the code, not the running app</td>
+        <td>2–5 days</td>
+        <td>One-off reassurance, if the seller is good</td>
+      </tr>
+      <tr>
+        <td>Penetration test (agency)</td>
+        <td>₹25,000–2,00,000+</td>
+        <td>Authenticated testing, exploitation, business-logic abuse, retest</td>
+        <td>1–3 weeks</td>
+        <td>Apps with real money or user data, before enterprise deals</td>
+      </tr>
+      <tr>
+        <td>Trustfield + pentest</td>
+        <td>₹499 + pentest</td>
+        <td>Fast external check now, deep manual test later when it is justified</td>
+        <td>60 sec + weeks</td>
+        <td>The honest sequence for most founders</td>
+      </tr>
+    </table>
+
+    <h2>Where Trustfield is the wrong tool</h2>
+    <ul>
+      <li>You need an exploitation-level pentest or a retest certificate.</li>
+      <li>Your app is behind a login and you need authenticated testing.</li>
+      <li>You need mobile apps, browser extensions or Shopify admin apps reviewed.</li>
+      <li>You need a SOC 2 / ISO style compliance report.</li>
+    </ul>
+
+    <h2>Where it is the right tool</h2>
+    <ul>
+      <li>You shipped with Lovable, Bolt, v0, Cursor, Replit or by hand and want to know what a stranger can reach.</li>
+      <li>You want the exact fix and a prompt you can paste back into your builder.</li>
+      <li>You want a cheap check after every deploy, with Watch for daily re-checks.</li>
+    </ul>
+
+    <p class="note">Trustfield is an external, read-only check: a point in time, not a guarantee. It is not a penetration test and not a certification. <a href="/methodology">Methodology</a> · <a href="/security">Security</a> · <a href="/#scan">Run a free scan</a></p>
+  </main>
+  <footer class="site-foot"><div class="wrap"><div class="foot-legal"><span>© {{YEAR}} {{BRAND}} · Independent security review for AI-built apps</span><span><a href="/security">Security</a> · <a href="/privacy">Privacy</a> · <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a></span></div></div></footer>
+</body>
+</html>
