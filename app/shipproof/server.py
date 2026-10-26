@@ -584,6 +584,11 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/methodology":
                 return self._html(200, report.legal_page("methodology"))
             if path == "/audit":
+                channel = usage.source((query.get("utm_source") or ["direct"])[0])
+                try:
+                    usage.funnel("visit", channel)
+                except Exception:
+                    pass
                 return self._html(200, report.audit_page())
             if path == "/tools/speed":
                 from . import speedtool
