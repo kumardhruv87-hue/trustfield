@@ -47,10 +47,13 @@ def context(scans, revenue, index_data, watches, keys, alerts_on, agencies, noti
         fields = f'<input type="hidden" name="csrf" value="{esc(csrf)}"><input type="hidden" name="action" value="{esc(action)}"><input type="hidden" name="scan_id" value="{esc(scan_id)}">'
         checkbox = '<label><input type="checkbox" name="confirmed" value="1" required> I verified payment or intend a complimentary grant. This does not record revenue.</label>' if confirm else ''
         return f'<form method="post" action="/admin/actions">{fields}{checkbox}<button class="btn small" type="submit">{esc(label)}</button></form>'
+    paid_ids = {str(r.get("scan_id") or r.get("report_id") or "") for r in revenue.get("records", [])
+                if r.get("classification") == "Provider confirmed"}
     alerts = []
-    attention = [s for s in scans if s.get("unlocked") and email_status(s) != "Accepted by email provider" and not s.get("verified_against")]
+    attention = [s for s in scans if str(s.get("id")) in paid_ids
+                 and email_status(s) != "Accepted by email provider" and not s.get("verified_against")]
     if attention:
-        alerts.append(f'{len(attention)} access-granted report(s) have missing, failed or unconfirmed email delivery. Review the recent reports table.')
+        alerts.append(f'{len(attention)} confirmed paid report(s) need an email-delivery check. Open the customer reports below.')
     if revenue.get("review_count"):
         alerts.append(f'{revenue["review_count"]} payment record(s) need gateway review. Legacy records are not counted as confirmed sales.')
     if not storage.enabled():
@@ -64,9 +67,12 @@ def context(scans, revenue, index_data, watches, keys, alerts_on, agencies, noti
                "email-accepted": "The email provider accepted the request. Inbox delivery is not confirmed.",
                "email-failed": "The report was not accepted for email delivery. Review its delivery status."}
     report_rows = []
+    paid_report_rows = []
     for scan in scans:
         sid = esc(scan.get("id"))
         access = "Included re-check" if scan.get("verified_against") else ("Access granted" if scan.get("unlocked") else "Free / locked")
+        if str(scan.get("id")) in paid_ids:
+            access = "Paid report"
         actions = f'<a href="/r/{sid}">Open report</a>'
         if scan.get("unlocked"):
             actions += f' · <a href="/admin/pdf/{sid}">PDF</a>'
@@ -75,10 +81,15 @@ def context(scans, revenue, index_data, watches, keys, alerts_on, agencies, noti
         else:
             actions += '<details><summary>Grant access</summary>' + form("grant", "Confirm access grant", scan.get("id"), True) + '</details>'
         report_rows.append(f'<tr><td><a href="/r/{sid}">{sid}</a><br><span class="fine">{esc(scan.get("target"))}</span></td><td>{int((scan.get("score") or {}).get("score") or 0)}</td><td>{access}</td><td>{esc(email_status(scan))}<br><span class="fine">{esc(scan.get("email") or "No recipient")}</span></td><td>{ist(scan.get("created_at"))}</td><td class="admin-actions">{actions}</td></tr>')
+        if str(scan.get("id")) in paid_ids:
+            paid_report_rows.append(report_rows[-1])
     payment_rows = []
+    history_rows = []
     for row in revenue.get("records", [])[:100]:
         receipt = row.get("receipt") or {}
         payment_rows.append(f'<tr><td>{esc(row.get("provider_id") or "Manual grant")}<br><span class="fine">{esc(row.get("provider"))} · {esc(row.get("product") or "report")}</span></td><td>{esc(row.get("currency") or "INR")} {int(row.get("amount_minor") or 0)/100:,.2f}</td><td>{esc(row.get("classification"))}<br><span class="fine">{esc(receipt.get("reason") or row.get("verification") or "No provider evidence recorded")} · mode: {esc(row.get("payment_mode") or "unknown")}</span></td><td>{esc(row.get("scan_id") or row.get("report_id") or "—")}</td><td>{ist(row.get("paid_at"))}</td></tr>')
+        if row.get("classification") in ("Manual access / grant", "Test payment"):
+            history_rows.append(payment_rows.pop())
     active = sum(watch_current(w) for w in watches)
     legacy = f'<p>{active} active/current Watch records of {len(watches)} total; {len(agencies)} agency records; {len(keys)} API key records. New sales are paused in focus mode.</p>'
     legacy += '<ul>' + ''.join(f'<li>{esc(w.get("target"))} — {"active flag" if w.get("active") else "paused"}; paid through {esc(w.get("paid_until") or "not recorded")} · <a href="/watch/manage?token={esc(w.get("cancel_token"))}">Manage existing service</a></li>' for w in watches) + '</ul>'
@@ -89,6 +100,10 @@ def context(scans, revenue, index_data, watches, keys, alerts_on, agencies, noti
             "CONFIRMED_ORDERS": revenue.get("confirmed_orders", 0), "CONFIRMED_INR": f'{revenue.get("confirmed_inr", 0):,.2f}',
             "REVIEW_COUNT": revenue.get("review_count", 0), "SCAN_COUNT": len(scans),
             "RECORDED_INR": f'{revenue.get("revenue_inr", 0):,.2f}', "TEST_COUNT": revenue.get("test_orders", 0), "MANUAL_COUNT": revenue.get("manual_grants", 0),
+            "DELIVERY_COUNT": len(attention),
+            "PAID_REPORT_ROWS": ''.join(paid_report_rows) or '<tr><td colspan="6">No provider-confirmed customer reports in the recent records.</td></tr>',
+            "HISTORY_ROWS": ''.join(history_rows) or '<tr><td colspan="5">No test or complimentary records.</td></tr>',
+            "LEGACY_BLOCK": '<details class="block"><summary>Existing Watch commitments</summary>' + legacy + '</details>' if active else "",
             "PAYMENT_ROWS": ''.join(payment_rows) or '<tr><td colspan="5">No payment records available.</td></tr>',
             "RECONCILE_FORM": form("reconcile", "Check recorded Razorpay payments"),
             "REPORT_ROWS": ''.join(report_rows) or '<tr><td colspan="6">No reports loaded.</td></tr>',

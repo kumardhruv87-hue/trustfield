@@ -121,4 +121,80 @@ class AdminDataTests(unittest.TestCase):
         self.assertEqual(orders.summary()["confirmed_inr"], 499)
 
 
+    def fulfill(self, **extra):
+        return server._fulfill("paidscan01", provider="razorpay", provider_id="pay_realbuyer",
+                               amount_minor=49900, verification="signed_webhook", **extra)
+
+    def test_payment_after_complimentary_access_is_recorded_once_without_automatic_ai(self):
+        store.save_scan({"id": "paidscan01", "unlocked": True, "email": "buyer@example.com"})
+        with patch.object(config, "RAZORPAY_KEY_ID", "rzp_live_example"), \
+             patch.object(server.notify, "send"), patch.object(server.usage, "funnel") as funnel, \
+             patch.object(server.aicopilot, "ask") as ai, \
+             patch.object(server.emailer, "send_report", return_value={"ok": True, "mode": "resend"}) as email:
+            self.fulfill()
+            self.fulfill()
+        self.assertEqual(orders.summary()["confirmed_inr"], 499)
+        self.assertEqual(len(orders.all_orders()), 1)
+        self.assertEqual(email.call_count, 1)
+        self.assertEqual(funnel.call_count, 1)
+        ai.assert_not_called()
+
+    def test_distinct_receipts_are_retained_even_for_an_unlocked_report(self):
+        store.save_scan({"id": "paidscan01", "unlocked": True})
+        with patch.object(server.notify, "send"), patch.object(server.usage, "funnel"):
+            self.fulfill()
+            server._fulfill("paidscan01", provider="razorpay", provider_id="pay_secondbuyer", amount_minor=49900)
+        self.assertEqual(len(orders.all_orders()), 2)
+
+    def test_ledger_write_failure_does_not_grant_access(self):
+        store.save_scan({"id": "paidscan01", "unlocked": False})
+        with patch.object(orders, "append", side_effect=OSError("disk unavailable")):
+            with self.assertRaises(OSError): self.fulfill()
+        self.assertFalse(store.load_scan("paidscan01")["unlocked"])
+
+    def test_webhook_retry_finishes_unlock_after_receipt_was_saved(self):
+        store.save_scan({"id": "paidscan01", "unlocked": False, "email": "buyer@example.com"})
+        h = object.__new__(server.Handler)
+        h._json = MagicMock()
+        event = {"provider": "razorpay", "provider_id": "pay_realbuyer", "report_id": "paidscan01",
+                 "amount_minor": 49900, "currency": "INR", "product": "report"}
+        with patch.object(store, "unlock", side_effect=OSError("temporary failure")):
+            with self.assertRaises(OSError): h._apply_payment(event)
+        self.assertEqual(len(orders.all_orders()), 1)
+        self.assertFalse(store.load_scan("paidscan01")["unlocked"])
+        with patch.object(server.emailer, "send_report", return_value={"ok": True, "mode": "resend"}) as email:
+            h._apply_payment(event)
+        self.assertTrue(store.load_scan("paidscan01")["unlocked"])
+        self.assertEqual(len(orders.all_orders()), 1)
+        email.assert_called_once()
+
+    def test_duplicate_payment_retries_failed_delivery(self):
+        store.save_scan({"id": "paidscan01", "unlocked": False, "email": "buyer@example.com"})
+        with patch.object(server.notify, "send"), patch.object(server.usage, "funnel"), \
+             patch.object(server.emailer, "send_report", side_effect=[{"ok": False, "mode": "resend"}, {"ok": True, "mode": "resend"}]) as email:
+            self.fulfill()
+            self.fulfill()
+        self.assertEqual(email.call_count, 2)
+        self.assertEqual(len(orders.all_orders()), 1)
+        self.assertTrue(store.load_scan("paidscan01")["email_result"]["ok"])
+
+    def test_solo_dashboard_separates_paid_delivery_from_free_grants(self):
+        scans = [{"id": "paidscan01", "unlocked": True, "email": "buyer@example.com"},
+                 {"id": "manualscan1", "unlocked": True}]
+        revenue = {"records": [{"classification": "Provider confirmed", "scan_id": "paidscan01"}]}
+        ctx = admin_panel.context(scans, revenue, {}, [], [], False, [])
+        self.assertEqual(ctx["DELIVERY_COUNT"], 1)
+        self.assertIn("paidscan01", ctx["PAID_REPORT_ROWS"])
+        self.assertNotIn("manualscan1", ctx["PAID_REPORT_ROWS"])
+        self.assertIn("manualscan1", ctx["REPORT_ROWS"])
+        self.assertEqual(ctx["LEGACY_BLOCK"], "")
+
+    def test_public_pages_do_not_render_operator_personal_name(self):
+        with patch.object(config, "LEGAL_NAME", "Dhruv Kumar"):
+            for name in ("about", "terms", "trust_center", "customers"):
+                page = report.legal_page(name)
+                self.assertNotIn("Dhruv Kumar", page)
+        self.assertNotIn("Dhruv Kumar", report.index_page())
+
+
 if __name__ == "__main__": unittest.main()

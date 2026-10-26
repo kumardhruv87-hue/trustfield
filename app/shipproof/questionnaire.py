@@ -71,8 +71,8 @@ QUESTIONS: list[tuple[str, str]] = [
      "Yes. The agency pack gives ten client-ready reports; each report can carry 'Prepared for <client> · handover "
      "by <agency>'. See /agency. Same scope and limits as the standard report."),
     ("How do we contact you?",
-     "Email the address on every page. A real person answers, usually within one business day. The operator is "
-     "Dhruv Kumar, Faridabad, India (sole proprietorship), named in /about and /terms."),
+     "Email the address on every page. A real person answers, usually within one business day. The service is "
+     "independently operated from India. See /about and /terms."),
 ]
 
 

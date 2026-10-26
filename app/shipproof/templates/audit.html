@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Audit your AI-built app in 60 seconds · {{BRAND}}</title>
-<meta name="description" content="Free 60-second scan for leaked OpenAI/Stripe keys, open Supabase RLS tables and leaky CORS. Evidence + exact fix + PDF for ₹{{PRICE_INR}}.">
+<title>Check your AI-built app before launch · {{BRAND}}</title>
+<meta name="description" content="Free scan of public app exposures or public GitHub source. Evidence, fix guidance and PDF for ₹{{PRICE_INR}}.">
 <link rel="canonical" href="{{BASE_URL}}/audit">
-<meta property="og:title" content="Find critical security leaks in your AI-built app in 60 seconds">
+<meta property="og:title" content="Find exposed risks before you launch your AI-built app">
 <meta property="og:description" content="Free passive scan. Evidence, paste-back fixes and PDF for ₹{{PRICE_INR}}.">
 <meta property="og:image" content="{{BASE_URL}}/static/og.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -12,22 +12,27 @@
 <div class="bg"></div>
 <header class="nav"><a class="logo" href="/">{{BRAND}}</a><a class="nav-cta" href="#scan">Run free scan</a></header>
 <main>
-  <section class="hero">
-    <span class="eyebrow">● Passive scan · no login · 60 seconds</span>
-    <h1>Find &amp; patch critical security leaks in your <span>AI-built app</span> in 60 seconds</h1>
-    <p class="sub">Scans exposed OpenAI/Stripe tokens, open Supabase RLS policies and leaky CORS — before your launch goes public. Built for Cursor, Bolt, Lovable and v0 builders.</p>
-    <form id="scan-form" class="scanbar" action="#" method="post">
-      <input id="scan-target" name="target" placeholder="App URL or GitHub repo" autocomplete="off" required>
+  <section class="hero" id="scan">
+    <span class="eyebrow">● Public exposure checks · no app login required</span>
+    <h1>Find exposed risks before you launch your <span>AI-built app</span></h1>
+    <p class="sub">Check public pages and browser code for exposed secrets and configuration risks. Public GitHub scans add source-code checks. Built for Cursor, Bolt, Lovable and v0 builders.</p>
+    <form id="scan-form" action="#" method="post">
+    <div class="scanbar">
+      <label class="sr-only" for="scan-target">Public app URL or GitHub repository</label>
+      <input id="scan-target" name="target" placeholder="App URL or github.com/owner/repo" autocomplete="off" maxlength="300" required>
       <button type="submit" id="scan-btn">Run Instant Safety Scan (Free)</button>
+    </div>
+    <label class="consent"><input id="scan-consent" type="checkbox" required> I own this app or have permission to check it.</label>
+    <p class="micro">URL checks cannot verify private pages or database policies. Public source checks identify patterns for you to review. We do not change your app.</p>
     </form>
-    <p id="scan-status" class="status" hidden></p>
-    <ul class="badges"><li>Zero setup required</li><li>Non-intrusive passive scan</li><li>Scanned in 60s</li></ul>
+    <p id="scan-status" class="status" role="status" aria-live="polite" hidden></p>
+    <ul class="badges"><li>Zero setup required</li><li>Non-intrusive passive scan</li><li>Results usually in about a minute</li></ul>
     <p class="micro">No card for the scan. The full report is ₹{{PRICE_INR}} one-time — refund if a finding is wrong.</p>
   </section>
 
   <section class="pain">
-    <div class="pain-card"><strong>₹1.7 lakh+</strong><span>A leaked OpenAI key can burn your card overnight.</span></div>
-    <div class="pain-card"><strong>#1 mistake</strong><span>Supabase tables readable with the public anon key.</span></div>
+    <div class="pain-card"><strong>Exposed API keys</strong><span>Public secrets can let others use your paid services.</span></div>
+    <div class="pain-card"><strong>Source-code risks</strong><span>Public repo checks flag risky database-policy patterns for review.</span></div>
     <div class="pain-card"><strong>Client handover</strong><span>Dated report with evidence before you share a demo link.</span></div>
   </section>
 
@@ -35,9 +40,9 @@
     <h2>Full remediation report</h2>
     <p class="price">₹{{PRICE_INR}} <span>one-time</span></p>
     <ul class="deliverables">
-      <li>✓ Full vulnerability breakdown (PDF)</li>
-      <li>✓ Exact evidence for every finding</li>
-      <li>✓ Copy-paste Supabase RLS fix script</li>
+      <li>✓ Findings, scope and limitations in a PDF</li>
+      <li>✓ Evidence and fix guidance for detected findings</li>
+      <li>✓ Relevant fix instructions for your AI builder</li>
       <li>✓ Paste-back AI builder prompt + action plan</li>
     </ul>
     <p class="micro">UPI (GPay · PhonePe · Paytm) · Cards · Netbanking via Razorpay</p>
@@ -48,9 +53,9 @@
     <h2>Quick answers</h2>
     <details><summary>Is this a penetration test?</summary><p>No. It is a passive external review: public pages, headers, JS bundles and (optionally) a public repo. Honest limits, no exploitation.</p></details>
     <details><summary>What is free?</summary><p>Your score and every issue title. The paid report adds evidence, the exact fix, a copy-paste prompt and a PDF.</p></details>
-    <details><summary>What if a finding is wrong?</summary><p>We refund that report. See the refund policy.</p></details>
+    <details><summary>What if a finding is wrong?</summary><p>See the <a href="/refund">refund policy</a> for eligibility and how to request a refund.</p></details>
   </section>
 </main>
-<footer><p>© {{YEAR}} {{BRAND}} · Independent security review for AI-built apps. Not a penetration test or a certification.</p></footer>
+<footer><p>© {{YEAR}} {{BRAND}} · Independent security review for AI-built apps. Not a penetration test or a certification.</p><p><a href="/methodology">Methodology</a> · <a href="/privacy">Privacy</a> · <a href="/subprocessors">Subprocessors</a> · <a href="/terms">Terms</a> · <a href="/refund">Refunds</a> · <a href="mailto:info@trustfield.dev">Support</a></p></footer>
 <script src="/static/audit.js"></script>
 </body></html>

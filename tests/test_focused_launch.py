@@ -68,9 +68,9 @@ class FocusedLaunchTests(unittest.TestCase):
 
     def test_payment_unlocks_email_pdf_and_repeated_delivery_is_safe(self):
         store.save_scan(make_record())
-        with patch.object(server.emailer, "send_report", return_value={"ok": True, "mode": "test"}) as mail, patch.object(server.notify, "send"):
+        with patch.object(server.emailer, "send_report", return_value={"ok": True, "mode": "resend"}) as mail, patch.object(server.notify, "send"):
             self.handler._apply_payment(self.event())
-            self.handler._apply_payment(self.event(provider_id="plink_same_payment"))
+            self.handler._apply_payment(self.event())
         record = store.load_scan("reportid12")
         self.assertTrue(record["unlocked"])
         self.assertEqual(record["email"], "buyer@example.com")

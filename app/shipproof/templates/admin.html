@@ -3,38 +3,37 @@
 <meta name="robots" content="noindex"><title>Admin · {{BRAND}}</title>
 <link rel="stylesheet" href="/static/style.css"></head>
 <body class="report-body admin-panel">
-<header class="nav"><a class="brand" href="/">{{BRAND}} · Admin</a><nav><a href="/">Public site</a> · <a href="/admin">Refresh dashboard</a> · <a href="/admin/logout">Log out</a></nav></header>
+<header class="nav"><a class="brand" href="/">{{BRAND}} · Admin</a><nav><a href="/">Public site</a> · <a href="/admin">Refresh</a> · <a href="/admin/logout">Log out</a></nav></header>
 <main class="wrap report">
-<h1>Business &amp; delivery</h1><p class="fine">Report access, recorded orders and confirmed sales are separate. Event counters use UTC; record timestamps below use IST.</p>
+<h1>Your business</h1><p class="fine">Check sales, deliver reports, and follow up where needed. Record times use IST; daily and monthly counters use UTC.</p>
 {{NOTICE}}
 <div class="counts">
-<div class="count"><span class="count-n">{{CONFIRMED_ORDERS}}</span><span class="count-l">Provider-confirmed live INR payments</span></div>
+<div class="count"><span class="count-n">{{CONFIRMED_ORDERS}}</span><span class="count-l">Confirmed live INR payments</span></div>
 <div class="count"><span class="count-n">₹{{CONFIRMED_INR}}</span><span class="count-l">Confirmed INR gross · before fees/refunds</span></div>
-<div class="count"><span class="count-n">{{REVIEW_COUNT}}</span><span class="count-l">Payment records needing review</span></div>
-<div class="count"><span class="count-n">{{SCAN_COUNT}}</span><span class="count-l">Recent reports loaded · up to 60</span></div>
+<div class="count"><span class="count-n">{{DELIVERY_COUNT}}</span><span class="count-l">Paid reports needing email review</span></div>
+<div class="count"><span class="count-n">{{SCANS_MONTH}}</span><span class="count-l">Scans this UTC month</span></div>
 </div>
 <section class="block"><h2>Needs attention</h2><ul>{{ALERTS}}</ul></section>
-
-<section class="block"><h2>Payment records</h2>
-<p class="fine">Recorded INR gross, including unconfirmed records: ₹{{RECORDED_INR}}. {{TEST_COUNT}} test records and {{MANUAL_COUNT}} manual grants are excluded from sales. Legacy records without provider evidence remain unconfirmed. Different currencies are never added to INR. Summaries use the available ledger (up to 5,000 records), with the latest 100 shown below.</p>
+<section class="block"><h2>Customer reports</h2>
+<p class="fine">Provider-confirmed payments matched to the latest {{SCAN_COUNT}} reports (up to 60). Email acceptance means the provider accepted the request; it does not confirm inbox delivery.</p>
+<div class="admin-table"><table class="meta-table"><thead><tr><th>Report / target</th><th>Score</th><th>Access</th><th>Email / customer</th><th>Created</th><th>Actions</th></tr></thead><tbody>{{PAID_REPORT_ROWS}}</tbody></table></div>
+<p class="fine">Send report email sends a real email. Use it for intended delivery or a requested resend.</p></section>
+<section class="block"><h2>Payments &amp; review</h2>
+<p>{{REVIEW_COUNT}} payment records need review. Check settlements and refunds in your payment-provider dashboard.</p>
 {{RECONCILE_FORM}}
-<p class="fine">Read-only gateway checks, up to 10 references per click. No charges, refunds or cancellations. Results are saved separately from the original ledger. Unknown mode, missing references and failed lookups stay under review. Confirm settlements, refunds and actual fees in Razorpay/Stripe; this page does not show profit or bank payout.</p>
-<div class="admin-table"><table class="meta-table"><thead><tr><th>Reference / product</th><th>Recorded amount</th><th>Evidence / classification</th><th>Report reference</th><th>Recorded time</th></tr></thead><tbody>{{PAYMENT_ROWS}}</tbody></table></div></section>
-
-<section class="block"><h2>Recent reports &amp; email delivery</h2>
-<p class="fine">Newest scan time first. “Access granted” includes manual grants and included re-checks; it does not prove a purchase. “Accepted by email provider” is not inbox delivery confirmation. Local outbox files are not sent emails.</p>
-<div class="admin-table"><table class="meta-table"><thead><tr><th>Report / target</th><th>Score</th><th>Access</th><th>Email status / recipient</th><th>Created</th><th>Actions</th></tr></thead><tbody>{{REPORT_ROWS}}</tbody></table></div>
-<p class="fine">Granting access does not send an email or record revenue. Email buttons send a real customer email; use them only for intended delivery or a requested resend.</p></section>
-
-<section class="block"><h2>Acquisition funnel — current UTC month</h2>
-<p class="fine">Tracking starts from the focused-launch release; older historical activity is not backfilled. Events, not unique people. Checkout = new payment link; purchase event = report fulfillment, not independently verified revenue. Use <code>/?utm_source=google</code> or <code>/?utm_source=linkedin</code>.</p>
-<div class="admin-table"><table class="meta-table"><tr><th>Source</th><th>Visit events</th><th>Completed scans</th><th>New checkouts</th><th>Fulfillment events</th></tr>{{FUNNEL_ROWS}}</table></div></section>
-
-<section class="block"><h2>Service health &amp; usage</h2>
-<div class="counts"><div class="count"><span class="count-n">{{SCANS_MONTH}}</span><span class="count-l">Scan events this UTC month</span></div><div class="count"><span class="count-n">{{EMAIL_TODAY}} / {{EMAIL_MONTH}}</span><span class="count-l">Email requests accepted · UTC day / month</span></div><div class="count"><span class="count-n">{{AI_ATTEMPTS}} / {{AI_LIMIT}}</span><span class="count-l">Reserved AI calls today / configured guard</span></div><div class="count"><span class="count-n">{{AI_ANSWERS}}</span><span class="count-l">Successful AI answers today</span></div></div>
-<ul><li>Cloud storage: {{STORAGE_STATE}}</li><li>Transactional email: {{EMAIL_STATE}}</li><li>Operator alerts: {{ALERT_STATE}}</li></ul>
-<p class="fine">Provider invoices, balances and plan limits are not queried here. No fixed per-answer AI cost, gateway fee or net-payout estimate is presented. Counters can be incomplete after outages or unavailable persistence.</p></section>
-
-<details class="block"><summary>Legacy services — existing obligations</summary>{{LEGACY}}<p class="fine">Paused records are not counted as active subscriptions. Creation tools are omitted from the core dashboard.</p></details>
-<p class="fine">© {{YEAR}} {{BRAND}} · <a href="/healthz">Service health</a> · <a href="/changelog">Changelog</a> · <a href="/admin/logout">Log out</a></p>
+<p class="fine">Checks up to 10 eligible Razorpay references and saves evidence. No charges or refunds. Legacy records without provider evidence remain unconfirmed and are excluded from confirmed sales.</p>
+<div class="admin-table"><table class="meta-table"><thead><tr><th>Reference</th><th>Amount</th><th>Status / evidence</th><th>Report</th><th>Recorded</th></tr></thead><tbody>{{PAYMENT_ROWS}}</tbody></table></div>
+<details><summary>Test payments &amp; complimentary access</summary><p class="fine">{{TEST_COUNT}} test records and {{MANUAL_COUNT}} manual grants are excluded from sales. All records are retained.</p><div class="admin-table"><table class="meta-table"><thead><tr><th>Reference</th><th>Amount</th><th>Status</th><th>Report</th><th>Recorded</th></tr></thead><tbody>{{HISTORY_ROWS}}</tbody></table></div></details>
+<p class="fine">Available ledger: up to 5,000 records; latest 100 listed. Recorded INR gross including unconfirmed records: ₹{{RECORDED_INR}}. Different currencies are not added to INR. Gross revenue is not profit or bank payout.</p></section>
+<details class="block"><summary>All recent reports · free scans, grants &amp; re-checks</summary>
+<p class="fine">Newest first, up to 60. Access granted does not prove a purchase. Grant access is complimentary, records no revenue, and sends no automatic email. Local outbox files are not sent emails.</p>
+<div class="admin-table"><table class="meta-table"><thead><tr><th>Report / target</th><th>Score</th><th>Access</th><th>Email / recipient</th><th>Created</th><th>Actions</th></tr></thead><tbody>{{REPORT_ROWS}}</tbody></table></div></details>
+<details class="block"><summary>Where traffic comes from · current UTC month</summary>
+<p class="fine">Events, not unique people. Checkout = a new payment link; fulfillment is not independently verified revenue. Older activity is not backfilled. Track campaigns with <code>/audit?utm_source=google</code>.</p>
+<div class="admin-table"><table class="meta-table"><thead><tr><th>Source</th><th>Visits</th><th>Scans</th><th>Checkouts</th><th>Fulfillments</th></tr></thead><tbody>{{FUNNEL_ROWS}}</tbody></table></div></details>
+<details class="block"><summary>Service health &amp; usage</summary>
+<ul><li>Cloud storage: {{STORAGE_STATE}}</li><li>Report email: {{EMAIL_STATE}}</li><li>Operator alerts: {{ALERT_STATE}}</li><li>Email requests accepted today / month: {{EMAIL_TODAY}} / {{EMAIL_MONTH}}</li><li>AI reservations today: {{AI_ATTEMPTS}} / {{AI_LIMIT}}; successful answers: {{AI_ANSWERS}}</li></ul>
+<p class="fine">Configuration does not verify storage restoration or inbox delivery. Provider invoices and balances are not queried here. Usage counters may be incomplete after outages.</p></details>
+{{LEGACY_BLOCK}}
+<p class="fine">© {{YEAR}} {{BRAND}} · <a href="/healthz">Service health</a> · <a href="/admin/logout">Log out</a></p>
 </main></body></html>

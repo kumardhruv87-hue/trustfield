@@ -114,91 +114,60 @@ def _recent_scans(limit: int = 60) -> list[dict]:
     return sorted(out, key=created, reverse=True)[:limit]
 
 
-def _fulfill(
-    scan_id: str,
-    *,
-    provider: str,
-    provider_id: str = "",
-    email: str = "",
-    amount_minor: int = 0,
-    currency: str = "INR",
-    product: str = "report",
+def _fulfill(scan_id: str, **payment) -> dict | None:
+    # Webhooks and browser reconciliation share this lock and the same ledger.
+    with _payment_lock:
+        return _fulfill_locked(scan_id, **payment)
+
+
+def _fulfill_locked(
+    scan_id: str, *, provider: str, provider_id: str = "", email: str = "",
+    amount_minor: int = 0, currency: str = "INR", product: str = "report",
     verification: str = "",
 ) -> dict | None:
-    """Mark a report paid, record the order, email the buyer. Idempotent per scan."""
     record = store.load_scan(scan_id)
     if record is None:
         return None
-    if record.get("unlocked") and provider != "manual":
-        return record
     if email and not record.get("email"):
         record = store.update_scan(scan_id, email=email) or record
-    record = store.unlock(scan_id) or record
-    if provider != "manual":
-        usage.funnel("purchase", record.get("source", "direct"))
-    if provider_id:
-        orders.append(
-            {
-                "provider": provider,
-                "provider_id": provider_id,
-                "product": product,
-                "amount_minor": int(amount_minor),
-                "currency": currency,
-                "status": "paid",
-                "scan_id": scan_id,
-                "report_id": scan_id,
-                "email": email or record.get("email", ""),
-                "paid_at": config.now_iso(),
-                "created_at": config.now_iso(),
-                "verification": verification,
-                "payment_mode": payments.mode(provider),
-            }
-        )
-    if provider == "manual":
-        orders.append(
-            {
-                "provider": "manual",
-                "provider_id": "",
-                "product": product,
-                "amount_minor": int(amount_minor),
-                "currency": currency,
-                "status": "paid",
-                "scan_id": scan_id,
-                "report_id": scan_id,
-                "email": email or record.get("email", ""),
-                "paid_at": config.now_iso(),
-                "created_at": config.now_iso(),
-            }
-        )
-    try:
-        notify.send("New paid report", f"{record.get('target', '')} - {record.get('email', '')}",
-                    config.BASE_URL + "/r/" + scan_id)
-    except Exception:
-        pass
+    fresh_payment = bool(provider_id) and not orders.exists(provider_id)
+    if fresh_payment or provider == "manual":
+        # Persist the receipt BEFORE granting access. A retry can finish delivery
+        # even if unlocking or emailing fails after the receipt is recorded.
+        stamp = config.now_iso()
+        orders.append({
+            "provider": provider, "provider_id": provider_id, "product": product,
+            "amount_minor": int(amount_minor), "currency": currency,
+            "status": "access_granted" if provider == "manual" else "paid",
+            "scan_id": scan_id, "report_id": scan_id,
+            "email": email or record.get("email", ""),
+            "paid_at": stamp, "created_at": stamp,
+            "verification": verification, "payment_mode": payments.mode(provider),
+        })
+    if not record.get("unlocked"):
+        record = store.unlock(scan_id)
+        if record is None:
+            raise OSError("Payment recorded but report access could not be saved; retry fulfillment.")
+    if fresh_payment and provider != "manual":
+        try:
+            usage.funnel("purchase", record.get("source", "direct"))
+            notify.send("New paid report", f"{record.get('target', '')} - {record.get('email', '')}",
+                        config.BASE_URL + "/r/" + scan_id)
+        except Exception:
+            pass
     target_email = email or record.get("email", "")
-    if target_email:
+    delivered = record.get("email_result") or {}
+    if target_email and not (delivered.get("ok") and delivered.get("mode") == "resend"):
         try:
             store.save_lead(target_email, scan_id, source="payment")
         except ValueError:
             pass
         result = emailer.send_report({**record, "email": target_email})
         record = store.update_scan(
-            scan_id,
-            emailed_at=config.now_iso(),
+            scan_id, emailed_at=config.now_iso(),
             email_result={k: v for k, v in result.items() if k != "path"},
         ) or record
-
-    try:
-        if record and not record.get("ai_plan"):
-            plan = aicopilot.ask(
-                record,
-                "In plain English, write a 5-line action plan: first what is most dangerous, then the next 3 fixes in order, then what to tell a client or buyer. No jargon. Under 140 words.",
-            ).get("answer") or ""
-            if plan:
-                record = store.update_scan(record["id"], ai_plan=plan) or record
-    except Exception:
-        pass
-
+    # AI processing is optional and happens only when the user asks the copilot.
     return record
 
 
@@ -1534,8 +1503,17 @@ class Handler(BaseHTTPRequestHandler):
         payment_id = str(event.get("provider_id") or "")
         if not payment_id:
             return self._json(200, {"ok": True, "ignored": "no payment id"})
-        if orders.exists(payment_id):
-            return self._json(200, {"ok": True, "duplicate": True})
+        recorded = next((row for row in reversed(orders.all_orders())
+                         if row.get("provider_id") == payment_id and row.get("provider") == event.get("provider")), None)
+        duplicate = recorded is not None
+        if duplicate:
+            if recorded.get("product", "report") != "report":
+                return self._json(200, {"ok": True, "duplicate": True})
+            # A retried notification may omit amount/notes. Resume only the
+            # original receipt's report; never retarget an existing payment.
+            event = {**event, **recorded,
+                     "report_id": recorded.get("report_id") or recorded.get("scan_id")}
+
         product = event.get("product") or "report"
         if product not in ("report", "watch", "agency"):
             return self._json(200, {"ok": True, "ignored": "unknown product"})
@@ -1581,7 +1559,7 @@ class Handler(BaseHTTPRequestHandler):
         )
         if record is None:
             return self._json(200, {"ok": True, "ignored": "unknown report"})
-        return self._json(200, {"ok": True, "id": record.get("id")})
+        return self._json(200, {"ok": True, "id": record.get("id"), "duplicate": duplicate})
 
 def make_server(host: str = config.HOST, port: int = config.PORT) -> ThreadingHTTPServer:
     config.ensure_dirs()
