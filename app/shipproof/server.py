@@ -146,8 +146,10 @@ def _fulfill(
                 "currency": currency,
                 "status": "paid",
                 "scan_id": scan_id,
+                "report_id": scan_id,
                 "email": email or record.get("email", ""),
                 "paid_at": config.now_iso(),
+                "created_at": config.now_iso(),
                 "verification": verification,
                 "payment_mode": payments.mode(provider),
             }
@@ -162,8 +164,10 @@ def _fulfill(
                 "currency": currency,
                 "status": "paid",
                 "scan_id": scan_id,
+                "report_id": scan_id,
                 "email": email or record.get("email", ""),
                 "paid_at": config.now_iso(),
+                "created_at": config.now_iso(),
             }
         )
     try:
