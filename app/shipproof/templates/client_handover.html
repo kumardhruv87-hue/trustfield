@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="no-referrer">
+<title>Client Handover · {{BRAND}}</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.handover{max-width:980px;margin:0 auto;padding:40px 22px}.handover h1{font-size:clamp(34px,6vw,56px);line-height:1.1}.handover .eyebrow{color:#5eead4;letter-spacing:.12em;font-size:12px;font-weight:700}.handover .score-pair{display:flex;align-items:center;gap:24px;margin:24px 0}.handover .score-pair strong{display:block;font-size:46px}.handover .score-pair span{color:#94a3b8}.handover .progress-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.handover .progress-item{padding:18px;border:1px solid #334155;border-radius:14px;background:#111827}.handover .progress-item strong{font-size:32px;display:block}.handover .progress-item p{font-size:13px;color:#cbd5e1;line-height:1.45}.handover .timing{display:grid;grid-template-columns:1fr 1fr;gap:16px}.handover .timing p{overflow-wrap:anywhere}.handover .sample-banner{border:1px solid #fbbf24;color:#fde68a;padding:12px;border-radius:10px}.handover ul li{margin:9px 0}.handover .target{overflow-wrap:anywhere}.handover .actions{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}@media(max-width:640px){.handover .progress-grid{grid-template-columns:1fr 1fr}.handover .timing{grid-template-columns:1fr}.handover{padding:24px 16px}}@media print{.handover .actions,.handover header{display:none}.handover{max-width:none;color:#111;background:#fff}.handover .progress-item{background:#fff;border-color:#999;break-inside:avoid}.handover .progress-item p,.handover .score-pair span{color:#333}body{background:#fff!important;color:#111!important}a{color:#111}.handover .eyebrow{color:#333}.handover .sample-banner{color:#111}}
+</style></head><body class="report-body"><main class="handover">
+<header><a class="brand" href="/">{{BRAND}}</a></header>
+{{SAMPLE_BANNER}}
+<p class="eyebrow">CLIENT HANDOVER · POINT-IN-TIME CHECK RESULTS</p>
+<h1>Show what changed.<br>Keep the limits visible.</h1>
+<p class="target"><strong>{{TARGET}}</strong></p><p>{{SCOPE}}</p>
+<div class="score-pair"><div><strong>{{BEFORE_SCORE}}<small>/100</small></strong><span>Original score</span></div><span aria-hidden="true">→</span><div><strong>{{AFTER_SCORE}}<small>/100</small></strong><span>Re-check score</span></div></div>
+<p class="fine">Reported scores summarize the checks run. A higher score is not a safety guarantee. Original finding types: {{BEFORE_FINDINGS}} · Currently detected types: {{AFTER_FINDINGS}}. Counts group alerts by type, not every affected file or instance.</p>
+<section class="block"><h2>What the re-check established</h2><div class="progress-grid">
+<div class="progress-item"><strong>{{PASSED}}</strong><b>Relevant checks passed</b><p>A previously flagged finding type had its mapped checks run and pass in this snapshot.</p></div>
+<div class="progress-item"><strong>{{REMAINS}}</strong><b>Still detected</b><p>The original finding appeared again. Follow-up is needed.</p></div>
+<div class="progress-item"><strong>{{UNCONFIRMED}}</strong><b>Not confirmed</b><p>The finding disappeared without a passing mapped check. Do not call it fixed.</p></div>
+<div class="progress-item"><strong>{{NEW}}</strong><b>New findings</b><p>Detected at re-check and absent from the original findings.</p></div>
+</div></section>
+<section class="block"><h2>Dates &amp; scope</h2><div class="timing"><p><b>Original observation</b><br>{{ORIGINAL_AT}}</p><p><b>Re-check observation</b><br>{{RECHECK_AT}}</p><p><b>Summary issued</b><br>{{ISSUED_AT}}</p><p><b>Link expires</b><br>{{EXPIRES_AT}}</p></div></section>
+<section class="block"><h2>What this does not prove</h2><ul>{{LIMITS}}</ul><p>No evidence snippets, finding titles, email addresses or full-report links are included. Ask the owner privately if you need more context.</p></section>
+<div class="actions"><button class="btn primary" type="button" id="print-handover">Print / Save as PDF</button>{{JSON_LINK}}<a class="btn ghost" href="/#scan">Check your own app free</a></div>
+<p class="fine">Anyone holding this link can view this limited summary until it expires or the owner disables it. Saved copies cannot be recalled. Revisit the live link to check availability. {{BRAND}} is not certifying the app as secure.</p>
+</main><script src="/static/handover.js" defer></script></body></html>

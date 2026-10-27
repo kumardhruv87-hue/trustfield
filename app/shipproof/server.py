@@ -17,7 +17,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 from . import agency, ai_kit, aicopilot, apikeys, config, guides, questionnaire, vs, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
 from . import storage
-from . import handover
+from . import handover, clientproof
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
@@ -30,6 +30,7 @@ STATIC_FILES = {
     "landing.css": "text/css; charset=utf-8",
     "audit.css": "text/css; charset=utf-8",
     "audit.js": "application/javascript; charset=utf-8",
+    "handover.js": "application/javascript; charset=utf-8",
     "inter-latin.woff2": "font/woff2",
     "sample-report.html": "text/html; charset=utf-8",
 }
@@ -563,6 +564,20 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception:
                     pass
                 return self._html(200, report.audit_page())
+            if path == "/handover/sample":
+                return self._html(200, report.client_handover_page(clientproof.sample()))
+            match = re.fullmatch(r"/handover/([A-Za-z0-9_-]{32})(\.json)?", path)
+            if match:
+                summary = clientproof.load(match.group(1))
+                if summary is None:
+                    if not match.group(2):
+                        return self._error_page(404, "Summary unavailable", "This link has expired, was disabled by its owner, or could not be loaded. No private report is exposed.")
+                    raise HTTPProblem(404, "This summary is unavailable, expired or disabled by its owner.")
+                headers = {"X-Robots-Tag": "noindex, nofollow, noarchive", "Referrer-Policy": "no-referrer"}
+                if match.group(2):
+                    headers["Content-Disposition"] = 'attachment; filename="client-handover.json"'
+                    return self._send(200, json.dumps(summary).encode(), "application/json; charset=utf-8", headers)
+                return self._send(200, report.client_handover_page(summary, match.group(1)).encode(), "text/html; charset=utf-8", headers)
             if path == "/tools/speed":
                 from . import speedtool
                 target = (query.get("url") or [""])[0].strip()[:300]
@@ -854,6 +869,9 @@ class Handler(BaseHTTPRequestHandler):
                 raise HTTPProblem(429, "Too many requests — slow down a little.")
             if path == "/admin/actions":
                 return self._admin_operation()
+            match = re.fullmatch(r"/api/scan/([a-z0-9]{6,24})/handover", path)
+            if match:
+                return self._client_handover(match.group(1))
             if path == "/api/scan":
                 return self._create_scan()
             if path == "/api/events":
@@ -1143,6 +1161,35 @@ class Handler(BaseHTTPRequestHandler):
                 pass
         payload["checks_total"] = len(result.checks)
         return self._json(200, payload)
+
+    def _client_handover(self, scan_id: str) -> None:
+        body = self._read_json()
+        if sign.verify(str(body.get("token") or ""), "handover_manage") != scan_id:
+            raise HTTPProblem(403, "Sharing controls are available only from the private re-check report.")
+        after = store.load_scan(scan_id)
+        if after is None:
+            raise HTTPProblem(404, "Re-check not found.")
+        if not _is_paid(after) or not after.get("verified_against"):
+            raise HTTPProblem(402, "Complete the included paid re-check before creating a client handover.")
+        action = body.get("action")
+        try:
+            if action == "revoke":
+                clientproof.revoke(after)
+                return self._json(200, {"ok": True, "disabled": True})
+            if action != "publish":
+                raise HTTPProblem(400, "Choose publish or revoke.")
+            if body.get("confirmed") is not True:
+                raise HTTPProblem(403, "Confirm that you want to publish a limited summary before creating the link.")
+            before = store.load_scan(after["verified_against"])
+            if before is None or not _is_paid(before):
+                raise HTTPProblem(410, "The original paid report is no longer available.")
+            token, summary = clientproof.publish(before, after, body.get("include_target") is True)
+            return self._json(200, {"ok": True, "url": config.BASE_URL + "/handover/" + token,
+                                    "expires_at": summary["expires_at"]})
+        except ValueError as exc:
+            raise HTTPProblem(400, str(exc))
+        except OSError:
+            raise HTTPProblem(503, "Sharing storage is unavailable. Please try again; do not assume the link changed.")
 
     def _verify_rescan(self, scan_id: str) -> None:
         if not _verification_lock.acquire(blocking=False):
@@ -1581,6 +1628,7 @@ def make_server(host: str = config.HOST, port: int = config.PORT) -> ThreadingHT
             while True:
                 try:
                     store.purge_old(30)
+                    clientproof.purge_expired()
                 except Exception:
                     pass
                 time.sleep(21600)
