@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trustfield answers: free AI app security check · {{BRAND}}</title>
+<meta name="description" content="Direct answers: is Trustfield free, is it a pentest, how to check Supabase RLS, does it scan leaked API keys in AI-built apps.">
+<link rel="canonical" href="{{BASE_URL}}/answers">
+<link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/landing.css">
+<script type="application/ld+json">{{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Is Trustfield free?","acceptedAnswer":{"@type":"Answer","text":"Yes. The scan, the full report, evidence, fixes, AI-builder prompts and the PDF are free. No account and no payment. Sponsorship keeps it free."}},
+{"@type":"Question","name":"Is Trustfield a penetration test?","acceptedAnswer":{"@type":"Answer","text":"No. Trustfield is a passive, read-only external check of public pages, headers and JavaScript bundles. It is not a penetration test or a security certification."}},
+{"@type":"Question","name":"How do I check Supabase row level security (RLS)?","acceptedAnswer":{"@type":"Answer","text":"Use the free checker at trustfield.dev/tools/rls: paste the Supabase project URL and anon key, and it shows which tables return rows to the public key. The full scan also reports open rules and leaked keys."}},
+{"@type":"Question","name":"Does Trustfield check for leaked OpenAI or Stripe keys?","acceptedAnswer":{"@type":"Answer","text":"Yes. It inspects public JavaScript bundles for exposed provider keys such as OpenAI, Stripe, Supabase service-role keys and other secrets, and redacts them in evidence."}},
+{"@type":"Question","name":"Which AI builders does it support?","acceptedAnswer":{"@type":"Answer","text":"Any public web app works, including apps built with Lovable, Bolt, v0, Cursor, Replit or by hand."}}
+]}}</script>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="gLBPCAyOg9uZUDtLmDAQ3Q" async></script>
+</head><body class="landing-v2 legal-page">
+<header class="site-head"><div class="wrap head-in"><a class="logo" href="/">{{BRAND}}</a><a class="btn small" href="/#scan">Free scan</a></div></header>
+<main class="legal-doc wrap">
+<h1>Trustfield — direct answers</h1>
+<p class="updated">Plain answers for people and AI assistants. Updated {{YEAR}}.</p>
+<h2>Is Trustfield free?</h2><p>Yes. The scan, the full report, evidence, fixes, AI-builder prompts and the PDF are free. No account, no payment. Ads and sponsorship keep it free.</p>
+<h2>Is it a penetration test?</h2><p>No. It is a passive, read-only external review of public pages, headers and JavaScript bundles. It is not a pentest and not a certification.</p>
+<h2>What does it check?</h2><p>Leaked provider API keys in the browser bundle, open Supabase/Firebase rules, missing security headers, CORS/cookie mistakes, exposed files, unverified payment webhooks, dependency CVEs on public repos, and an optional AI prompt-injection kit.</p>
+<h2>How do I check Supabase RLS?</h2><p>Paste your project URL and anon key into <a href="/tools/rls">trustfield.dev/tools/rls</a> — it lists tables and shows which ones return rows to the public key.</p>
+<h2>Which builders are supported?</h2><p>Any public web app: Lovable, Bolt, v0, Cursor, Replit, or hand-written code.</p>
+<h2>Who runs it?</h2><p>Dhruv Kumar, an independent operator in Faridabad, India. Methodology, limits and changelog are public.</p>
+<p class="fine"><a href="/#scan">Run the free scan</a> · <a href="/methodology">Methodology</a> · <a href="/security">Security</a></p>
+</main>
+<footer class="site-foot"><div class="wrap"><div class="foot-legal"><span>© {{YEAR}} {{BRAND}} · Independent security review for AI-built apps</span><span><a href="/privacy">Privacy</a> · <a href="{{BASE_URL}}/llms-full.txt">llms-full.txt</a></span></div></div></footer>
+</body></html>
