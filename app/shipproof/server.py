@@ -1,4 +1,4 @@
-"""HTTP server (stdlib only). No framework, no dependencies, no surprises."""
+﻿"""HTTP server (stdlib only). No framework, no dependencies, no surprises."""
 from __future__ import annotations
 
 import hashlib
@@ -17,7 +17,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 from . import agency, ai_kit, aicopilot, apikeys, config, guides, questionnaire, vs, usage, emailer, indexstore, live, net, notify, orders, payments, pdf, repo, report, score, sign, store, supabase_tool, watch, web_tools
 from . import storage
-from . import handover, clientproof
+from . import handover
 from .findings import Finding, sort_findings
 
 STATIC_FILES = {
@@ -30,7 +30,6 @@ STATIC_FILES = {
     "landing.css": "text/css; charset=utf-8",
     "audit.css": "text/css; charset=utf-8",
     "audit.js": "application/javascript; charset=utf-8",
-    "handover.js": "application/javascript; charset=utf-8",
     "inter-latin.woff2": "font/woff2",
     "sample-report.html": "text/html; charset=utf-8",
 }
@@ -115,60 +114,91 @@ def _recent_scans(limit: int = 60) -> list[dict]:
     return sorted(out, key=created, reverse=True)[:limit]
 
 
-def _fulfill(scan_id: str, **payment) -> dict | None:
-    # Webhooks and browser reconciliation share this lock and the same ledger.
-    with _payment_lock:
-        return _fulfill_locked(scan_id, **payment)
-
-
-def _fulfill_locked(
-    scan_id: str, *, provider: str, provider_id: str = "", email: str = "",
-    amount_minor: int = 0, currency: str = "INR", product: str = "report",
+def _fulfill(
+    scan_id: str,
+    *,
+    provider: str,
+    provider_id: str = "",
+    email: str = "",
+    amount_minor: int = 0,
+    currency: str = "INR",
+    product: str = "report",
     verification: str = "",
 ) -> dict | None:
+    """Mark a report paid, record the order, email the buyer. Idempotent per scan."""
     record = store.load_scan(scan_id)
     if record is None:
         return None
+    if record.get("unlocked") and provider != "manual":
+        return record
     if email and not record.get("email"):
         record = store.update_scan(scan_id, email=email) or record
-    fresh_payment = bool(provider_id) and not orders.exists(provider_id)
-    if fresh_payment or provider == "manual":
-        # Persist the receipt BEFORE granting access. A retry can finish delivery
-        # even if unlocking or emailing fails after the receipt is recorded.
-        stamp = config.now_iso()
-        orders.append({
-            "provider": provider, "provider_id": provider_id, "product": product,
-            "amount_minor": int(amount_minor), "currency": currency,
-            "status": "access_granted" if provider == "manual" else "paid",
-            "scan_id": scan_id, "report_id": scan_id,
-            "email": email or record.get("email", ""),
-            "paid_at": stamp, "created_at": stamp,
-            "verification": verification, "payment_mode": payments.mode(provider),
-        })
-    if not record.get("unlocked"):
-        record = store.unlock(scan_id)
-        if record is None:
-            raise OSError("Payment recorded but report access could not be saved; retry fulfillment.")
-    if fresh_payment and provider != "manual":
-        try:
-            usage.funnel("purchase", record.get("source", "direct"))
-            notify.send("New paid report", f"{record.get('target', '')} - {record.get('email', '')}",
-                        config.BASE_URL + "/r/" + scan_id)
-        except Exception:
-            pass
+    record = store.unlock(scan_id) or record
+    if provider != "manual":
+        usage.funnel("purchase", record.get("source", "direct"))
+    if provider_id:
+        orders.append(
+            {
+                "provider": provider,
+                "provider_id": provider_id,
+                "product": product,
+                "amount_minor": int(amount_minor),
+                "currency": currency,
+                "status": "paid",
+                "scan_id": scan_id,
+                "report_id": scan_id,
+                "email": email or record.get("email", ""),
+                "paid_at": config.now_iso(),
+                "created_at": config.now_iso(),
+                "verification": verification,
+                "payment_mode": payments.mode(provider),
+            }
+        )
+    if provider == "manual":
+        orders.append(
+            {
+                "provider": "manual",
+                "provider_id": "",
+                "product": product,
+                "amount_minor": int(amount_minor),
+                "currency": currency,
+                "status": "paid",
+                "scan_id": scan_id,
+                "report_id": scan_id,
+                "email": email or record.get("email", ""),
+                "paid_at": config.now_iso(),
+                "created_at": config.now_iso(),
+            }
+        )
+    try:
+        notify.send("New paid report", f"{record.get('target', '')} - {record.get('email', '')}",
+                    config.BASE_URL + "/r/" + scan_id)
+    except Exception:
+        pass
     target_email = email or record.get("email", "")
-    delivered = record.get("email_result") or {}
-    if target_email and not (delivered.get("ok") and delivered.get("mode") == "resend"):
+    if target_email:
         try:
             store.save_lead(target_email, scan_id, source="payment")
         except ValueError:
             pass
         result = emailer.send_report({**record, "email": target_email})
         record = store.update_scan(
-            scan_id, emailed_at=config.now_iso(),
+            scan_id,
+            emailed_at=config.now_iso(),
             email_result={k: v for k, v in result.items() if k != "path"},
         ) or record
-    # AI processing is optional and happens only when the user asks the copilot.
+
+    try:
+        if record and not config.FREE_MODE and not record.get("ai_plan"):
+            plan = aicopilot.ask(
+                record,
+                "In plain English, write a 5-line action plan: first what is most dangerous, then the next 3 fixes in order, then what to tell a client or buyer. No jargon. Under 140 words.",
+            ).get("answer") or ""
+            if plan:
+                record = store.update_scan(record["id"], ai_plan=plan) or record
+    except Exception:
+        pass
+
     return record
 
 
@@ -343,8 +373,8 @@ class Handler(BaseHTTPRequestHandler):
             "X-Frame-Options": "DENY",
             "Referrer-Policy": "strict-origin-when-cross-origin",
             "Content-Security-Policy": (
-                "default-src 'self'; font-src 'self'; img-src 'self' data: https://*.ahrefs.com; style-src 'self' 'unsafe-inline'; "
-                "script-src 'self' https://analytics.ahrefs.com; connect-src 'self' https://analytics.ahrefs.com https://*.ahrefs.com; "
+                "default-src 'self'; font-src 'self'; img-src 'self' data: https://*.ahrefs.com https://*.googlesyndication.com https://*.doubleclick.net; style-src 'self' 'unsafe-inline'; "
+                "script-src 'self' https://analytics.ahrefs.com https://pagead2.googlesyndication.com https://*.googlesyndication.com; connect-src 'self' https://analytics.ahrefs.com https://*.ahrefs.com https://*.googlesyndication.com https://*.doubleclick.net; "
                 "base-uri 'none'; form-action 'self'"
             ),
             "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
@@ -383,30 +413,6 @@ class Handler(BaseHTTPRequestHandler):
 <p class="muted">{report.esc(message)}</p>
 <p><a class="btn" href="/">â† Back to {report.esc(config.BRAND)}</a></p></main></body></html>""",
         )
-
-    def _paused(self, method: str) -> None:
-        """Serve the maintenance page. Never accept money or scans while paused."""
-        if method != "GET":
-            self._json(503, {
-                "ok": False,
-                "paused": True,
-                "error": "Trustfield is paused. No scans or payments are being accepted.",
-            }, )
-            return
-        try:
-            page_path = os.path.join(os.path.dirname(__file__), "static", "paused.html")
-            with open(page_path, "rb") as handle:
-                body = handle.read()
-        except OSError:
-            body = (
-                b"<!doctype html><meta charset=utf-8><title>Trustfield is paused</title>"
-                b"<h1>Trustfield is paused</h1><p>Email info@trustfield.dev.</p>"
-            )
-        self._send(503, body, "text/html; charset=utf-8", {
-            "Cache-Control": "no-store",
-            "Retry-After": "86400",
-            "X-Robots-Tag": "noindex, nofollow",
-        })
 
     def _read_json(self) -> dict:
         try:
@@ -518,13 +524,12 @@ class Handler(BaseHTTPRequestHandler):
         split = urlsplit(self.path)
         path = unquote(split.path or "/")
         query = parse_qs(split.query)
+        if config.FREE_MODE and (
+            path.startswith(("/pay/", "/watch/", "/checkout/", "/api/v1/", "/api/report/"))
+            or path in ("/agency", "/agency/start", "/unlock-code", "/admin/login", "/admin/logout")
+        ):
+            return self._html(200, report.free_mode_page())
         path = path.rstrip("/") or "/"
-
-        # Global pause: no scans, no payments, no report delivery. The host
-        # health check must keep returning 200 or Render will restart the service.
-        if config.PAUSED and path != "/healthz":
-            return self._paused(method)
-
         if config.FOCUS_MODE and (
             path.startswith("/watch/start/") or path == "/agency/start"
             or (path == "/agency" and not query.get("code"))
@@ -594,20 +599,6 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception:
                     pass
                 return self._html(200, report.audit_page())
-            if path == "/handover/sample":
-                return self._html(200, report.client_handover_page(clientproof.sample()))
-            match = re.fullmatch(r"/handover/([A-Za-z0-9_-]{32})(\.json)?", path)
-            if match:
-                summary = clientproof.load(match.group(1))
-                if summary is None:
-                    if not match.group(2):
-                        return self._error_page(404, "Summary unavailable", "This link has expired, was disabled by its owner, or could not be loaded. No private report is exposed.")
-                    raise HTTPProblem(404, "This summary is unavailable, expired or disabled by its owner.")
-                headers = {"X-Robots-Tag": "noindex, nofollow, noarchive", "Referrer-Policy": "no-referrer"}
-                if match.group(2):
-                    headers["Content-Disposition"] = 'attachment; filename="client-handover.json"'
-                    return self._send(200, json.dumps(summary).encode(), "application/json; charset=utf-8", headers)
-                return self._send(200, report.client_handover_page(summary, match.group(1)).encode(), "text/html; charset=utf-8", headers)
             if path == "/tools/speed":
                 from . import speedtool
                 target = (query.get("url") or [""])[0].strip()[:300]
@@ -899,9 +890,6 @@ class Handler(BaseHTTPRequestHandler):
                 raise HTTPProblem(429, "Too many requests — slow down a little.")
             if path == "/admin/actions":
                 return self._admin_operation()
-            match = re.fullmatch(r"/api/scan/([a-z0-9]{6,24})/handover", path)
-            if match:
-                return self._client_handover(match.group(1))
             if path == "/api/scan":
                 return self._create_scan()
             if path == "/api/events":
@@ -1157,6 +1145,10 @@ class Handler(BaseHTTPRequestHandler):
             "kit_results": [],
             "expires_at": (config.now() + timedelta(days=config.BADGE_VALID_DAYS)).date().isoformat(),
         }
+        if config.FREE_MODE:
+            record["unlocked"] = True
+            record["unlocked_at"] = config.now_iso()
+            record["free"] = True
         store.save_scan(record)
         usage.bump("scans")
         usage.funnel("scan_complete", record.get("source", "direct"))
@@ -1191,35 +1183,6 @@ class Handler(BaseHTTPRequestHandler):
                 pass
         payload["checks_total"] = len(result.checks)
         return self._json(200, payload)
-
-    def _client_handover(self, scan_id: str) -> None:
-        body = self._read_json()
-        if sign.verify(str(body.get("token") or ""), "handover_manage") != scan_id:
-            raise HTTPProblem(403, "Sharing controls are available only from the private re-check report.")
-        after = store.load_scan(scan_id)
-        if after is None:
-            raise HTTPProblem(404, "Re-check not found.")
-        if not _is_paid(after) or not after.get("verified_against"):
-            raise HTTPProblem(402, "Complete the included paid re-check before creating a client handover.")
-        action = body.get("action")
-        try:
-            if action == "revoke":
-                clientproof.revoke(after)
-                return self._json(200, {"ok": True, "disabled": True})
-            if action != "publish":
-                raise HTTPProblem(400, "Choose publish or revoke.")
-            if body.get("confirmed") is not True:
-                raise HTTPProblem(403, "Confirm that you want to publish a limited summary before creating the link.")
-            before = store.load_scan(after["verified_against"])
-            if before is None or not _is_paid(before):
-                raise HTTPProblem(410, "The original paid report is no longer available.")
-            token, summary = clientproof.publish(before, after, body.get("include_target") is True)
-            return self._json(200, {"ok": True, "url": config.BASE_URL + "/handover/" + token,
-                                    "expires_at": summary["expires_at"]})
-        except ValueError as exc:
-            raise HTTPProblem(400, str(exc))
-        except OSError:
-            raise HTTPProblem(503, "Sharing storage is unavailable. Please try again; do not assume the link changed.")
 
     def _verify_rescan(self, scan_id: str) -> None:
         if not _verification_lock.acquire(blocking=False):
@@ -1580,17 +1543,8 @@ class Handler(BaseHTTPRequestHandler):
         payment_id = str(event.get("provider_id") or "")
         if not payment_id:
             return self._json(200, {"ok": True, "ignored": "no payment id"})
-        recorded = next((row for row in reversed(orders.all_orders())
-                         if row.get("provider_id") == payment_id and row.get("provider") == event.get("provider")), None)
-        duplicate = recorded is not None
-        if duplicate:
-            if recorded.get("product", "report") != "report":
-                return self._json(200, {"ok": True, "duplicate": True})
-            # A retried notification may omit amount/notes. Resume only the
-            # original receipt's report; never retarget an existing payment.
-            event = {**event, **recorded,
-                     "report_id": recorded.get("report_id") or recorded.get("scan_id")}
-
+        if orders.exists(payment_id):
+            return self._json(200, {"ok": True, "duplicate": True})
         product = event.get("product") or "report"
         if product not in ("report", "watch", "agency"):
             return self._json(200, {"ok": True, "ignored": "unknown product"})
@@ -1636,7 +1590,7 @@ class Handler(BaseHTTPRequestHandler):
         )
         if record is None:
             return self._json(200, {"ok": True, "ignored": "unknown report"})
-        return self._json(200, {"ok": True, "id": record.get("id"), "duplicate": duplicate})
+        return self._json(200, {"ok": True, "id": record.get("id")})
 
 def make_server(host: str = config.HOST, port: int = config.PORT) -> ThreadingHTTPServer:
     config.ensure_dirs()
@@ -1658,7 +1612,6 @@ def make_server(host: str = config.HOST, port: int = config.PORT) -> ThreadingHT
             while True:
                 try:
                     store.purge_old(30)
-                    clientproof.purge_expired()
                 except Exception:
                     pass
                 time.sleep(21600)
