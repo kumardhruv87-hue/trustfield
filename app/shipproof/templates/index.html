@@ -19,16 +19,17 @@
   <link rel="preload" href="/static/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/style.css">
   <link rel="stylesheet" href="/static/landing.css">
+  <style>#pricing{display:none!important}</style>
   <link rel="icon" href="/static/logo-mark.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"{{BRAND}}","applicationCategory":"SecurityApplication","operatingSystem":"Web","url":"{{BASE_URL}}/","description":"Automated public app security check with evidence, AI-builder fix prompts and one verification re-check. A point-in-time check, not a security certification.","offers":[{"@type":"Offer","name":"Free check","price":"0","priceCurrency":"INR"},{"@type":"Offer","name":"Fix & Handover Report","price":"{{PRICE_INR}}","priceCurrency":"INR"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"{{BRAND}}","applicationCategory":"SecurityApplication","operatingSystem":"Web","url":"{{BASE_URL}}/","description":"Automated public app security check with evidence, AI-builder fix prompts and one verification re-check. A point-in-time check, not a security certification.","offers":[{"@type":"Offer","name":"Free check","price":"0","priceCurrency":"INR"},{"@type":"Offer","name":"Fix & Handover Report","price":"0","priceCurrency":"INR"}]}</script>
   <script src="https://analytics.ahrefs.com/analytics.js" data-key="gLBPCAyOg9uZUDtLmDAQ3Q" async></script>
 </head>
 <body class="landing-v2 focused-launch">
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-head"><div class="wrap head-in">
     <a class="logo" href="/" aria-label="{{BRAND}} home"><img src="/static/logo-mark.svg" width="28" height="28" alt=""><span>{{BRAND}}</span></a>
-    <nav class="nav-links" aria-label="Main"><a href="#how">How it works</a><a href="/static/sample-report.html">Sample report</a><a href="#pricing">₹{{PRICE_INR}} report</a></nav>
+    <nav class="nav-links" aria-label="Main"><a href="#how">How it works</a><a href="/static/sample-report.html">Sample report</a><a href="#scan">100% free</a></nav>
     <a class="btn primary small" href="#scan">Check my app</a>
   </div></header>
   <main id="main">
@@ -41,7 +42,7 @@
         <div class="launch-actions"><a class="btn primary big" href="#scan">Check my app — free</a><a class="sample-link" href="/static/sample-report.html">See a sample report <span aria-hidden="true">↗</span></a></div>
         <p class="fine">No signup. No card. Usually about a minute.</p>
         <p class="hindi-note" lang="hi-Latn">AI se app ban gaya? Launch se pehle pata karo kya fix karna hai.</p>
-        <div class="launch-trust"><span>Read-only checks</span><span>Keys redacted in evidence</span><span>₹{{PRICE_INR}} once, if you need fixes</span></div>
+        <div class="launch-trust"><span>Read-only checks</span><span>Keys redacted in evidence</span><span>Full report free</span></div>
       </div>
       <aside class="launch-preview" aria-label="Illustrative report preview">
         <div class="preview-top"><span class="preview-dot"></span>{{BRAND}} / launch check <span class="preview-demo">Example</span></div>
@@ -78,7 +79,7 @@
 
     <section class="band soft" id="how"><div class="wrap">
       <p class="preview-eyebrow">ONE JOB. THREE STEPS.</p><h2>Find it. Fix it. Re-check it.</h2>
-      <div class="steps"><article class="step"><div class="step-n">1</div><h3>Check before you share</h3><p>Run the free check. Read every issue title and its severity. No signup needed.</p></article><article class="step"><div class="step-n">2</div><h3>Get the fix instructions</h3><p>If you need help, pay ₹{{PRICE_INR}} once for the evidence, prioritized fixes and prompts for your AI builder.</p></article><article class="step"><div class="step-n">3</div><h3>Verify &amp; hand over</h3><p>Apply and test the changes. Use your included re-check, then create a limited client handover link without exposing your evidence.</p></article></div>
+      <div class="steps"><article class="step"><div class="step-n">1</div><h3>Check before you share</h3><p>Run the free check. Read every issue title and its severity. No signup needed.</p></article><article class="step"><div class="step-n">2</div><h3>Get the fix instructions</h3><p>Open the full report free — evidence, prioritized fixes, prompts and PDF for your AI builder.</p></article><article class="step"><div class="step-n">3</div><h3>Verify &amp; hand over</h3><p>Apply and test the changes. Use your included re-check, then share the dated PDF with your client or team.</p></article></div>
       <p class="fine">You or your developer apply the fixes. Trustfield does not edit or repair your app automatically.</p>
     </div></section>
 
@@ -89,22 +90,22 @@
     </div></section>
 
     <section class="band soft" id="pricing"><div class="wrap launch-pricing">
-      <div><p class="preview-eyebrow">NO SUBSCRIPTION. ONE DECISION.</p><h2>See the issues free.<br>Pay for a way forward.</h2><p>For the founder about to launch, or the builder about to hand an app to a client.</p><p class="fine">If this check finds no issues, we will tell you. You do not need to buy fixes for an empty report.</p><a class="sample-link" href="/static/sample-report.html">Read a sample before paying ↗</a><p><a class="sample-link" href="/handover/sample">Preview the client handover ↗</a></p></div>
-      <article class="price featured"><span class="price-badge">One app · one-time</span><h3>Fix &amp; Handover Report</h3><div class="price-tag">₹{{PRICE_INR}}</div><p class="price-sub">Clear instructions for your next conversation with your AI builder.</p><ul><li>All findings, prioritized by severity</li><li>Evidence and a plain-English explanation</li><li>Individual fix prompts + one AI Builder Fix Pack (.md)</li><li>Downloadable, dated PDF report</li><li>One re-check: see what passed, remains or could not be confirmed</li><li>Optional client handover link: before/after counts, expiry &amp; disable control</li></ul><a class="btn primary big" href="#scan">Check free, then decide</a><p class="fine">Same-target re-check within 30 days. UPI or card via Razorpay. No recurring charge. Checkout shows the payable amount.</p><p class="fine">Report not delivered or a finding factually wrong? <a href="/refund">See our 7-day refund policy</a>.</p></article>
+      <div><p class="preview-eyebrow">NO SUBSCRIPTION. ONE DECISION.</p><h2>See the issues free.<br>Pay for a way forward.</h2><p>For the founder about to launch, or the builder about to hand an app to a client.</p><p class="fine">If this check finds no issues, we will tell you. You do not need to buy fixes for an empty report.</p><a class="sample-link" href="/static/sample-report.html">Read a sample before paying ↗</a></div>
+      <article class="price featured"><span class="price-badge">One app · one-time</span><h3>Fix &amp; Handover Report</h3><div class="price-tag">₹{{PRICE_INR}}</div><p class="price-sub">Clear instructions for your next conversation with your AI builder.</p><ul><li>All findings, prioritized by severity</li><li>Evidence and a plain-English explanation</li><li>Individual fix prompts + one AI Builder Fix Pack (.md)</li><li>Downloadable, dated PDF report</li><li>One re-check: see what passed, remains or could not be confirmed</li></ul><a class="btn primary big" href="#scan">Check free, then decide</a><p class="fine">Same-target re-check within 30 days. UPI or card via Razorpay. No recurring charge. Checkout shows the payable amount.</p><p class="fine">Report not delivered or a finding factually wrong? <a href="/refund">See our 7-day refund policy</a>.</p></article>
     </div></section>
 
     <section class="band" id="faq"><div class="wrap narrow"><h2>Before you check.</h2><div class="faq">
       <details><summary>Can I use this without a technical team?</summary><p>Yes. Each paid finding explains the issue and provides a prompt for the AI tool that built your app. You still need to review and test the changes; the report does not include someone fixing your code.</p></details>
-      <details><summary>What is free, and when do I pay?</summary><p>The check, score and every issue title are free. Pay ₹{{PRICE_INR}} only when you choose the Fix &amp; Handover Report with evidence, fixes, prompts, PDF and one re-check. No signup or card is needed to scan.</p></details>
+      <details><summary>What is free, and when do I pay?</summary><p>The check, score and every issue title are free. Everything is free: score, every finding, evidence, fixes, prompts, PDF and one re-check. No signup, no card, no payment. Ads and sponsorship keep it free.</p></details>
       <details><summary>What if no issues are found?</summary><p>There may be nothing to fix in the checks we ran. Keep the free result and check again after changes. A clean scan does not cover hidden server logic or logged-in behavior.</p></details>
       <details><summary>Is this a certificate or a penetration test?</summary><p>No. This is an automated check of publicly reachable content or a public repository. It is a practical first pass before launch, with evidence and clear limits. A dated PDF documents results; it does not certify security or compliance.</p></details>
       <details><summary>Do you need my source code or passwords?</summary><p>No passwords or private repository access. Start with a public URL, or choose a public GitHub repository for code checks. Source is processed in memory and discarded. Findings and evidence are retained for 30 days. <a href="/privacy">Privacy details</a>.</p></details>
       <details><summary>How does the included re-check work?</summary><p>After you fix the issues, open your paid report and select Re-check after fixes. One re-check of that same URL or repository is included during the report's 30-day lifetime. The new report shows which findings disappeared and which appeared.</p></details>
-      <details><summary>Who can help if something goes wrong?</summary><p>Email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> with your report link or payment ID. Support answers the inbox. Refund terms are published before you pay.</p></details>
+      <details><summary>Who can help if something goes wrong?</summary><p>Email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> with your report link or payment ID. Dhruv Kumar, the founder, answers the inbox. Refund terms are published before you pay.</p></details>
     </div></div></section>
     <section class="wrap launch-final"><h2>Your next step does not need to be a guess.</h2><p>Check your app. See the issues. Decide what to fix.</p><a class="btn primary big" href="#scan">Check my app — free</a></section>
   </main>
-  <footer class="site-foot"><div class="wrap"><div class="launch-footer"><div><a class="logo" href="/">{{BRAND}}</a><p class="fine">Launch checks for AI-built apps.<br>Independently operated in India.</p></div><nav aria-label="Footer"><a href="/static/sample-report.html">Sample report</a><a href="/methodology">Methodology</a><a href="/about">About</a><a href="/security">Security</a><a href="mailto:{{CONTACT_EMAIL}}">Contact</a></nav></div><div class="foot-legal"><span>© {{YEAR}} {{BRAND}} · Automated checks, with evidence and limits.</span><span><a href="/privacy">Privacy</a> · <a href="/subprocessors">Subprocessors</a> · <a href="/terms">Terms</a> · <a href="/refund">Refunds</a> · <a class="admin-link" href="/admin/login">Admin login</a></span></div></div></footer>
+  <footer class="site-foot"><div class="wrap"><div class="launch-footer"><div><a class="logo" href="/">{{BRAND}}</a><p class="fine">Launch checks for AI-built apps.<br>Built and operated by Dhruv Kumar, India.</p></div><nav aria-label="Footer"><a href="/static/sample-report.html">Sample report</a><a href="/methodology">Methodology</a><a href="/about">About</a><a href="/security">Security</a><a href="mailto:{{CONTACT_EMAIL}}">Contact</a></nav></div><div class="foot-legal"><span>© {{YEAR}} {{BRAND}} · Automated checks, with evidence and limits.</span><span><a href="/privacy">Privacy</a> · <a href="/subprocessors">Subprocessors</a> · <a href="/terms">Terms</a> · <a href="/refund">Refunds</a></span></div></div></footer>
   <script src="/static/app.js" defer></script>
 </body>
 </html>
