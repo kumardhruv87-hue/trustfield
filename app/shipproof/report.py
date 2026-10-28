@@ -7,7 +7,7 @@ import html
 import re
 from pathlib import Path
 
-from . import config, sign, usage, handover, clientproof
+from . import config, sign, usage, handover
 from .findings import SEVERITY_COLOR, SEVERITY_LABEL, Finding, sort_findings
 
 BACKTICK_RE = re.compile(r"`([^`]{1,120})`")
@@ -407,50 +407,8 @@ def verification_html(record: dict) -> str:
             + table + '<p class="fine">“Relevant check passed” means the mapped check ran and passed in this snapshot. It does not prove all instances are fixed. Missing findings without a passing mapped check remain unconfirmed, including older scans without check mappings.</p></section>')
 
 
-def client_handover_tools(record: dict) -> str:
-    if not record.get("verified_against"):
-        sid = esc(record.get("id"))
-        label = "Open your re-check" if record.get("verification_scan_id") else "Run your included re-check"
-        return (f'<section class="block"><h2>From fixes to client handover</h2>'
-                '<p>Review and apply the fixes, then use your included re-check. Create an optional summary link showing what passed, remains or could not be confirmed—without sharing your evidence or private report.</p>'
-                f'<p><a class="btn" href="/verify/{sid}">{label}</a> '
-                '<a href="/handover/sample" target="_blank" rel="noopener noreferrer">See a fictional sample</a></p>'
-                '<p class="fine">No summary is published automatically. This is not a security certification.</p></section>')
-    sid = str(record.get("id") or "")
-    token = str(record.get("handover_token") or "")
-    active = clientproof.load(token) if token else None
-    url = config.BASE_URL + "/handover/" + token if active else ""
-    return f'''<section class="block" id="client-handover"><h2>Client Handover</h2>
-<p>Share the before-and-after counts without sharing your private report. No evidence snippets, finding titles, email address or full-report link is included.</p>
-<p><a href="/handover/sample" target="_blank" rel="noopener noreferrer">See a fictional sample first</a></p>
-<form id="handover-form" data-scan="{esc(sid)}" data-token="{esc(sign.sign(sid, 'handover_manage'))}">
-<label class="checkline"><input id="handover-target" type="checkbox"> Include my app hostname or public repository name (paths and query strings are never included).</label>
-<label class="checkline"><input id="handover-consent" type="checkbox" required> I want to publish this limited summary. Anyone with the link can view and save it.</label>
-<p><button class="btn primary" id="publish-handover" type="submit">Create / view share link</button></p></form>
-<div id="handover-result" class="{'hidden' if not active else ''}"><label for="handover-link">Share this summary link, not your private report link</label><input class="fix-pack-text" id="handover-link" type="text" readonly value="{esc(url)}"><p><a class="btn ghost" id="view-handover" href="{esc(url or '#client-handover')}" target="_blank" rel="noopener noreferrer">Preview summary</a> <button class="btn ghost" type="button" id="revoke-handover">Disable live link</button></p></div>
-<p id="handover-note" class="fine" role="status" aria-live="polite">{'An active link already exists. Disable it before changing which target information is shared.' if active else 'Nothing is published until you choose to create the link.'}</p>
-<p class="fine">Expires when the original report's 30-day window ends. Disable the live link from this report at any time before expiry. Saved copies cannot be recalled. Keep this report link private: it includes the sharing controls.</p></section>'''
-
-
-def client_handover_page(summary: dict, token: str = "") -> str:
-    counts = summary["comparison"]
-    sample = summary.get("sample") is True
-    return _fill(_template("client_handover.html"), {
-        "BRAND": esc(config.BRAND), "TARGET": esc(summary["target"]), "SCOPE": esc(summary["scope"]),
-        "SAMPLE_BANNER": '<p class="sample-banner"><strong>FICTIONAL SAMPLE</strong> · These numbers are illustrative, not a real customer result or security endorsement.</p>' if sample else '',
-        "BEFORE_SCORE": int(summary["before_score"]), "AFTER_SCORE": int(summary["after_score"]),
-        "BEFORE_FINDINGS": int(summary["original_findings"]), "AFTER_FINDINGS": int(summary["current_findings"]),
-        "PASSED": int(counts["check_passed"]), "REMAINS": int(counts["still_detected"]),
-        "UNCONFIRMED": int(counts["not_confirmed"]), "NEW": int(counts["new"]),
-        "ORIGINAL_AT": esc(summary["original_observed_at"]), "RECHECK_AT": esc(summary["rechecked_at"]),
-        "ISSUED_AT": esc(summary["issued_at"]), "EXPIRES_AT": esc(summary["expires_at"]),
-        "LIMITS": ''.join('<li>' + esc(item) + '</li>' for item in summary["limits"]),
-        "JSON_LINK": f'<a class="btn ghost" href="/handover/{esc(token)}.json">Download summary JSON</a>' if token else '',
-    })
-
-
 def watch_upsell_html(record: dict) -> str:
-    if config.FOCUS_MODE:
+    if config.FOCUS_MODE or config.FREE_MODE:
         return ""
     watch_price = esc(config.WATCH_INR)
     scan_id = esc(record.get("id", ""))
@@ -465,6 +423,8 @@ def watch_upsell_html(record: dict) -> str:
 
 
 def ai_panel_html(record: dict) -> str:
+    if config.FREE_MODE:
+        return ""
     chat = record.get("chat") or []
     messages = []
     for item in chat[-20:]:
@@ -486,7 +446,22 @@ def ai_panel_html(record: dict) -> str:
     </section>"""
 
 
+def free_mode_page() -> str:
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Free · {esc(config.BRAND)}</title>
+<link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/landing.css"></head>
+<body class="landing-v2 legal-page"><main class="legal-doc wrap" style="max-width:640px">
+<h1>Everything is free now</h1>
+<p>Trustfield is 100% free: the scan, the full report with evidence, the exact fix, the AI-builder prompt and the PDF. No account, no payment.</p>
+<p>We keep it free with sponsorship and display ads. <a href="/#scan">Run a scan</a> or read the <a href="/methodology">methodology</a>.</p>
+</main></body></html>"""
+
+
 def report_page(record: dict) -> str:
+    if config.FREE_MODE:
+        record = dict(record)
+        record["unlocked"] = True
+        record["free"] = True
     score = record.get("score") or {}
     findings = record.get("findings") or []
     paid = (
@@ -576,12 +551,13 @@ def report_page(record: dict) -> str:
             ) if record.get("ai_plan") else "",
             "RESCAN_LINK": (f'<a class="btn" href="/verify/{esc(record.get("id",""))}">{"View your re-check" if record.get("verification_scan_id") else "Re-check after fixes (included)"}</a>' if paid and not record.get("verified_against") else ""),
             "VERIFY_BANNER": verification_html(record),
-            "CLIENT_HANDOVER": client_handover_tools(record) if paid else "",
             "PREPARED_FOR": (
                 f'<p class="fine" style="color:#0f766e">Prepared for <strong>{esc(record.get("prepared_for"))}</strong>'
                 + (f' — handover by {esc(record.get("agency_name"))}' if record.get("agency_name") else "")
                 + "</p>"
             ) if record.get("prepared_for") else "",
+            "FREE_BANNER": ('<div class="note" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46">'
+                            '100% free — no account, no payment. Sponsorship and ads keep this free.</div>') if config.FREE_MODE else "",
             "AI_PANEL": ai_panel_html(record) if paid else "",
             "MODE_NOTE": esc(mode_note),
             "CHECKS": checks_html(record.get("checks") or []),
