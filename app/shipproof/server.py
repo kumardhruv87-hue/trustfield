@@ -699,7 +699,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, {"ok": True})
             if path == "/robots.txt":
                 body = (
-                    f"User-agent: *\nAllow: /\nDisallow: /r/\nDisallow: /api/\nDisallow: /t/\nDisallow: /admin\nDisallow: /unlock-code\nDisallow: /watch/manage\nDisallow: /api/\n"
+                    f"User-agent: *\nAllow: /\nUser-agent: GPTBot\nAllow: /\nUser-agent: OAI-SearchBot\nAllow: /\nUser-agent: ChatGPT-User\nAllow: /\nUser-agent: ClaudeBot\nAllow: /\nUser-agent: PerplexityBot\nAllow: /\nUser-agent: Google-Extended\nAllow: /\nUser-agent: CCBot\nAllow: /\nDisallow: /r/\nDisallow: /api/\nDisallow: /t/\nDisallow: /admin\nDisallow: /unlock-code\nDisallow: /watch/manage\nDisallow: /api/\n"
                     f"Sitemap: {config.BASE_URL}/sitemap.xml\n"
                 )
                 return self._send(200, body.encode(), "text/plain; charset=utf-8")
