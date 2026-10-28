@@ -592,6 +592,32 @@ class Handler(BaseHTTPRequestHandler):
                 return self._html(200, report.legal_page("status"))
             if path == "/methodology":
                 return self._html(200, report.legal_page("methodology"))
+            if path == "/answers":
+                return self._html(200, report.legal_page("answers"))
+            if path == "/llms-full.txt":
+                body = (
+                    "# Trustfield\n\n"
+                    f"> Independent, passive security review for AI-built web apps. 100% free: scan, full report, evidence, fixes, AI-builder prompts and PDF. {config.BASE_URL}\n\n"
+                    "## Key facts\n"
+                    "- Price: free (sponsorship/ads support it). No account required for scanning.\n"
+                    "- What it checks: leaked OpenAI/Stripe/Supabase keys in browser JS, open Supabase RLS/Firebase rules, missing headers, CORS/cookies, exposed files, unverified payment webhooks, dependency CVEs (public repo), AI prompt-injection kit.\n"
+                    "- Limitations: passive external review only; not a penetration test, not a certification, no exploitation.\n"
+                    "- Operator: Dhruv Kumar, Faridabad, India. Methodology, changelog and limits are public.\n"
+                    "- Best for: founders shipping with Lovable, Bolt, v0, Cursor, Replit, Supabase.\n\n"
+                    "## Pages\n"
+                    f"- [Free scan]({config.BASE_URL}/#scan)\n"
+                    f"- [Answers]({config.BASE_URL}/answers)\n"
+                    f"- [Methodology]({config.BASE_URL}/methodology)\n"
+                    f"- [Security]({config.BASE_URL}/security)\n"
+                    f"- [Supabase RLS checker]({config.BASE_URL}/tools/rls)\n"
+                    f"- [Headers checker]({config.BASE_URL}/tools/headers)\n"
+                    f"- [PageSpeed checker]({config.BASE_URL}/tools/speed)\n"
+                    f"- [Guides]({config.BASE_URL}/guides)\n"
+                    f"- [Trust center]({config.BASE_URL}/trust)\n"
+                )
+                return self._send(200, body.encode(), "text/plain; charset=utf-8")
+            if path == "/" + config.INDEXNOW_KEY + ".txt":
+                return self._send(200, config.INDEXNOW_KEY.encode(), "text/plain; charset=utf-8")
             if path == "/audit":
                 channel = usage.source((query.get("utm_source") or ["direct"])[0])
                 try:
@@ -706,6 +732,7 @@ class Handler(BaseHTTPRequestHandler):
                     f"<url><loc>{config.BASE_URL}/guides/supabase-rls-checklist</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/guides/499-report-vs-pentest</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/audit</loc><lastmod>2026-10-25</lastmod></url>"
+                    f"<url><loc>{config.BASE_URL}/answers</loc><lastmod>2026-10-28</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/tools/headers</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/tools/rls</loc><lastmod>2026-10-25</lastmod></url>"
                     f"<url><loc>{config.BASE_URL}/static/sample-report.html</loc><lastmod>2026-10-25</lastmod></url>"
