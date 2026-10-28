@@ -152,3 +152,6 @@ FOCUS_MODE = os.environ.get("SHIPPROOF_FOCUS_MODE", "1") == "1"
 # 100% free mode: full reports are free; monetisation is sponsorship / display ads.
 FREE_MODE = os.environ.get("SHIPPROOF_FREE_MODE", "0") == "1"
 ADSENSE_CLIENT = os.environ.get("SHIPPROOF_ADSENSE_CLIENT", "")
+
+# Bing/IndexNow submission key (public by design).
+INDEXNOW_KEY = os.environ.get("SHIPPROOF_INDEXNOW_KEY", "tf9c4e2a7b1d8436f5a0c9e2d7b4a1f6")
