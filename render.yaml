@@ -1,4 +1,4 @@
-﻿services:
+services:
   - type: web
     name: trustfield
     runtime: docker
@@ -16,8 +16,12 @@
         sync: false
       - key: SHIPPROOF_SECRET_KEY
         sync: false
-      - key: SHIPPROOF_PAYMENT_LINK
-        sync: false
+      # Product paused: no scans, no payments, no report delivery.
+      # Payments have moved to StayOn. Set to "0" only after a deliberate restart.
+      - key: SHIPPROOF_PAUSED
+        value: "1"
+      - key: SHIPPROOF_FREE_REPORTS
+        value: "1"
       - key: SHIPPROOF_DATA
         value: /tmp/data
       - key: PORT
@@ -30,3 +34,7 @@
 #   SHIPPROOF_ADMIN_TOKEN   (long random admin token)
 #   SECRET_KEY              (HMAC secret for signed links / admin sessions)
 # Without the first two, reports/leads/orders live only in ephemeral storage.
+#
+# Paused state: the app ignores ALL routes except /healthz and shows a single
+# maintenance page. Remove RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET / STRIPE_* from
+# the Render dashboard; the Razorpay account/keys are now used by StayOn only.

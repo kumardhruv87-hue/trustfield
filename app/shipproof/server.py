@@ -1,4 +1,4 @@
-﻿"""HTTP server (stdlib only). No framework, no dependencies, no surprises."""
+"""HTTP server (stdlib only). No framework, no dependencies, no surprises."""
 from __future__ import annotations
 
 import hashlib
@@ -384,6 +384,30 @@ class Handler(BaseHTTPRequestHandler):
 <p><a class="btn" href="/">â† Back to {report.esc(config.BRAND)}</a></p></main></body></html>""",
         )
 
+    def _paused(self, method: str) -> None:
+        """Serve the maintenance page. Never accept money or scans while paused."""
+        if method != "GET":
+            self._json(503, {
+                "ok": False,
+                "paused": True,
+                "error": "Trustfield is paused. No scans or payments are being accepted.",
+            }, )
+            return
+        try:
+            page_path = os.path.join(os.path.dirname(__file__), "static", "paused.html")
+            with open(page_path, "rb") as handle:
+                body = handle.read()
+        except OSError:
+            body = (
+                b"<!doctype html><meta charset=utf-8><title>Trustfield is paused</title>"
+                b"<h1>Trustfield is paused</h1><p>Email info@trustfield.dev.</p>"
+            )
+        self._send(503, body, "text/html; charset=utf-8", {
+            "Cache-Control": "no-store",
+            "Retry-After": "86400",
+            "X-Robots-Tag": "noindex, nofollow",
+        })
+
     def _read_json(self) -> dict:
         try:
             length = int(self.headers.get("Content-Length") or "0")
@@ -495,6 +519,12 @@ class Handler(BaseHTTPRequestHandler):
         path = unquote(split.path or "/")
         query = parse_qs(split.query)
         path = path.rstrip("/") or "/"
+
+        # Global pause: no scans, no payments, no report delivery. The host
+        # health check must keep returning 200 or Render will restart the service.
+        if config.PAUSED and path != "/healthz":
+            return self._paused(method)
+
         if config.FOCUS_MODE and (
             path.startswith("/watch/start/") or path == "/agency/start"
             or (path == "/agency" and not query.get("code"))

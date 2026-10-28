@@ -148,3 +148,9 @@ DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
 
 # Focus mode: only the core free scan + Rs 499 report are public.
 FOCUS_MODE = os.environ.get("SHIPPROOF_FOCUS_MODE", "1") == "1"
+
+# Paused: stop all scans, payments and report delivery while the product is
+# intentionally paused. /healthz stays up so the host keeps the service healthy.
+# Set SHIPPROOF_PAUSED=0 to resume.
+PAUSED = os.environ.get("SHIPPROOF_PAUSED", "") == "1"
+
